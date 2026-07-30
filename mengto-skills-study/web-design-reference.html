@@ -439,21 +439,34 @@ Avoid: dynamic class names, overusing @apply</div>
 <div class="detail-overlay" id="detailOverlay">
   <div class="detail-panel">
     <button class="close-btn" id="closeBtn">关闭 ✕</button>
-    <div class="detail-content" id="detailContent"></div>
+    <div class="detail-content">
+    <div class="detail-name" id="detailName"></div>
+    <div class="detail-desc" id="detailDesc"></div>
+    <div class="detail-section-title">核心代码</div>
+    <button class="detail-copy-btn" onclick="copyCode(this)">复制代码</button>
+    <pre class="detail-code" id="codeBlock"></pre>
+    <div id="detailPitfalls"></div>
+    <div class="detail-note" id="detailNote"></div>
+  </div>
   </div>
 </div>
 
 <script>
+// 工具函数：转义 HTML 特殊字符（防止 code 字段里的 < > & 被解析成 HTML）
+function esc(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
 const DETAIL_DATA = {
   'animation-on-scroll': {
     desc: 'IntersectionObserver + Tailwind 的滚动动画触发器。零依赖，Tailwind 友好，含 prefers-reduced-motion 降级方案。',
-    code: `<!-- Keyframes -->
+    code: `/* Keyframes — 放在 <head> 的 <style> 中 */
 @keyframes animationIn {
   0%   { opacity:0; transform:translateY(30px); filter:blur(8px); }
   100% { opacity:1; transform:translateY(0);     filter:blur(0px); }
 }
 
-/* IntersectionObserver trigger */
+/* IntersectionObserver trigger — 放在 <head> 的 <script> 中 */
 .animate-on-scroll { animation-play-state: paused !important; }
 .animate-on-scroll.animate  { animation-play-state: running !important; }
 
@@ -491,18 +504,20 @@ lenis.on("scroll", ScrollTrigger.update);
 gsap.ticker.add(time => lenis.raf(time*1000));
 
 // 数据属性标记
-<h1 data-motion-text="lines">文字逐行显示</h1>
-<section data-reveal-group><article data-reveal="fade-up" data-reveal-item>...</article></section>
-<figure data-image-reveal data-parallax-section>
-  <img data-parallax-image src="...">
-</figure>
-<a data-magnetic data-cursor-label="Explore">Explore</a>
+// <h1 data-motion-text="lines">文字逐行显示</h1>
+// <section data-reveal-group>
+//   <article data-reveal="fade-up" data-reveal-item>...</article>
+// </section>
+// <figure data-image-reveal data-parallax-section>
+//   <img data-parallax-image src="...">
+// </figure>
+// <a data-magnetic data-cursor-label="Explore">Explore</a>
 
 // revealPresets
 const revealPresets = {
-  "fade-up":    { from:{y:32,autoAlpha:0}, to:{y:0,autoAlpha:1} },
-  "blur-in":    { from:{y:18,autoAlpha:0,filter:"blur(10px)"}, ... },
-  "scale":     { from:{scale:0.96,autoAlpha:0}, ... },
+  "fade-up":  { from:{y:32,autoAlpha:0}, to:{y:0,autoAlpha:1} },
+  "blur-in":  { from:{y:18,autoAlpha:0,filter:"blur(10px)"}, to:{filter:"blur(0px)"} },
+  "scale":    { from:{scale:0.96,autoAlpha:0}, to:{scale:1,autoAlpha:1} },
 };`,
     pitfalls: ['bounce/elastic/springy 动画过于活泼，cinematic 风格应该用 power3.out / expo.out', 'pin 区域太长导致移动端性能问题', 'cursor 在触屏设备上应该隐藏'],
     note: '<strong>核心价值：</strong>数据属性驱动的标记 API 思想很重要——「让 HTML 本身声明动画意图，JS 统一处理」。我们做 Skill 库可以借鉴这个模式。'
@@ -537,13 +552,13 @@ IntersectionObserver(({threshold:0.2, rootMargin:"0px 0px -10% 0px"}))`,
   },
   'marquee-loop': {
     desc: '无缝循环字幕动画。核心技巧：复制一组内容，使结尾和开头视觉完全衔接，动画范围 0→-50%（因为内容是双份）。',
-    code: `<!-- HTML: 复制内容使首尾衔接 -->
+    code: `/* HTML: 复制内容使首尾衔接 */
 <div class="marquee-track">
   <div class="marquee-content">...items...</div>
   <div class="marquee-content" aria-hidden="true">...items...</div>
 </div>
 
-<!-- CSS -->
+/* CSS */
 .marquee-track { display:flex; overflow:hidden; }
 .marquee-content { display:flex; animation:marquee 20s linear infinite; }
 @keyframes marquee {
@@ -560,12 +575,12 @@ IntersectionObserver(({threshold:0.2, rootMargin:"0px 0px -10% 0px"}))`,
   },
   'beautiful-shadows': {
     desc: '三层 Tailwind arbitrary shadow utilities：sm（紧凑）/md（卡片）/lg（hero）。零摩擦复制，直接用在 class 里。',
-    code: `<!-- Beautiful sm: 紧凑卡片、表单控件 -->
+    code: `/* Beautiful sm: 紧凑卡片、表单控件 */
 class="shadow-[0px_2px_3px_-1px_rgba(0,0,0,0.10),
                    0px_1px_0px_0px_rgba(25,28,33,0.02),
                    0px_0px_0px_1px_rgba(25,28,33,0.08)]"
 
-<!-- Beautiful md: 默认卡片、面板、弹窗 -->
+/* Beautiful md: 默认卡片、面板、弹窗 */
 class="shadow-[0px_0px_0px_1px_rgba(0,0,0,0.06),
                    0px_1px_1px_-0.5px_rgba(0,0,0,0.06),
                    0px_3px_3px_-1.5px_rgba(0,0,0,0.06),
@@ -573,7 +588,7 @@ class="shadow-[0px_0px_0px_1px_rgba(0,0,0,0.06),
                    0px_12px_12px_-6px_rgba(0,0,0,0.06),
                    0px_24px_24px_-12px_rgba(0,0,0,0.06)]"
 
-<!-- Beautiful lg: Hero媒体、特性展示、弹窗 -->
+/* Beautiful lg: Hero媒体、特性展示、弹窗 */
 class="shadow-[0_2.8px_2.2px_rgba(0,0,0,0.034),
                    0_6.7px_5.3px_rgba(0,0,0,0.048),
                    0_12.5px_10px_rgba(0,0,0,0.060),
@@ -585,49 +600,48 @@ class="shadow-[0_2.8px_2.2px_rgba(0,0,0,0.034),
   },
   'progressive-blur': {
     desc: '6 层 backdrop-filter 渐进模糊叠加。可用作页面顶部/底部渐隐遮罩，配合毛玻璃导航使用。',
-    code: `<!-- 6层blur叠加 (0.5px → 64px) -->
-<div class="gradient-blur"><div></div>...×6</div>
-<style>
+    code: `/* 6层blur叠加 (0.5px → 64px) — 放在 <style> 中 */
 .gradient-blur{ position:fixed; z-index:5; inset:0 auto auto 0; height:12%; pointer-events:none; }
-.gradient-blur::before{ z-index:1; backdrop-filter:blur(0.5px); mask:linear-gradient(to top,rgba(0,0,0,0) 0%,rgba(0,0,0,1) 12.5%,...); }
+.gradient-blur::before{ z-index:1; backdrop-filter:blur(0.5px);
+  mask:linear-gradient(to top,rgba(0,0,0,0) 0%,rgba(0,0,0,1) 12.5%,rgba(0,0,0,1) 100%); }
 .gradient-blur>div:nth-of-type(1){ z-index:2; backdrop-filter:blur(1px); ... }
 .gradient-blur>div:nth-of-type(2){ z-index:3; backdrop-filter:blur(2px); ... }
 /* ... 4px, 8px, 16px, 32px */
-.gradient-blur::after{ z-index:8; backdrop-filter:blur(64px); mask:linear-gradient(to top,rgba(0,0,0,0) 87.5%,rgba(0,0,0,1) 100%); }
-</style>`,
+.gradient-blur::after{ z-index:8; backdrop-filter:blur(64px);
+  mask:linear-gradient(to top,rgba(0,0,0,0) 87.5%,rgba(0,0,0,1) 100%); }`,
     pitfalls: ['backdrop-filter 需要元素后方有实际内容才能生效，纯色背景无效', '高 blur 值 GPU 密集，低端设备需减少层数', 'pointer-events:none 必须保留，否则遮挡点击'],
     note: '<strong>核心价值：</strong>多层 backdrop-filter 叠加是毛玻璃效果的高级用法。做 Skill 时这类「参数化设计片段」最有复用价值。'
   },
   'landing-page': {
     desc: '高转化落地页完整结构（12区块）、4种布局类型、文案公式、转化策略、常见坑点。',
-    code: `<!-- 12区块结构 -->
+    code: `/* 12区块结构 */
 Above fold: Headline + Subheadline + Primary CTA + Proof signal + Hero visual
 Mid page: Problem→Solution → Benefits(3-5) → How it works(3 steps) → Social proof
 Bottom: FAQ(6-12) → Risk reversal → Final CTA(same as top)
 
-<!-- 4种布局类型 -->
+/* 4种布局类型 */
 A) Classic hero+sections: 产品可用截图说明
 B) Long-form story: 需要教育用户+克服疑虑
 C) Minimal conversion: 高意图流量（email→已知用户）
 D) Comparison: 搜索意图含"X vs Y"
 
-<!-- Headline公式 -->
+/* Headline公式 */
 "{Outcome} without {pain}"
 "The {category} for {audience}"
 "Ship {result} in {time}"
 
-<!-- CTA规则: Verb + what they get -->
+/* CTA规则: Verb + what they get */
 "Start free trial" / "Book a demo" / "Get the checklist"`,
     pitfalls: ['首屏多个 CTA 竞争', '价值主张模糊("streamline"/"optimize")', '社会证明藏在底部', '移动端布局破坏可读性'],
     note: '<strong>核心价值：</strong>「12区块」结构把落地页拆解成了可独立验证的单元。我们做 Skill 时也可以这样——把大技能拆成「先做哪个区块」的步骤指引。'
   },
   'dark-glass-clean-layout': {
     desc: '深色毛玻璃布局系统。near-black 背景 + backdrop-filter 毛玻璃面板 + 单像素边框高光 + 多栏工作区结构。',
-    code: `<!-- 视觉目标 -->
+    code: `/* 视觉目标 */
 background: near-black(#0a0a0f) + atmospheric blur behind
 palette: monochrome white/zinc/smoke/charcoal + accent limited to status dots
 
-<!-- 毛玻璃面板 -->
+/* 毛玻璃面板 */
 .glass-panel{
   background: rgba(255,255,255,0.03);
   border: 1px solid rgba(255,255,255,0.08);
@@ -635,14 +649,14 @@ palette: monochrome white/zinc/smoke/charcoal + accent limited to status dots
   border-radius: 12px;
 }
 
-<!-- 多栏布局 -->
+/* 多栏布局 */
 .layout-shell{
   display:grid;
   grid-template-columns: 240px 1fr 280px; /* nav | main | sidebar */
   max-width:1400px; margin:0 auto;
 }
 
-<!-- 浮动数据卡片 -->
+/* 浮动数据卡片 */
 .float-card{
   position:absolute;
   background:rgba(255,255,255,0.04);
@@ -680,19 +694,23 @@ function dispose(){
   },
   'tailwindcss': {
     desc: 'Tailwind CSS 最佳实践：响应式变体/状态变体/dark mode/@apply 边界/clsx/cva 组合。',
-    code: `<!-- 响应式变体 -->
+    code: `/* 响应式变体 */
 <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
 
-<!-- 状态变体 -->
+/* 状态变体 */
 <button class="bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 focus:ring-2">
 
-<!-- Dark mode (class策略) -->
+/* Dark mode (class策略) */
 <div class="bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100">
 
-<!-- Dynamic class 安全写法 -->
-const btnClass = { success:'bg-emerald-600', danger:'bg-rose-600' }[tone];
+/* Dynamic class 安全写法 */
+const toneClass = {
+  success: "bg-emerald-600",
+  danger:  "bg-rose-600",
+  info:    "bg-sky-600",
+}[tone];
 
-<!-- clsx/cva 组合 -->
+/* clsx/cva 组合 */
 import { clsx } from 'clsx';
 <button class={clsx('px-4 py-2', isActive && 'bg-blue-600')}>Draft</button>`,
     pitfalls: ['content 路径配置不全导致生产环境 class 不生成', '动态 class 名（"text-"+color）需要 safelist', '@apply 滥用失去 utility-first 优势', '长串 class 无结构'],
@@ -702,7 +720,6 @@ import { clsx } from 'clsx';
 
 const overlay = document.getElementById('detailOverlay');
 const closeBtn = document.getElementById('closeBtn');
-const detailContent = document.getElementById('detailContent');
 
 document.querySelectorAll('.filter-btn').forEach(btn => {
   btn.addEventListener('click', () => {
@@ -721,20 +738,32 @@ document.querySelectorAll('.skill-card').forEach(card => {
     const data = DETAIL_DATA[name];
     if (!data) return;
 
-    const pitfallsHtml = data.pitfalls ? data.pitfalls.map(p => `<div class="detail-pitfall">${p}</div>`).join('') : '';
+    const pitfallsHtml = data.pitfalls
+      ? data.pitfalls.map(p => `<div class="detail-pitfall">${p}</div>`).join('')
+      : '';
 
-    detailContent.innerHTML = `
-      <div class="detail-name">${name}</div>
-      <div class="detail-desc">${data.desc}</div>
-      <div class="detail-section-title">核心代码</div>
-      <button class="detail-copy-btn" onclick="navigator.clipboard.writeText(document.getElementById('codeBlock').textContent)">复制代码</button>
-      <pre class="detail-code" id="codeBlock">${data.code.trim()}</pre>
-      ${pitfallsHtml ? `<div class="detail-section-title">常见坑点</div><div class="detail-pitfalls">${pitfallsHtml}</div>` : ''}
-      <div class="detail-note">${data.note}</div>
-    `;
+    // 用 textContent 设置代码，防止 HTML 标签被解析
+    const codeEl = document.getElementById('codeBlock');
+    codeEl.textContent = data.code.trim();
+
+    document.getElementById('detailName').textContent = name;
+    document.getElementById('detailDesc').textContent = data.desc;
+    document.getElementById('detailPitfalls').innerHTML = pitfallsHtml
+      ? `<div class="detail-section-title">常见坑点</div><div class="detail-pitfalls">${pitfallsHtml}</div>`
+      : '';
+    document.getElementById('detailNote').innerHTML = data.note;
+
     overlay.classList.add('open');
   });
 });
+
+function copyCode(btn) {
+  const text = document.getElementById('codeBlock').textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = '已复制!';
+    setTimeout(() => btn.textContent = '复制代码', 1500);
+  });
+}
 
 closeBtn.addEventListener('click', () => overlay.classList.remove('open'));
 overlay.addEventListener('click', e => { if (e.target === overlay) overlay.classList.remove('open'); });
