@@ -1,0 +1,11 @@
+.DS_Store
+node_modules/
+*.log
+.env
+.env.*
+
+# Playwright MCP 调试产物(截图/console log/snapshot)
+.playwright-mcp/
+
+# 本地优化 backlog,不提交
+OPTIMIZATION.md

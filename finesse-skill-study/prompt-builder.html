@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Finesse — Prompt Builder · 拼一个完整的 AI 复刻指令</title>
+<style>
+  /* ===== Universal craft floor ===== */
+  *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+  :root{
+    --page:#efedf5;
+    --bg:#ffffff;
+    --panel:#f4f3fb;
+    --panel-2:#ebe9f5;
+    --border:rgba(28,22,56,.08);
+    --border-strong:rgba(28,22,56,.16);
+    --ink-1:#1a1438;
+    --ink-2:#403a63;
+    --ink-3:#6f6890;
+    --ink-faint:#9892b3;
+    --accent:#5B4BD1;
+    --accent-2:#D98A3C;
+    --accent-soft:rgba(91,75,209,.10);
+    --accent-soft-2:rgba(217,138,60,.12);
+    --up:#2F7A55;
+    --down:#C0453C;
+    --warn:#B77A16;
+    --r:14px;
+    --r-sm:10px;
+    --r-lg:22px;
+    --shadow:0 1px 3px rgba(28,22,56,.06);
+    --shadow-lg:0 30px 70px -40px rgba(28,22,56,.4);
+    --font-serif:'Cormorant Garamond','Playfair Display',Georgia,serif;
+    --font-sans:'Inter',system-ui,-apple-system,sans-serif;
+    --font-mono:'JetBrains Mono','SF Mono','Menlo',monospace;
+  }
+  html{scroll-behavior:smooth;-webkit-font-smoothing:antialiased}
+  body{background:var(--page);color:var(--ink-1);font-family:var(--font-sans);font-weight:400;line-height:1.55;overflow-x:hidden;min-height:100vh}
+  body::before{
+    content:'';position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.018;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+  .content{position:relative;z-index:1}
+  a{color:inherit;text-decoration:none}
+  button,input,select,textarea{font-family:inherit}
+
+  /* ===== Top nav ===== */
+  .topnav{
+    position:sticky;top:0;z-index:50;
+    background:rgba(239,237,245,.85);backdrop-filter:blur(14px);
+    border-bottom:1px solid var(--border);
+  }
+  .topnav-inner{
+    max-width:1380px;margin:0 auto;padding:14px 40px;
+    display:flex;align-items:center;justify-content:space-between;gap:24px;
+  }
+  .brand{display:flex;align-items:center;gap:12px}
+  .brand-mark{width:30px;height:30px;border-radius:8px;background:var(--ink-1);display:grid;place-items:center;color:var(--bg);font-family:var(--font-serif);font-size:17px;font-weight:600}
+  .brand-name{font-family:var(--font-serif);font-size:18px;font-weight:500}
+  .nav-links{display:flex;gap:24px;font-size:13px;color:var(--ink-3)}
+  .nav-links a{transition:color .2s}
+  .nav-links a.active{color:var(--ink-1);font-weight:600}
+  .nav-links a:hover{color:var(--ink-1)}
+
+  /* ===== Hero ===== */
+  .hero{padding:80px 40px 30px;max-width:1380px;margin:0 auto}
+  .eyebrow{font-size:11px;font-weight:600;letter-spacing:.22em;text-transform:uppercase;color:var(--accent);display:inline-flex;align-items:center;gap:10px;margin-bottom:18px}
+  .eyebrow::before{content:'';width:28px;height:1px;background:var(--accent)}
+  h1{font-family:var(--font-serif);font-weight:500;letter-spacing:-.025em;line-height:.98;font-size:clamp(40px,5.4vw,76px)}
+  h1 em{font-style:italic;color:var(--accent)}
+  .lede{font-size:17px;color:var(--ink-2);max-width:680px;margin-top:22px}
+
+  /* ===== Two-column layout ===== */
+  .split{display:grid;grid-template-columns:1.05fr 1fr;gap:24px;max-width:1380px;margin:30px auto 80px;padding:0 40px}
+  @media (max-width:1100px){.split{grid-template-columns:1fr}}
+
+  /* ===== Form (left column) ===== */
+  .builder{
+    background:var(--bg);border:1px solid var(--border);border-radius:var(--r-lg);
+    padding:28px 30px 34px;box-shadow:var(--shadow);
+  }
+  .builder h2{font-size:13px;letter-spacing:.18em;text-transform:uppercase;color:var(--accent);font-weight:600;font-family:var(--font-sans);margin-bottom:6px}
+  .builder .subtitle{font-size:14px;color:var(--ink-3);margin-bottom:26px}
+  .step{
+    border-top:1px solid var(--border);
+    padding-top:20px;margin-top:20px;
+  }
+  .step:first-of-type{border-top:0;padding-top:0;margin-top:0}
+  .step-h{display:flex;align-items:baseline;gap:10px;margin-bottom:12px}
+  .step-num{
+    font-family:var(--font-mono);font-size:11px;font-weight:600;letter-spacing:.1em;
+    color:var(--accent);background:var(--accent-soft);padding:3px 8px;border-radius:5px;
+  }
+  .step-title{font-family:var(--font-serif);font-size:20px;font-weight:500;color:var(--ink-1);line-height:1.1}
+  .step-desc{font-size:12.5px;color:var(--ink-3);margin-bottom:14px;line-height:1.5}
+
+  /* Radio cards (for register) */
+  .radio-cards{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .radio-cards.three{grid-template-columns:repeat(3,1fr)}
+  .radio-cards.four{grid-template-columns:repeat(4,1fr)}
+  .rcard{
+    background:var(--bg);border:1.5px solid var(--border-strong);border-radius:var(--r);
+    padding:14px 12px;cursor:pointer;transition:.2s;
+    display:flex;flex-direction:column;align-items:flex-start;gap:4px;text-align:left;
+  }
+  .rcard:hover{border-color:var(--accent)}
+  .rcard.is-on{background:var(--accent-soft);border-color:var(--accent)}
+  .rcard .nm{font-family:var(--font-serif);font-size:17px;font-weight:500;color:var(--ink-1);line-height:1.1}
+  .rcard .sm{font-size:11.5px;color:var(--ink-3);line-height:1.35}
+  .rcard.is-on .nm{color:var(--accent)}
+
+  /* Select */
+  select{
+    width:100%;padding:11px 14px;border-radius:var(--r-sm);border:1.5px solid var(--border-strong);
+    background:var(--bg);font-size:14px;color:var(--ink-1);
+    cursor:pointer;outline:none;appearance:none;
+    background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath fill='%23403a63' d='M6 8L0 0h12z'/%3E%3C/svg%3E");
+    background-repeat:no-repeat;background-position:right 14px center;background-size:11px;padding-right:36px;
+  }
+  select:focus{border-color:var(--accent)}
+
+  /* Range slider */
+  .range-row{display:flex;align-items:center;gap:14px}
+  .range-row .val{font-family:var(--font-mono);font-size:16px;font-weight:500;color:var(--ink-1);min-width:30px;text-align:right}
+  input[type=range]{
+    flex:1;height:6px;border-radius:999px;
+    background:linear-gradient(90deg,var(--accent) 0% var(--v,50%),var(--panel-2) var(--v,50%) 100%);
+    -webkit-appearance:none;cursor:pointer;outline:none;
+  }
+  input[type=range]::-webkit-slider-thumb{
+    -webkit-appearance:none;width:18px;height:18px;border-radius:999px;
+    background:var(--bg);border:3px solid var(--accent);cursor:grab;
+  }
+  input[type=range]::-moz-range-thumb{
+    width:18px;height:18px;border-radius:999px;
+    background:var(--bg);border:3px solid var(--accent);cursor:grab;
+  }
+
+  /* Checkboxes */
+  .check-row{
+    display:flex;align-items:flex-start;gap:10px;padding:8px 10px;border-radius:var(--r-sm);
+    cursor:pointer;transition:.15s;
+  }
+  .check-row:hover{background:var(--panel)}
+  .check-row input{accent-color:var(--accent);margin-top:3px;cursor:pointer}
+  .check-row .lbl{font-size:13.5px;color:var(--ink-1);font-weight:500}
+  .check-row .lbl small{display:block;font-size:11.5px;color:var(--ink-3);font-weight:400;margin-top:2px;line-height:1.4}
+  .check-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px}
+  @media (max-width:560px){.check-grid{grid-template-columns:1fr}}
+
+  /* Textarea */
+  textarea{
+    width:100%;min-height:90px;padding:12px 14px;border-radius:var(--r-sm);
+    border:1.5px solid var(--border-strong);background:var(--bg);
+    font-size:13.5px;color:var(--ink-1);font-family:var(--font-sans);line-height:1.55;
+    outline:none;resize:vertical;
+  }
+  textarea:focus{border-color:var(--accent)}
+
+  /* ===== Output (right column) ===== */
+  .output{
+    position:sticky;top:80px;
+    background:var(--bg);border:1px solid var(--border);border-radius:var(--r-lg);
+    box-shadow:var(--shadow-lg);
+    display:flex;flex-direction:column;max-height:calc(100vh - 100px);
+  }
+  .output-h{
+    padding:18px 24px;border-bottom:1px solid var(--border);
+    display:flex;align-items:center;justify-content:space-between;
+  }
+  .output-h h2{font-size:13px;letter-spacing:.18em;text-transform:uppercase;color:var(--accent);font-weight:600;font-family:var(--font-sans)}
+  .output-h .stat{font-family:var(--font-mono);font-size:11px;color:var(--ink-3)}
+  .output-body{
+    padding:20px 24px;flex:1;overflow-y:auto;
+    background:#0d0a1a;
+    color:#d4d0e8;font-family:var(--font-mono);font-size:12.5px;line-height:1.65;
+    white-space:pre-wrap;
+  }
+  .output-body .label{color:#9d8cff;font-weight:600}
+  .output-body .quote{color:#9bbc6b}
+  .output-body .warn{color:#f3b96b}
+  .output-body .em{color:#FF6BA0;font-style:italic}
+  .output-foot{padding:16px 24px;border-top:1px solid var(--border);display:flex;gap:10px;justify-content:space-between;align-items:center}
+  .copy-btn{
+    flex:1;background:var(--accent);color:#fff;border:0;padding:11px 18px;
+    border-radius:8px;font-weight:600;font-size:13px;cursor:pointer;
+    display:inline-flex;align-items:center;justify-content:center;gap:8px;
+    transition:.2s;
+  }
+  .copy-btn:hover{background:#4a3bc0}
+  .copy-btn.copied{background:var(--up)}
+  .reset-btn{
+    background:transparent;color:var(--ink-3);border:1px solid var(--border-strong);
+    padding:11px 14px;border-radius:8px;font-size:12px;cursor:pointer;transition:.2s;
+  }
+  .reset-btn:hover{color:var(--ink-1);border-color:var(--ink-3)}
+
+  /* Help box */
+  .howto{
+    background:rgba(91,75,209,.06);border:1px dashed rgba(91,75,209,.3);
+    border-radius:var(--r);padding:14px 18px;margin-bottom:20px;
+    font-size:13px;line-height:1.6;color:var(--ink-2);
+  }
+  .howto b{color:var(--ink-1);font-weight:600}
+  .howto .step-link{color:var(--accent);font-weight:500}
+
+  /* Footer */
+  footer{padding:30px 40px 60px;text-align:center;border-top:1px solid var(--border);background:var(--bg)}
+  footer p{font-size:13px;color:var(--ink-3);max-width:none;margin:0 auto}
+  footer a{color:var(--accent);font-weight:500}
+</style>
+</head>
+<body>
+<div class="content">
+
+<!-- ============== TOP NAV ============== -->
+<nav class="topnav">
+  <div class="topnav-inner">
+    <div class="brand">
+      <div class="brand-mark">f</div>
+      <div class="brand-name">finesse · prompt builder</div>
+    </div>
+    <div class="nav-links">
+      <a href="examples-index.html">→ 13 个范例</a>
+      <a href="capabilities.html">→ 能力演示</a>
+      <a class="active" href="prompt-builder.html">→ 拼 Prompt</a>
+    </div>
+  </div>
+</nav>
+
+<!-- ============== HERO ============== -->
+<header class="hero">
+  <div class="eyebrow">Prompt Builder · 拼一个完整的 AI 复刻指令</div>
+  <h1>勾选 + 拖滑块，<em>实时</em>拼出 AI 复刻 Prompt。</h1>
+  <p class="lede">
+    10 步表单生成一份<strong>结构化、可直接粘贴到 Claude/Codex 的指令</strong>。左侧改，右侧同步更新。
+    不知道选什么时，顶部的"决策树"页与范例库都在导航里。
+  </p>
+</header>
+
+<!-- ============== SPLIT ============== -->
+<main class="split">
+
+  <!-- ============ LEFT: BUILDER ============ -->
+  <form class="builder" id="builder" onsubmit="return false">
+
+    <h2>10 步表单 · Prompt Builder</h2>
+    <p class="subtitle">每个步骤都会立即反映在右侧的 Prompt 里。所有选择都是可逆的。</p>
+
+    <div class="howto">
+      <b>不熟悉这些名词?</b>
+      跳到 <a href="capabilities.html" style="color:var(--accent);font-weight:500">capabilities.html</a>
+      看每个能力的现场演示，或
+      <a href="examples-index.html" style="color:var(--accent);font-weight:500">examples-index.html</a>
+      看 13 个真实范例。每个范例卡片都有"适合 / 别用 / 触发语"标签可对照。
+    </div>
+
+    <!-- Step 1: Register -->
+    <div class="step">
+      <div class="step-h"><span class="step-num">STEP 1</span><span class="step-title">类型 · Register</span></div>
+      <p class="step-desc">决定了你的主要战场 —— 是要做"看着就有冲击"还是"读着用着流畅"。</p>
+      <div class="radio-cards four" id="step-register">
+        <button type="button" class="rcard is-on" data-val="brand">
+          <div class="nm">Brand</div><div class="sm">品牌面 — 设计即产品 · 落地页 / hero</div>
+        </button>
+        <button type="button" class="rcard" data-val="product">
+          <div class="nm">Product</div><div class="sm">产品面 — 设计服务产品 · 后台 / 仪表盘</div>
+        </button>
+        <button type="button" class="rcard" data-val="commerce">
+          <div class="nm">Commerce</div><div class="sm">商业面 — PDP + PLP + Cart + Checkout</div>
+        </button>
+        <button type="button" class="rcard" data-val="workflow">
+          <div class="nm">Workflow</div><div class="sm">操作型 — 表单 / 发布 / 设置页</div>
+        </button>
+      </div>
+    </div>
+
+    <!-- Step 2: Persona -->
+    <div class="step">
+      <div class="step-h"><span class="step-num">STEP 2</span><span class="step-title">调性 · Persona / 灵魂</span></div>
+      <p class="step-desc">10 种灵魂覆盖了从 AI 到威士忌的所有主流行业。product/commerce/workflow 选项会自动隐藏 brand-only 的人。</p>
+      <select id="step-persona">
+        <option value="">(不强求 · 让 AI 自己挑一个匹配的)</option>
+      </select>
+    </div>
+
+    <!-- Step 3: Theme + Palette preset -->
+    <div class="step">
+      <div class="step-h"><span class="step-num">STEP 3</span><span class="step-title">明 / 暗与配色预设</span></div>
+      <p class="step-desc">product/commerce/workflow 推荐从 12 套 past-ready palette 挑。brand 模式有更自由的描述空间。</p>
+      <div class="radio-cards four" id="step-theme" style="margin-bottom:12px">
+        <button type="button" class="rcard is-on" data-val="auto"><div class="nm">自动</div><div class="sm">让 AI 决定</div></button>
+        <button type="button" class="rcard" data-val="dark"><div class="nm">暗</div><div class="sm">Dark default</div></button>
+        <button type="button" class="rcard" data-val="light"><div class="nm">亮</div><div class="sm">Light tinted</div></button>
+        <button type="button" class="rcard" data-val="dual"><div class="nm">双层</div><div class="sm">商家后台用：亮内容 + 暗 rail</div></button>
+      </div>
+      <select id="step-palette">
+        <option value="">(不强求 · 让 AI 自己提颜色)</option>
+      </select>
+    </div>
+
+    <!-- Step 4: Engine -->
+    <div class="step">
+      <div class="step-h"><span class="step-num">STEP 4</span><span class="step-title">视觉引擎 · Hero Engine</span></div>
+      <p class="step-desc">只在 Brand register 有效。要"会动"就要选一个；product/commerce/workflow 留 None。</p>
+      <select id="step-engine">
+        <option value="none">None — 不需要 hero 引擎(产品面 / 多数情况)</option>
+        <option value="A">A · Three.js + GLSL(7–10 级特效,粒子 / 3D / 物理)</option>
+        <option value="B">B · Canvas 2D(实时数据 / K 线 / 粒子场)</option>
+        <option value="C">C · WebGL FBO(流体 / 反应扩散 / 物理仿真,极重)</option>
+        <option value="D">D · GSAP ScrollTrigger(滚动故事 / 横滚画廊,工作horse)</option>
+        <option value="E">E · CSS-only(双层遮罩 / 变字重 / 原生 scroll-timeline,零依赖)</option>
+      </select>
+    </div>
+
+    <!-- Step 5: Shell (product only) -->
+    <div class="step">
+      <div class="step-h"><span class="step-num">STEP 5</span><span class="step-title">布局形态 · Shell</span></div>
+      <p class="step-desc">你的页面用什么信息架构。错配一种 shell 比没有 shell 更糟。</p>
+      <select id="step-shell">
+        <option value="auto">自动(让 AI 根据 register 选最合适的)</option>
+      </select>
+    </div>
+
+    <!-- Step 6: Dials (density + spectacle) -->
+    <div class="step">
+      <div class="step-h"><span class="step-num">STEP 6</span><span class="step-title">两个拨盘 · DENSITY × SPECTACLE</span></div>
+      <p class="step-desc">DENSITY 越高 = 每屏越多信息;SPECTACLE 越高 = 越需要真引擎。brand 面一般 DENSITY 低、SPECTACLE 高;产品面反过来。</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+        <div>
+          <div style="font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);font-weight:600;margin-bottom:6px">DENSITY · 信息密度</div>
+          <div class="range-row">
+            <input id="step-density" type="range" min="1" max="10" value="4" />
+            <div class="val" id="densityOut">4</div>
+          </div>
+        </div>
+        <div>
+          <div style="font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);font-weight:600;margin-bottom:6px">SPECTACLE · 视觉冲击</div>
+          <div class="range-row">
+            <input id="step-spectacle" type="range" min="1" max="10" value="6" />
+            <div class="val" id="spectacleOut">6</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 7: Must-have features -->
+    <div class="step">
+      <div class="step-h"><span class="step-num">STEP 7</span><span class="step-title">要 / 不要哪些特征</span></div>
+      <p class="step-desc">勾选你想要的"必须出现";勾 Anti 栏勾那些"必须规避"的。</p>
+      <div style="font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--up);font-weight:600;margin-bottom:8px">✓ 必须有的特征</div>
+      <div class="check-grid" id="step-features">
+        <label class="check-row"><input type="checkbox" value="chart-bar" /><div class="lbl">堆叠 / 柱状图<small>含 KPI 顶 icon + status + 大数字</small></div></label>
+        <label class="check-row"><input type="checkbox" value="chart-line" /><div class="lbl">折线 / 面积图<small>SVG draw-in 动画</small></div></label>
+        <label class="check-row"><input type="checkbox" value="donut" /><div class="lbl">Donut / 仪表<small>circumference 数学</small></div></label>
+        <label class="check-row"><input type="checkbox" value="sparkline" /><div class="lbl">Sparkline<small>inline 趋势微图</small></div></label>
+        <label class="check-row"><input type="checkbox" value="bento" /><div class="lbl">非均匀 Bento 网格<small>2.15fr 1.7fr 1fr 1fr 1fr 等</small></div></label>
+        <label class="check-row"><input type="checkbox" value="hotspot" /><div class="lbl">图片 hotspot 注解<small>percentage 定位 + staggered fade</small></div></label>
+        <label class="check-row"><input type="checkbox" value="mouse-mask" /><div class="lbl">鼠标遮罩 / 视差<small>CSS-only 招牌动作</small></div></label>
+        <label class="check-row"><input type="checkbox" value="tilt-3d" /><div class="lbl">3D 倾斜 / 翻转<small>CSS perspective ±12°</small></div></label>
+        <label class="check-row"><input type="checkbox" value="magnetic-btn" /><div class="lbl">磁性按钮吸附<small>near pointer 动效</small></div></label>
+        <label class="check-row"><input type="checkbox" value="split-char" /><div class="lbl">逐字揭示标题<small>split-char reveal</small></div></label>
+        <label class="check-row"><input type="checkbox" value="grain" /><div class="lbl">Grain 颗粒噪点<small>SVG feTurbulence 叠加</small></div></label>
+        <label class="check-row"><input type="checkbox" value="sidebar" /><div class="lbl">侧栏导航<small>canonical sidebar 240px</small></div></label>
+      </div>
+      <div style="font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--down);font-weight:600;margin:16px 0 8px">✗ 绝不能出现(AI 廉价痕迹)</div>
+      <div class="check-grid" id="step-antislop">
+        <label class="check-row"><input type="checkbox" value="em-dash" /><div class="lbl">em-dash 装饰<small>用句号 / 逗号代替</small></div></label>
+        <label class="check-row"><input type="checkbox" value="gradient-text" /><div class="lbl">渐变文字做装饰<small>除非 duotone 灵魂</small></div></label>
+        <label class="check-row"><input type="checkbox" value="purple-glow" /><div class="lbl">AI 紫蓝 glow 按钮<small>SaaS 默认 trap</small></div></label>
+        <label class="check-row"><input type="checkbox" value="eyebrow-everywhere" /><div class="lbl">每节 eyebrow 标签<small>上限 ⌈sections / 3⌉</small></div></label>
+        <label class="check-row"><input type="checkbox" value="fake-numbers" /><div class="lbl">假精确数字<small>"92%" / "4.1×" 假装规格</small></div></label>
+        <label class="check-row"><input type="checkbox" value="barcode-chart" /><div type="lbl" class="lbl">"barcode" 柱状图<small>高度没由数据算出来</small></div></label>
+        <label class="check-row"><input type="checkbox" value="inter-default-fonts" /><div class="lbl">默认 Inter/Fraunces 等<small>reflex 字体 trap</small></div></label>
+        <label class="check-row"><input type="checkbox" value="round-corners-once-told" /><div class="lbl">硬 1px #ccc/#333 边<small>永远用 alpha 边</small></div></label>
+      </div>
+    </div>
+
+    <!-- Step 8: Reference example -->
+    <div class="step">
+      <div class="step-h"><span class="step-num">STEP 8</span><span class="step-title">参考范例 · 模仿谁</span></div>
+      <p class="step-desc">如果你想"基于某个范例改造",这里选。它会把那个范例的核心招式写进 Prompt。</p>
+      <select id="step-ref">
+        <option value="">(不参照 · 让 AI 自己发挥)</option>
+      </select>
+    </div>
+
+    <!-- Step 9: Output spec -->
+    <div class="step">
+      <div class="step-h"><span class="step-num">STEP 9</span><span class="step-title">输出规格</span></div>
+      <p class="step-desc">让 AI 用什么形式给你。</p>
+      <div class="check-grid" id="step-output">
+        <label class="check-row"><input type="checkbox" value="single-file" checked /><div class="lbl">单 HTML 文件<small>self-contained,无 build</small></div></label>
+        <label class="check-row"><input type="checkbox" value="css-vars" checked /><div class="lbl">CSS 变量驱动<small>:root token 化</small></div></label>
+        <label class="check-row"><input type="checkbox" value="no-framework" checked /><div class="lbl">不用 Tailwind 等框架<small>纯 vanilla</small></div></label>
+        <label class="check-row"><input type="checkbox" value="reduced-motion" checked /><div class="lbl">prefers-reduced-motion 兜底<small>所有动效必发</small></div></label>
+        <label class="check-row"><input type="checkbox" value="self-host-libs" checked /><div class="lbl">小库自托管 ./lib/<small>GSAP 等</small></div></label>
+        <label class="check-row"><input type="checkbox" value="data-fake" checked /><div class="lbl">数据诚实标"mock"<small>不假装真实产品</small></div></label>
+      </div>
+    </div>
+
+    <!-- Step 10: Free-form notes -->
+    <div class="step">
+      <div class="step-h"><span class="step-num">STEP 10</span><span class="step-title">额外要求 · 你手写的补充</span></div>
+      <p class="step-desc">任何你觉得该强调的 — 行业、特殊约束、目标用户、参考竞品名...</p>
+      <textarea id="step-notes" placeholder="例如:我做的是 B2B SaaS 监控产品(类似 Datadog 但服务中国市场);Logo 主色是 #2D5BFF;参考竞品风格:Linear 干净 + Vercel 黑白;目标用户:SRE 工程师..."></textarea>
+    </div>
+
+  </form>
+
+  <!-- ============ RIGHT: LIVE PROMPT ============ -->
+  <aside class="output">
+    <div class="output-h">
+      <h2>实时 Prompt</h2>
+      <span class="stat" id="promptStat">0 字 · 0 行</span>
+    </div>
+    <div class="output-body" id="promptOut">配置你的左侧表单以生成 Prompt…</div>
+    <div class="output-foot">
+      <button class="copy-btn" id="copyBtn">📋 复制到剪贴板</button>
+      <button class="reset-btn" id="resetBtn">重置</button>
+    </div>
+  </aside>
+
+</main>
+
+<footer>
+  <p>这页面是 <a href="capabilities.html">capabilities.html</a> 的扩展工具。 通用工艺 / anti-slop 规则都来自 <a href="https://github.com/mouse-lin/finesse-skill">finesse-ui skill</a>。</p>
+</footer>
+
+</div>
+
+<script>
+/* ===================== Data ===================== */
+const PERSONAS = [
+  {name:'Cinematic Tech', fits:'天文 / AI / crypto / deep-tech', accent:'cyan + magenta', only:'brand'},
+  {name:'Phosphor Terminal', fits:'量化 / 安全 / 基础设施 / dev tools', accent:'单一荧光绿', only:'brand'},
+  {name:'Editorial Publication', fits:'杂志 / 电影 / 期刊 / 摄影', accent:'rust 红 on 米白', only:'brand'},
+  {name:'Warm Heritage', fits:'威士忌 / 咖啡 / 蒸馏所', accent:'amber + ember', only:'brand'},
+  {name:'Gold Luxury', fits:'手表 / 香水 / 高级餐饮', accent:'双金 on near-black', only:'brand'},
+  {name:'Brutal Typographic', fits:'时装 / 音乐 / 街头 / 文化', accent:'骨色 + 红', only:'brand'},
+  {name:'Quiet Luxury Minimal', fits:'建筑 / 酒店 / wellness', accent:'sage green', only:'brand'},
+  {name:'Organic / Botanical', fits:'花艺 / 护肤 / 食品 / 永续', accent:'earth + blush', only:'brand'},
+  {name:'Electric Nightlife', fits:'俱乐部 / 音乐节 / 游戏 / 电竞', accent:'duotone neon', only:'brand'},
+  {name:'Scientific Emergence', fits:'研究 / 模拟 / 生成艺术', accent:'violet/cyan on dark', only:'brand'}
+];
+
+const PALETTES = [
+  {name:'Sage Ledger — forest green + sage paper',         domain:'finance / B2B admin',           light:true,  accent:'#2F6B4F'},
+  {name:'Amber Ops — burnt orange on warm paper',           domain:'merchant / e-commerce / 商家',   light:true,  accent:'#D9642A'},
+  {name:'Rose Clay — rose + gold on blush',                 domain:'beauty / fashion / creator',     light:true,  accent:'#B4485E'},
+  {name:'Teal & Clay — teal + terracotta',                  domain:'CRM / project tools',            light:true,  accent:'#176C6B'},
+  {name:'Violet Console — violet on lilac',                 domain:'AI / ML / automation',           light:true,  accent:'#5B4BD1'},
+  {name:'Mint & Lavender — mint + lavender on pale green',  domain:'health / wellness / edtech / HR',light:true,  accent:'#2E9E7B'},
+  {name:'Brick & Olive — brick on oat',                     domain:'restaurants / POS / hospitality', light:true,  accent:'#9C4A38'},
+  {name:'Indigo & Coral — indigo + coral on lilac-grey',    domain:'content / campaign / creator',   light:true,  accent:'#4A46C9'},
+  {name:'Cobalt Trust — saturated blue on tint',            domain:'platform-mandated blue',         light:true,  accent:'#2D5BD8'},
+  {name:'Graphite & Lime — lime on graphite (dark)',        domain:'dev tools / CI/CD / logs',      light:false, accent:'#B6E018'},
+  {name:'Midnight & Amber — amber on midnight (dark)',      domain:'treasury / trading / financial', light:false, accent:'#E8A33D'},
+  {name:'Steel Cyan — cyan on cold steel (dark)',           domain:'monitoring / IoT / NOC',        light:false, accent:'#2FD3C5'}
+];
+
+const SHELLS = [
+  {name:'auto · 让 AI 根据 register 选',                       only:'all'},
+  {name:'canonical sidebar + topbar(传统 IA)',                only:'product,workflow'},
+  {name:'floating rounded panel(整个 dashboard 是浮起的大卡)',only:'product,workflow'},
+  {name:'bento console(`2.15fr 1.7fr 1fr 1fr 1fr` 非均网格)',  only:'product'},
+  {name:'top pill-nav(无侧栏,IA 浅)',                          only:'product'},
+  {name:'triptych / centered bento(`296 1fr 320`)',             only:'product'},
+  {name:'hero-only full-bleed canvas',                         only:'brand'},
+  {name:'typographic single-column',                           only:'brand'},
+  {name:'editorial 12-column grid',                            only:'brand'},
+  {name:'commerce(PDP + PLP 等组合)',                         only:'commerce'}
+];
+
+const EXAMPLES = [
+  {name:'Aether (Cinematic Tech hero · brand)',   file:'aether-cinematic-tech.html'},
+  {name:'Nova (Brutal Typographic · brand)',       file:'nova-brutal-typographic.html'},
+  {name:'Offscreen (Editorial Publication · brand)',file:'offscreen-editorial.html'},
+  {name:'Signal (Phosphor Terminal · brand)',       file:'signal-phosphor-terminal.html'},
+  {name:'Studio Forma (Quiet Luxury · brand)',      file:'studio-quiet-luxury.html'},
+  {name:'Buildly (Growth Dashboard · product)',     file:'buildly-growth-dashboard.html'},
+  {name:'Pulsegrid (Monitoring · product)',        file:'stakent-monitoring-dashboard.html'},
+  {name:'Acru (Finance Dashboard · product)',       file:'acru-financial-dashboard.html'},
+  {name:'PawCare+ (Health App · product)',          file:'pawcare-adaptive-health.html'},
+  {name:'Postline (API Console · product)',         file:'nodeflux-api-console.html'},
+  {name:'Helphub (Publishing CMS · product)',       file:'inkline-publishing-cms.html'},
+  {name:'Skillhub (Learning Workspace · product)',  file:'huddle-team-workspace.html'},
+  {name:'Subhub (Subscription Analytics · product)',file:'ledgerio-treasury-console.html'}
+];
+
+const FEATURE_LABELS = {
+  'chart-bar':'堆叠 / 柱状图(含 KPI 顶 icon + status + 大数字)',
+  'chart-line':'折线 / 面积图(SVG draw-in 动画)',
+  'donut':'Donut / 仪表(circumference 数学)',
+  'sparkline':'Sparkline(inline 趋势微图)',
+  'bento':'非均匀 Bento 网格(`2.15fr 1.7fr 1fr 1fr 1fr` 等)',
+  'hotspot':'图片 hotspot 注解(percentage 定位 + staggered fade)',
+  'mouse-mask':'鼠标遮罩 / 视差(CSS-only 招牌动作)',
+  'tilt-3d':'3D 倾斜 / 翻转(CSS perspective ±12°)',
+  'magnetic-btn':'磁性按钮吸附(near pointer 动效)',
+  'split-char':'逐字揭示标题(split-char reveal)',
+  'grain':'Grain 颗粒噪点(SVG feTurbulence 叠加)',
+  'sidebar':'侧栏导航(canonical sidebar 240px)'
+};
+
+/* ===================== State ===================== */
+const state = {
+  register: 'brand',
+  persona: '',
+  theme: 'auto',
+  palette: '',
+  engine: 'none',
+  shell: 'auto',
+  density: 4,
+  spectacle: 6,
+  features: new Set(),
+  antislop: new Set(),
+  ref: '',
+  output: new Set(['single-file', 'css-vars', 'no-framework', 'reduced-motion', 'self-host-libs', 'data-fake']),
+  notes: ''
+};
+
+/* ===================== Wire up UI ===================== */
+function paintRange(input){
+  input.style.setProperty('--v', (input.value - input.min) / (input.max - input.min) * 100 + '%');
+}
+
+function rebuildPersonaDropdown(){
+  const sel = document.getElementById('step-persona');
+  sel.innerHTML = '<option value="">(不强求 · 让 AI 自己挑一个匹配的)</option>'
+    + PERSONAS
+      .filter(function(p){ return state.register === 'brand'; })
+      .map(function(p){ return '<option value="' + p.name + '">' + p.name + ' — ' + p.fits + '</option>'; }).join('');
+  if (state.persona) {
+    // Restore if still valid
+    const found = PERSONAS.find(function(p){ return p.name === state.persona && p.only === 'brand'; });
+    if (!found) state.persona = '';
+  }
+  sel.value = state.persona;
+}
+
+function rebuildPaletteDropdown(){
+  const sel = document.getElementById('step-palette');
+  let allowed = PALETTES;
+  if (state.theme === 'dark') allowed = PALETTES.filter(function(p){ return !p.light; });
+  else if (state.theme === 'light') allowed = PALETTES.filter(function(p){ return p.light; });
+  sel.innerHTML = '<option value="">(不强求 · 让 AI 自己提颜色)</option>'
+    + allowed.map(function(p){
+      return '<option value="' + p.name + '">' + p.name + ' · ' + p.domain + ' · ' + p.accent + '</option>';
+    }).join('');
+  sel.value = state.palette;
+}
+
+function rebuildShellDropdown(){
+  const sel = document.getElementById('step-shell');
+  const reg = state.register;
+  const allowed = SHELLS.filter(function(s){ return s.only === 'all' || s.only.indexOf(reg) >= 0; });
+  sel.innerHTML = allowed.map(function(s){ return '<option value="' + s.name + '">' + s.name + '</option>'; }).join('');
+  sel.value = state.shell;
+}
+
+function rebuildRefDropdown(){
+  const sel = document.getElementById('step-ref');
+  sel.innerHTML = '<option value="">(不参照 · 让 AI 自己发挥)</option>'
+    + EXAMPLES.map(function(e){
+      return '<option value="' + e.file + '">' + e.name + ' · ' + e.file + '</option>';
+    }).join('');
+  sel.value = state.ref;
+}
+
+function updateEngineAvailability(){
+  const sel = document.getElementById('step-engine');
+  // Engine only meaningful for brand; keep selection but prompt will note it.
+  // Keep all options available regardless.
+  Array.from(sel.options).forEach(function(o){
+    o.disabled = false;
+  });
+  if (state.register !== 'brand' && state.engine !== 'none') {
+    // Add a small notice to disable 'A / B / C / D / E' for non-brand
+    Array.from(sel.options).forEach(function(o){
+      if (o.value !== 'none') o.disabled = true;
+    });
+    if (sel.value !== 'none') {
+      state.engine = 'none';
+      sel.value = 'none';
+    }
+  }
+}
+
+/* Radio card activation */
+function bindRadioCards(){
+  document.querySelectorAll('.radio-cards').forEach(function(group){
+    group.addEventListener('click', function(e){
+      const card = e.target.closest('.rcard');
+      if (!card) return;
+      group.querySelectorAll('.rcard').forEach(function(c){ c.classList.remove('is-on'); });
+      card.classList.add('is-on');
+      const field = group.id.replace('step-', '');
+      const v = card.dataset.val;
+      state[field] = v;
+      // cascading refreshes
+      if (field === 'register') { rebuildPersonaDropdown(); rebuildShellDropdown(); updateEngineAvailability(); }
+      if (field === 'theme')    { rebuildPaletteDropdown(); }
+      render();
+    });
+  });
+}
+
+/* Range sliders */
+function bindRanges(){
+  const dR = document.getElementById('step-density');
+  const sR = document.getElementById('step-spectacle');
+  const dO = document.getElementById('densityOut');
+  const sO = document.getElementById('spectacleOut');
+  paintRange(dR); paintRange(sR);
+  dR.addEventListener('input', function(){
+    state.density = +dR.value; dO.textContent = dR.value; paintRange(dR); render();
+  });
+  sR.addEventListener('input', function(){
+    state.spectacle = +sR.value; sO.textContent = sR.value; paintRange(sR); render();
+  });
+}
+
+/* Selects & textarea */
+function bindSelects(){
+  ['persona','palette','engine','shell','ref'].forEach(function(id){
+    const el = document.getElementById('step-' + id);
+    el.addEventListener('change', function(){ state[id] = el.value; render(); });
+  });
+  document.getElementById('step-notes').addEventListener('input', function(e){
+    state.notes = e.target.value; render();
+  });
+}
+
+/* Checkboxes (features & antislop) */
+function bindCheckboxes(groupId, setName){
+  const group = document.getElementById(groupId);
+  group.addEventListener('change', function(e){
+    const box = e.target.closest('input[type=checkbox]');
+    if (!box) return;
+    if (box.checked) state[setName].add(box.value);
+    else state[setName].delete(box.value);
+    render();
+  });
+}
+
+/* ===================== Prompt generator ===================== */
+function highlight(txt){
+  // Escape HTML
+  var s = txt.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  // Inline code `x`
+  s = s.replace(/`([^`]+)`/g, '<span class="quote">`$1`</span>');
+  // Section labels **TEXT**
+  s = s.replace(/^(##\s+.+)$/gm, '<span class="label">$1</span>');
+  // Warnings ⚠
+  s = s.replace(/(⚠[^•\n]+)/g, '<span class="warn">$1</span>');
+  return s;
+}
+
+function generate(){
+  var lines = [];
+  var p = PERSONAS.find(function(x){ return x.name === state.persona; });
+  var palette = PALETTES.find(function(x){ return x.name === state.palette; });
+  var refExample = EXAMPLES.find(function(x){ return x.file === state.ref; });
+
+  // Title
+  lines.push('你是一名实现 finesse 设计系统的前端工程师。');
+  lines.push('读完整段后,生成符合以下规格的' + (state.output.has('single-file') ? '单 HTML 文件' : '项目') + ',所有 token 必须是真实 CSS 变量,不要写 placeholder。');
+  lines.push('');
+
+  // ## Project context
+  lines.push('## 1 · 项目背景');
+  lines.push('**Register**: ' + state.register + (p ? ' (' + p.name + ' 灵魂)' : ''));
+  lines.push('**调性/灵魂**: ' + (p ? p.name + ' — ' + p.fits : 'AI 自己挑最匹配的'));
+  lines.push('**明/暗**: ' + (state.theme === 'auto' ? '由 AI 决定' : state.theme));
+  lines.push('**配色**: ' + (palette ? palette.name + ' — accent ' + palette.accent : 'AI 自己挑,避免蓝+绿+橙通用三件套'));
+  if (state.notes) lines.push('**补充**: ' + state.notes.trim());
+  lines.push('');
+
+  // ## Dials
+  lines.push('## 2 · 三个拨盘');
+  lines.push('SOUL = ' + Math.max(7, state.spectacle + 1) + ' (偏' + (state.spectacle >= 7 ? '高' : '中') + '个性)');
+  lines.push('SPECTACLE = ' + state.spectacle + ' / 10');
+  lines.push('DENSITY = ' + state.density + ' / 10');
+  if (state.register === 'product' || state.register === 'workflow') {
+    lines.push('→ 这是产品面:DENSITY 应当' + (state.density >= 6 ? '高(留白节奏要好,表格对齐)' : '低(用大块卡片)') + ',SPECTACLE 锁 ≤ 4');
+  } else {
+    lines.push('→ 这是品牌面:SPECTACLE 越高越要真引擎 + reduced-motion 兜底');
+  }
+  lines.push('');
+
+  // ## Substrate
+  lines.push('## 3 · 通用工艺底线(must)');
+  lines.push('- 页面不是纯 #fff / #000,要向 brand hue 偏 OKLCH 0.005–0.015');
+  lines.push('- 边永远用 `rgba(...)` alpha(不用硬 #ccc / #333)');
+  lines.push('- 阴影向 ink 染色,不许纯黑 `rgba(0,0,0,.5)`');
+  lines.push('- ink 文本对比度 ≥ 7:1 (body),muted ≥ 3.5:1');
+  if (state.register === 'brand') lines.push('- 整页 layered:engine(z0) · grain(z1) · 暗角 · 内容(z5)');
+  if (state.register === 'product') lines.push('- 产品面 <em>不</em> 继承 brand 的 grain / vignette / 大 hero 字 / 真引擎');
+  lines.push('');
+
+  // ## Engine
+  lines.push('## 4 · 视觉引擎');
+  if (state.register !== 'brand') {
+    lines.push('NONE — 产品面不需要 hero 引擎;只允许 GSAP / ScrollTrigger 反馈型动效');
+  } else if (state.engine === 'none') {
+    lines.push('NONE — 静态品牌页');
+  } else {
+    var engineMap = {
+      A: 'A · Three.js + GLSL(+ RoomEnvironment + UnrealBloomPass) — versioned import map,IntersectionObserver 懒加载,~150KB gz',
+      B: 'B · Canvas 2D — DPR 自适应,trail fade 而非全清,实时数据 ring buffer',
+      C: 'C · WebGL FBO — 流体 / 反应扩散 / ray-march,极重,只在灵魂为物理/涌现时用',
+      D: 'D · GSAP ScrollTrigger — 工作horse,reveal stagger / 横滚 / pin-shrink',
+      E: 'E · CSS-only — 双层鼠标遮罩 / 变字重 / native scroll-timeline,零 JS 库'
+    };
+    lines.push(engineMap[state.engine]);
+  }
+  lines.push('所有动效必须有 `prefers-reduced-motion: reduce` 兜底(冻结到静态帧)');
+  lines.push('');
+
+  // ## Shell
+  lines.push('## 5 · 布局形态 Shell');
+  if (state.register === 'product' && state.shell !== 'auto') {
+    var sName = state.shell.split('·')[0].trim();
+    lines.push(state.shell);
+    if (/bento/i.test(state.shell))    lines.push('→ 列宽非均匀:`grid-template-columns: 2.15fr 1.7fr 1fr 1fr 1fr` 或类似比例');
+    if (/triptych/i.test(state.shell))lines.push('→ `align-items: start` 关键!');
+    if (/floating/i.test(state.shell))lines.push('→ 外层 page 比 panel 暗(`#e9e6dd` 配 `#f6f4ef`),panel radius 28-32px,负 spread 阴影');
+  } else if (state.register === 'brand') {
+    lines.push(state.shell === 'auto' ? '由 AI 决定(全屏 hero / typographic / editorial)' : state.shell);
+  } else if (state.register === 'workflow') {
+    lines.push('rail 230-250px · topbar 含 step rail · capped form column 720-820px · 300-380px sticky aside');
+    lines.push('→ pre-submit check card 是必须的!');
+  } else if (state.register === 'commerce') {
+    lines.push('PDP 走品牌灵魂;PLP / Cart / Checkout 走产品 register');
+  } else {
+    lines.push(state.shell);
+  }
+  lines.push('');
+
+  // ## Charts
+  if (state.register === 'product' || state.register === 'commerce') {
+    lines.push('## 6 · 图表硬规则(chart-crafting.md)');
+    if (state.features.has('chart-bar')) {
+      lines.push('- 柱状:height = value/max 从 0 基线;≤ 12 列;每列 x 轴 label;只 fill 动,不是整 column scaleY');
+    }
+    if (state.features.has('chart-line')) {
+      lines.push('- 折线:stroke-dasharray = path 总长度 → gsap.to(dashoffset, 0)');
+    }
+    if (state.features.has('donut')) {
+      lines.push('- Donut:C = 2πR;多个 segment start angle 累加器;rotate(-90)');
+    }
+    if (state.features.has('sparkline')) {
+      lines.push('- Sparkline:`vector-effect: non-scaling-stroke` + polyline');
+    }
+    if (!state.features.has('chart-bar') && !state.features.has('chart-line') && !state.features.has('donut')) {
+      lines.push('- 选 bar/line/donut 时遵守上述硬规则');
+    }
+    lines.push('- 绝对不能"barcode":等高 / 顶到框 / 太细 / 无 label');
+    lines.push('');
+  }
+
+  // ## Motion / features
+  lines.push('## 7 · 必须有的特征');
+  if (state.features.size === 0) {
+    lines.push('(无特别要求,AI 自由选择)');
+  } else {
+    state.features.forEach(function(f){
+      lines.push('- ' + FEATURE_LABELS[f]);
+    });
+  }
+  lines.push('');
+
+  // ## Anti-slop
+  if (state.antislop.size > 0) {
+    lines.push('## 8 · 反 slop — 必须规避');
+    state.antislop.forEach(function(a){
+      lines.push('- ' + (document.querySelector('#step-antislop input[value="' + a + '"]')
+        .closest('.check-row').querySelector('.lbl').textContent.trim()));
+    });
+    lines.push('');
+  }
+
+  // ## Reference example
+  if (refExample) {
+    lines.push('## 9 · 参考范例');
+    lines.push('模仿 `skills/finesse-ui/examples/' + refExample.file + '` 的招式,但配色与品牌调性请替换成上述选择');
+    lines.push('');
+  }
+
+  // ## Output spec
+  lines.push('## 10 · 输出规格');
+  state.output.forEach(function(o){
+    var labels = {
+      'single-file':'单 HTML 文件(self-contained)',
+      'css-vars':'所有 token `:root` CSS 变量驱动',
+      'no-framework':'不用 Tailwind / Bootstrap / 任何 CSS 框架',
+      'reduced-motion':'每个动效写 `prefers-reduced-motion` 兜底',
+      'self-host-libs':'小库(GSAP 等)自托管到 `./lib/`,不要 CDN',
+      'data-fake':'任何虚构数据必须标 "mock" / "illustrative"'
+    };
+    lines.push('- ✓ ' + labels[o]);
+  });
+  lines.push('- 自检清单:无纯 #fff/#fff · 无硬 #ccc 边 · 无紫蓝 glow · 无圆角 + 阴影 + eyebrow 全凑齐 · 无假精确数字');
+  lines.push('');
+
+  // Closing
+  lines.push('---');
+  lines.push('完成后,最后给我一段 50 字以内的"screenshot-ready"总结:这个页面做了什么、给谁看、第一眼能传达什么。');
+
+  return lines.join('\n');
+}
+
+/* ===================== Render ===================== */
+function render(){
+  const text = generate();
+  const out = document.getElementById('promptOut');
+  out.innerHTML = highlight(text);
+  document.getElementById('promptStat').textContent =
+    text.length + ' 字 · ' + (text.split('\n').length) + ' 行';
+}
+
+/* ===================== Init ===================== */
+function init(){
+  bindRadioCards();
+  bindRanges();
+  bindSelects();
+  bindCheckboxes('step-features', 'features');
+  bindCheckboxes('step-antislop', 'antislop');
+  bindCheckboxes('step-output', 'output');
+
+  rebuildPersonaDropdown();
+  rebuildPaletteDropdown();
+  rebuildShellDropdown();
+  rebuildRefDropdown();
+  updateEngineAvailability();
+
+  // Initial radio card state already has 'brand' is-on; ensure others reflect.
+  render();
+}
+
+document.getElementById('copyBtn').addEventListener('click', function(){
+  const text = document.getElementById('promptOut').innerText;
+  navigator.clipboard.writeText(text).then(function(){
+    const btn = document.getElementById('copyBtn');
+    btn.innerHTML = '✓ 已复制 · 共 ' + text.length + ' 字';
+    btn.classList.add('copied');
+    setTimeout(function(){
+      btn.innerHTML = '📋 复制到剪贴板';
+      btn.classList.remove('copied');
+    }, 2200);
+  });
+});
+
+document.getElementById('resetBtn').addEventListener('click', function(){
+  // Reset all state
+  state.register = 'brand'; state.persona = ''; state.theme = 'auto'; state.palette = '';
+  state.engine = 'none'; state.shell = 'auto'; state.density = 4; state.spectacle = 6;
+  state.features.clear(); state.antislop.clear(); state.ref = ''; state.notes = '';
+  state.output = new Set(['single-file','css-vars','no-framework','reduced-motion','self-host-libs','data-fake']);
+  // Sync UI
+  document.querySelectorAll('.radio-cards').forEach(function(group){
+    group.querySelectorAll('.rcard').forEach(function(c){ c.classList.remove('is-on'); });
+    var wanted = { 'step-register': state.register, 'step-theme': state.theme }[group.id];
+    if (wanted) {
+      var card = group.querySelector('[data-val="' + wanted + '"]');
+      if (card) card.classList.add('is-on');
+    }
+  });
+  document.getElementById('step-density').value = 4; document.getElementById('densityOut').textContent = 4;
+  document.getElementById('step-spectacle').value = 6; document.getElementById('spectacleOut').textContent = 6;
+  document.getElementById('step-notes').value = '';
+  document.querySelectorAll('#step-features input, #step-antislop input').forEach(function(b){ b.checked = false; });
+  document.querySelectorAll('#step-output input').forEach(function(b){
+    b.checked = ['single-file','css-vars','no-framework','reduced-motion','self-host-libs','data-fake'].indexOf(b.value) >= 0;
+  });
+  rebuildPersonaDropdown(); rebuildPaletteDropdown(); rebuildShellDropdown(); rebuildRefDropdown();
+  updateEngineAvailability();
+  paintRange(document.getElementById('step-density'));
+  paintRange(document.getElementById('step-spectacle'));
+  render();
+});
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>

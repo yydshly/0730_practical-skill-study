@@ -1,0 +1,1867 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Finesse — Capabilities · 库的能力全景</title>
+<style>
+  /* ============== Brand substrate applied ============== */
+  *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+  :root{
+    /* Cinematic cool palette — purple-leaning dark, the principled non-AI-purple choice */
+    --bg:#06040E; --surface:#0F0D1A; --surface-2:#181527;
+    --ink:#ECECF2; --muted:#9A9AAB; --dim:#6C6C7C; --faint:#3F3F4E;
+    --accent:#9d8cff; /* cool violet, lightened for dark UI */
+    --accent-2:#FF6BA0; /* duotone partner — across the wheel */
+    --accent-soft:rgba(157,140,255,.14);
+    --accent-glow:rgba(157,140,255,.32);
+    --good:#6FDB9C; --bad:#FF7C77; --warn:#FFC15C;
+    --border:rgba(255,255,255,.07); --border-strong:rgba(255,255,255,.13);
+
+    --font-serif:'Cormorant Garamond','Playfair Display',Georgia,serif;
+    --font-sans:'Inter',system-ui,-apple-system,sans-serif;
+    --font-mono:'JetBrains Mono','SF Mono','Menlo',monospace;
+
+    --r:14px; --r-sm:10px; --r-lg:22px;
+  }
+  html{scroll-behavior:smooth;-webkit-font-smoothing:antialiased}
+  body{background:var(--bg);color:var(--ink);font-family:var(--font-sans);line-height:1.6;overflow-x:hidden}
+  /* Brand move 1: grain */
+  body::before{
+    content:'';position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.04;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.78' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+  .content{position:relative;z-index:1}
+
+  /* Headlines use Cormorant for tonal contrast (not reflex Inter) */
+  h1,h2,h3,h4{font-family:var(--font-serif);font-weight:500;letter-spacing:-.018em;line-height:1.05}
+  h1{font-size:clamp(46px,7vw,108px)}
+  h2{font-size:clamp(34px,4vw,62px)}
+  h3{font-size:clamp(24px,2.4vw,36px)}
+  h4{font-size:18px;color:var(--ink);font-weight:500}
+  p{font-size:15.5px;color:var(--muted);max-width:680px}
+  a{color:var(--accent);text-decoration:none}
+  code,pre{font-family:var(--font-mono);font-size:13px}
+
+  .container{max-width:1380px;margin:0 auto;padding:0 40px}
+  .eyebrow{font-size:11px;font-weight:600;letter-spacing:.22em;text-transform:uppercase;color:var(--accent);margin-bottom:18px;display:inline-flex;align-items:center;gap:10px}
+  .eyebrow::before{content:'';width:28px;height:1px;background:var(--accent)}
+
+  /* ============== Sticky section nav ============== */
+  .topnav{
+    position:sticky;top:0;z-index:100;
+    background:rgba(6,4,14,.78);backdrop-filter:blur(14px);
+    border-bottom:1px solid var(--border);
+  }
+  .topnav-inner{
+    max-width:1380px;margin:0 auto;padding:14px 40px;
+    display:flex;align-items:center;justify-content:space-between;gap:24px;
+  }
+  .brand{display:flex;align-items:center;gap:12px}
+  .brand-mark{width:30px;height:30px;border-radius:8px;background:var(--accent);display:grid;place-items:center;color:#06040E;font-family:var(--font-serif);font-size:17px;font-weight:600}
+  .brand-name{font-family:var(--font-serif);font-size:18px}
+  .jumpnav{display:flex;gap:18px;font-size:12.5px;color:var(--muted);flex-wrap:wrap}
+  .jumpnav a{transition:color .2s}
+  .jumpnav a:hover{color:var(--ink)}
+
+  /* ============== Hero ============== */
+  .hero{padding:100px 40px 60px;text-align:left}
+  .hero .eyebrow{margin-bottom:24px}
+  .hero h1 em{font-style:italic;color:var(--accent)}
+  .hero .lede{font-size:19px;max-width:760px;margin-top:32px;line-height:1.55}
+  .hero-stats{display:flex;gap:48px;margin-top:50px;padding-top:30px;border-top:1px solid var(--border);flex-wrap:wrap}
+
+  /* ============== Decision tree ============== */
+  .decision{
+    max-width:1380px;margin:60px auto 0;padding:48px 40px 60px;
+    border-top:1px solid var(--border);border-bottom:1px solid var(--border);
+    background:linear-gradient(180deg,rgba(157,140,255,.04),transparent);
+  }
+  .decision-h{display:flex;justify-content:space-between;align-items:flex-end;gap:30px;margin-bottom:36px;flex-wrap:wrap}
+  .decision-h h2{font-size:clamp(28px,3.4vw,46px)}
+  .decision-h .sub{color:var(--muted);font-size:15px;max-width:480px}
+  .decision-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
+  .decision-card{
+    background:var(--surface);border:1px solid var(--border);border-radius:var(--r);
+    padding:20px 22px;display:flex;flex-direction:column;gap:10px;
+    transition:border-color .2s, transform .25s;text-decoration:none;color:inherit;
+  }
+  .decision-card:hover{border-color:var(--accent);transform:translateY(-3px)}
+  .decision-card .ico{font-size:24px;line-height:1}
+  .decision-card h3{font-family:var(--font-serif);font-size:19px;font-weight:500;line-height:1.2;color:var(--ink)}
+  .decision-card .q{font-size:13px;color:var(--muted);line-height:1.5}
+  .decision-card .arrow{
+    margin-top:auto;font-size:12px;color:var(--accent);
+    font-family:var(--font-mono);letter-spacing:.04em;
+  }
+  .decision-card .arrow::after{content:' →'}
+
+  /* Section "how to use" hint box */
+  .howto{
+    background:rgba(157,140,255,.07);border:1px dashed rgba(157,140,255,.3);
+    border-radius:var(--r);padding:18px 22px;margin-bottom:30px;
+    font-size:14px;line-height:1.65;color:var(--muted);
+  }
+  .howto b{color:var(--ink);font-weight:500}
+  .howto .q{color:var(--accent);font-weight:600;font-size:13px;letter-spacing:.06em;display:block;margin-bottom:6px;text-transform:uppercase}
+  .hero-stat .n{font-family:var(--font-mono);font-size:48px;font-weight:500;color:var(--ink);letter-spacing:-.04em;display:block;line-height:1}
+  .hero-stat .l{font-size:12px;color:var(--dim);letter-spacing:.08em;text-transform:uppercase;margin-top:8px}
+
+  /* ============== Section ============== */
+  section{padding:90px 40px;border-top:1px solid var(--border)}
+  section.head{display:flex;justify-content:space-between;align-items:flex-end;gap:40px;margin-bottom:50px}
+  section.head .right{max-width:480px}
+  .num{font-family:var(--font-mono);font-size:12px;color:var(--accent);letter-spacing:.1em;margin-bottom:12px;display:block}
+
+  /* ============== The Three Dials widget ============== */
+  .dials{
+    display:grid;grid-template-columns:repeat(3,1fr);gap:18px;
+  }
+  .dial{
+    background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);
+    padding:30px;display:flex;flex-direction:column;gap:14px;
+  }
+  .dial h4{display:flex;align-items:center;gap:10px;font-family:var(--font-sans);font-size:13px;letter-spacing:.18em;text-transform:uppercase;color:var(--accent);font-weight:600}
+  .dial h4 .dot{width:6px;height:6px;border-radius:999px;background:var(--accent)}
+  .dial p{font-size:14.5px;color:var(--muted)}
+  .dial input[type=range]{
+    width:100%;height:6px;border-radius:999px;
+    background:linear-gradient(90deg,var(--accent) 0% var(--v,50%),var(--faint) var(--v,50%) 100%);
+    -webkit-appearance:none;cursor:pointer;outline:none;
+  }
+  .dial input[type=range]::-webkit-slider-thumb{
+    -webkit-appearance:none;width:18px;height:18px;border-radius:999px;
+    background:var(--ink);border:3px solid var(--accent);cursor:grab;
+  }
+  .dial input[type=range]::-moz-range-thumb{
+    width:18px;height:18px;border-radius:999px;
+    background:var(--ink);border:3px solid var(--accent);cursor:grab;
+  }
+  .dial-readout{font-family:var(--font-mono);font-size:28px;font-weight:500;color:var(--ink);letter-spacing:-.03em}
+  .dial-readout small{font-size:13px;color:var(--dim);margin-left:6px}
+
+  /* ============== The Router Pill ============== */
+  .router-pill{
+    background:var(--surface);border:1px solid var(--border);border-radius:var(--r);
+    padding:14px 18px;display:flex;align-items:center;gap:16px;font-size:14px;color:var(--muted);
+    margin-bottom:40px;
+  }
+  .router-pill code{background:rgba(157,140,255,.12);color:var(--accent);padding:3px 8px;border-radius:5px}
+
+  /* ============== Card grid for engines/personas ============== */
+  .grid{display:grid;gap:20px}
+  .grid.cols-2{grid-template-columns:1fr 1fr}
+  .grid.cols-3{grid-template-columns:repeat(3,1fr)}
+  .grid.cols-4{grid-template-columns:repeat(4,1fr)}
+  .grid.cols-5{grid-template-columns:repeat(5,1fr)}
+  @media (max-width:1000px){
+    .grid.cols-3,.grid.cols-4,.grid.cols-5{grid-template-columns:repeat(2,1fr)}
+    .grid.cols-2{grid-template-columns:1fr}
+    .dials{grid-template-columns:1fr}
+  }
+
+  /* ============== Engine demo cards ============== */
+  .engine-card{
+    background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);
+    overflow:hidden;display:flex;flex-direction:column;
+  }
+  .engine-demo{
+    height:220px;position:relative;overflow:hidden;background:#000;
+  }
+  .engine-demo canvas{display:block;width:100%;height:100%}
+  .engine-info{padding:22px 24px 24px}
+  .engine-info .letter{font-family:var(--font-mono);font-size:11px;font-weight:700;letter-spacing:.2em;color:var(--accent)}
+  .engine-info h4{margin:8px 0 10px;font-family:var(--font-serif);font-size:24px}
+  .engine-info .use{font-size:13px;color:var(--dim);margin-bottom:14px;font-style:italic}
+  .engine-info p{font-size:13.5px;line-height:1.55}
+
+  /* ============== Persona chips with swatches ============== */
+  .persona-card{
+    background:var(--surface);border:1px solid var(--border);border-radius:var(--r);
+    padding:22px;display:flex;flex-direction:column;gap:14px;
+    transition:border-color .25s, transform .25s;
+  }
+  .persona-card:hover{border-color:var(--accent);transform:translateY(-2px)}
+  .persona-name{font-family:var(--font-serif);font-size:22px;font-weight:500;color:var(--ink);line-height:1.15}
+  .persona-fits{font-size:12px;color:var(--dim);letter-spacing:.06em;text-transform:uppercase;font-weight:600}
+  .swatches{display:flex;gap:5px;height:36px;border-radius:8px;overflow:hidden;border:1px solid var(--border)}
+  .swatches div{flex:1}
+  .persona-notes{font-size:13px;color:var(--muted);line-height:1.5}
+  .persona-engine{font-family:var(--font-mono);font-size:11px;color:var(--accent);letter-spacing:.06em;margin-top:auto}
+
+  /* ============== Chart sandbox ============== */
+  .chart-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:18px}
+  .chart-card{
+    background:var(--surface);border:1px solid var(--border);border-radius:var(--r);
+    padding:22px;display:flex;flex-direction:column;gap:14px;
+  }
+  .chart-card h4{font-family:var(--font-sans);font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);font-weight:600}
+  .chart-canvas{height:180px;background:var(--bg);border-radius:8px;padding:14px;display:flex;align-items:center}
+  .chart-card pre{margin:0;color:var(--dim);font-size:11.5px;line-height:1.5;overflow-x:auto}
+
+  /* ============== Shells morphologies ============== */
+  .shell-row{display:grid;grid-template-columns:repeat(6,1fr);gap:14px;margin-top:20px}
+  .shell-tile{
+    aspect-ratio:1;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);
+    padding:14px;display:flex;flex-direction:column;justify-content:space-between;position:relative;
+    overflow:hidden;
+  }
+  .shell-tile::before{
+    content:'';position:absolute;inset:0;background:var(--accent-soft);
+    opacity:0;transition:opacity .25s;
+  }
+  .shell-tile:hover::before{opacity:1}
+  .shell-tile h4{font-family:var(--font-sans);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);font-weight:600;position:relative}
+  .shell-tile .nm{font-family:var(--font-serif);font-size:18px;color:var(--ink);position:relative}
+  .shell-tile .nm small{font-size:11px;color:var(--dim);display:block;margin-top:4px;font-style:italic}
+  /* mini shell preview */
+  .mini-shell{
+    position:absolute;inset:auto 14px 36px 14px;
+    display:grid;gap:3px;
+  }
+  .mini-shell div{background:rgba(255,255,255,.06);border-radius:2px}
+  .mini-shell.sidebar div{background:rgba(157,140,255,.18)}
+
+  /* ============== Anti-cheap checker ============== */
+  .checker{
+    background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);
+    padding:30px;display:grid;grid-template-columns:1fr 1fr;gap:30px;
+  }
+  .checker h4{font-family:var(--font-sans);font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--accent);font-weight:600;margin-bottom:14px}
+  .check-row{display:flex;align-items:flex-start;gap:14px;padding:14px 0;border-bottom:1px solid var(--border)}
+  .check-row:last-child{border-bottom:0}
+  .check-row .q{flex:1}
+  .check-row .q b{display:block;color:var(--ink);font-size:14px;font-weight:500;margin-bottom:3px}
+  .check-row .q small{color:var(--dim);font-size:12.5px}
+  .check-row label{display:flex;gap:6px;font-size:12px;color:var(--muted);align-items:center;cursor:pointer;margin-top:6px}
+  .check-row label input{accent-color:var(--accent)}
+  .check-row.is-yes{border-left:3px solid var(--good);padding-left:14px}
+  .check-row.is-no{border-left:3px solid var(--bad);padding-left:14px}
+  .check-row.is-warn{border-left:3px solid var(--warn);padding-left:14px}
+  .verdict{
+    margin-top:20px;padding:18px;border-radius:var(--r);font-size:14px;
+    background:var(--bg);border:1px solid var(--border);
+  }
+  .verdict.fail{background:rgba(255,124,119,.08);border-color:rgba(255,124,119,.3);color:var(--bad)}
+  .verdict.ok{background:rgba(111,219,156,.08);border-color:rgba(111,219,156,.3);color:var(--good)}
+  .verdict.warn{background:rgba(255,193,92,.08);border-color:rgba(255,193,92,.3);color:var(--warn)}
+
+  /* ============== Command palette ============== */
+  .cmds{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
+  .cmd{
+    background:var(--surface);border:1px solid var(--border);border-radius:var(--r);
+    padding:18px 20px;display:flex;align-items:flex-start;gap:14px;transition:border-color .2s;
+  }
+  .cmd:hover{border-color:var(--accent)}
+  .cmd code{font-family:var(--font-mono);font-size:13px;color:var(--accent);background:rgba(157,140,255,.12);padding:3px 9px;border-radius:5px;font-weight:500;flex-shrink:0}
+  .cmd .body h4{font-family:var(--font-sans);font-size:14px;font-weight:500;color:var(--ink);margin-bottom:3px}
+  .cmd .body p{font-size:12.5px;color:var(--dim);line-height:1.4}
+
+  /* ============== 3D demo cards ============== */
+  .demo-3d{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:18px}
+  .demo-3d-card{
+    aspect-ratio:4/3;background:linear-gradient(135deg,#1a1830,#0f0d1a);
+    border:1px solid var(--border);border-radius:var(--r);padding:30px;position:relative;overflow:hidden;
+    display:flex;align-items:flex-end;
+  }
+  .demo-3d-card .inner-card{
+    width:100%;height:60%;background:rgba(255,255,255,.08);border-radius:10px;
+    border:1px solid rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center;
+    color:var(--ink);font-family:var(--font-mono);font-size:14px;font-weight:500;
+    transform-style:preserve-3d;transition:transform .3s ease-out;will-change:transform;
+    background:linear-gradient(135deg,rgba(157,140,255,.18),rgba(255,107,160,.12));
+  }
+  .demo-3d-card h4{position:absolute;top:18px;left:22px;font-family:var(--font-serif);font-size:18px}
+  .demo-3d-card small{position:absolute;top:42px;left:22px;color:var(--dim);font-size:11.5px}
+
+  /* ============== Workflow UI mock ============== */
+  .workflow{
+    background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);
+    padding:30px;display:grid;grid-template-columns:200px 1fr 280px;gap:18px;
+  }
+  .wf-rail{background:var(--bg);border-radius:var(--r);padding:18px;display:flex;flex-direction:column;gap:8px}
+  .wf-rail .nav-item{padding:10px 12px;border-radius:8px;font-size:13px;color:var(--muted);display:flex;align-items:center;gap:10px}
+  .wf-rail .nav-item.active{background:var(--accent-soft);color:var(--ink);font-weight:500}
+  .wf-rail .nav-item .dot{width:6px;height:6px;border-radius:999px;background:var(--faint)}
+  .wf-rail .nav-item.active .dot{background:var(--accent);box-shadow:0 0 8px var(--accent-glow)}
+  .wf-form{display:flex;flex-direction:column;gap:14px}
+  .wf-form .section-card{
+    background:var(--bg);border:1px solid var(--border);border-radius:var(--r);padding:22px;
+    display:grid;grid-template-columns:30px 1fr;gap:18px;
+  }
+  .wf-form .section-card .num{
+    width:28px;height:28px;border-radius:7px;background:var(--accent-soft);
+    color:var(--accent);display:grid;place-items:center;font-size:13px;font-weight:700;letter-spacing:0;
+    margin:0;
+  }
+  .wf-form .section-card h5{font-family:var(--font-sans);font-size:15px;font-weight:600;color:var(--ink);margin-bottom:6px}
+  .wf-form .section-card .desc{font-size:13px;color:var(--dim);margin-bottom:14px}
+  .wf-radio-group{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px}
+  .wf-radio{
+    border:1.5px solid var(--border);border-radius:10px;padding:14px;
+    display:flex;flex-direction:column;gap:4px;
+    font-size:13px;cursor:pointer;transition:.2s;
+  }
+  .wf-radio.on{border-color:var(--accent);background:var(--accent-soft)}
+  .wf-radio .lbl{color:var(--ink);font-weight:500;font-size:13.5px}
+  .wf-radio small{color:var(--dim);font-size:12px;line-height:1.4}
+  .wf-form input[type=text]{background:var(--surface);border:1px solid var(--border-strong);color:var(--ink);padding:10px 12px;border-radius:8px;font-size:13px;width:100%}
+  .wf-form input[type=text]:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+  .wf-aside{background:var(--bg);border-radius:var(--r);padding:18px;display:flex;flex-direction:column;gap:14px}
+  .wf-aside h5{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);font-weight:600}
+  .wf-aside .preview-row{display:flex;justify-content:space-between;font-size:13px;color:var(--muted);padding:8px 0;border-bottom:1px solid var(--border)}
+  .wf-aside .preview-row b{color:var(--ink);font-weight:500;font-family:var(--font-mono)}
+  .wf-precheck{background:rgba(111,219,156,.06);border:1px solid rgba(111,219,156,.18);border-radius:10px;padding:12px 14px}
+  .wf-precheck h5{color:var(--good);margin-bottom:8px}
+  .wf-precheck li{font-size:12.5px;color:var(--muted);padding:3px 0;list-style:none;display:flex;gap:8px}
+  .wf-precheck li::before{content:'✓';color:var(--good);font-weight:600}
+  .wf-precheck li.warn::before{content:'⚠';color:var(--warn)}
+
+  /* ============== Footer ============== */
+  footer{padding:80px 40px;border-top:1px solid var(--border);text-align:center}
+  footer h3{font-family:var(--font-serif);font-size:34px;margin-bottom:14px}
+  footer .links{display:flex;justify-content:center;gap:20px;margin-top:24px;font-size:14px}
+  footer .links a{padding:10px 20px;border:1px solid var(--border-strong);border-radius:999px;color:var(--ink);transition:.2s}
+  footer .links a:hover{background:var(--accent-soft);border-color:var(--accent)}
+
+  @media (max-width:880px){
+    .hero{padding:60px 24px 40px}
+    section{padding:60px 24px}
+    .container{padding:0 24px}
+    .checker,.workflow{grid-template-columns:1fr}
+    .workflow{grid-template-columns:1fr}
+    .shell-row{grid-template-columns:repeat(3,1fr)}
+    .jumpnav{display:none}
+  }
+</style>
+</head>
+<body>
+<div class="content">
+
+<!-- ============== TOP NAV ============== -->
+<nav class="topnav">
+  <div class="topnav-inner">
+    <div class="brand">
+      <div class="brand-mark">f</div>
+      <div class="brand-name">finesse · capabilities</div>
+    </div>
+    <div class="jumpnav">
+      <a href="#dials">三拨盘</a>
+      <a href="#register-brand">Brand register</a>
+      <a href="#engines">Engines</a>
+      <a href="#personas">Personas</a>
+      <a href="#motion">Motion</a>
+      <a href="#3d-effects">3D</a>
+      <a href="#register-product">Product register</a>
+      <a href="#shells">Shells</a>
+      <a href="#charts">Charts</a>
+      <a href="#workflow">Workflow</a>
+      <a href="#commerce">Commerce</a>
+      <a href="#anti-cheap">Anti-slop</a>
+      <a href="#commands">Commands</a>
+      <a href="prompt-builder.html" style="color:var(--accent);font-weight:500">拼 Prompt →</a>
+    </div>
+  </div>
+</nav>
+
+<!-- ============== HERO ============== -->
+<header class="hero container">
+  <div class="eyebrow">库的能力全景 · Capabilities overview</div>
+  <h1>
+    拒绝廉价。<br/>
+    两个<em>注册</em>、十种<em>灵魂</em>、<br/>
+    五套<em>引擎</em>、三十一种<em>技法</em>。
+  </h1>
+  <p class="lede">
+    finesse 是一个 <strong>设计技能包</strong>，不是一个固定的风格。它告诉 AI 编程助手 怎么避开 AI 廉价痕迹，从零生成、并迭代出"花得起钱"的界面。
+    下文按 SKILL.md 的章节顺序，<strong>逐条演示</strong>。能拖的拖，能点的点。
+  </p>
+  <div class="hero-stats">
+    <div class="hero-stat"><span class="n">4</span><span class="l">Registers · 注册类型<br/>(brand · product · commerce · workflow)</span></div>
+    <div class="hero-stat"><span class="n">10</span><span class="l">Style Personas · 灵魂人格</span></div>
+    <div class="hero-stat"><span class="n">5</span><span class="l">Hero Engines · 视觉引擎</span></div>
+    <div class="hero-stat"><span class="n">25</span><span class="l">Chart Types · 图表种类</span></div>
+    <div class="hero-stat"><span class="n">12</span><span class="l">Past-ready Palettes · 即用调色板</span></div>
+    <div class="hero-stat"><span class="n">16</span><span class="l">Accent Library · 强调色</span></div>
+    <div class="hero-stat"><span class="n">10</span><span class="l">Verb Commands · 动词命令</span></div>
+    <div class="hero-stat"><span class="n">53</span><span class="l">Inspiration · 技术灵感作品</span></div>
+  </div>
+</header>
+
+<!-- ============== DECISION TREE ============== -->
+<section class="decision" id="decision">
+  <div class="decision-h">
+    <div>
+      <div class="eyebrow" style="margin-bottom:14px">我有什么需求 · 决策树</div>
+      <h2>从你的需求直达<em style="font-style:italic">该看的章节</em></h2>
+    </div>
+    <p class="sub">不要按顺序读下面的几十节 —— 直接点你目前手头问题的卡片，页面会滚到对应的演示。每个卡片 ≈ 现实里"我在做这个"的那一类场景。</p>
+  </div>
+  <div class="decision-grid">
+    <a class="decision-card" href="#register-brand">
+      <div class="ico">🎨</div>
+      <h3>"我要做个 landing / 品牌 hero"</h3>
+      <p class="q">网站首屏要有冲击力，要反映品牌个性，要能"镇住场"。</p>
+      <div class="arrow">Brand register · 第 2 节</div>
+    </a>
+    <a class="decision-card" href="#engines">
+      <div class="ico">✨</div>
+      <h3>"hero 要有会动的视觉"</h3>
+      <p class="q">用户打开页面要看到一个真正"活的"画面 —— 粒子、3D、滚动故事都行。</p>
+      <div class="arrow">5 套 Hero Engines · 第 3 节</div>
+    </a>
+    <a class="decision-card" href="#personas">
+      <div class="ico">🎭</div>
+      <h3>"选哪种风格 / 灵魂调性?"</h3>
+      <p class="q">我做的产品该如何"看着对路" —— 时装、量化交易、建筑、还是 SaaS?</p>
+      <div class="arrow">10 种 Style Personas · 第 4 节</div>
+    </a>
+    <a class="decision-card" href="#motion">
+      <div class="ico">🪄</div>
+      <h3>"不要全屏 3D，但要点小动效"</h3>
+      <p class="q">想让按钮磁性吸附、卡片浮起、字逐字揭示 —— 这些"辅音"动效。</p>
+      <div class="arrow">二级动效词汇 · 第 5 节</div>
+    </a>
+    <a class="decision-card" href="#3d-effects">
+      <div class="ico">🎲</div>
+      <h3>"让卡片有 3D 倾斜 / 翻转 / 视差"</h3>
+      <p class="q">鼠标动卡片就动；或在仪表盘里给某个 KPI 加点空间感。</p>
+      <div class="arrow">3D 效果谱 · 第 6 节</div>
+    </a>
+    <a class="decision-card" href="#register-product">
+      <div class="ico">📊</div>
+      <h3>"我要做个仪表盘 / 后台"</h3>
+      <p class="q">数据密集、要多个 KPI、要表格和图表，但不像 SaaS 那么难看。</p>
+      <div class="arrow">Product register · 第 7 节</div>
+    </a>
+    <a class="decision-card" href="#shells">
+      <div class="ico">🧱</div>
+      <h3>"dashboard 该用哪种布局?"</h3>
+      <p class="q">侧栏还是浮动面板? Bento 还是三栏? 不同布局有不同失败模式。</p>
+      <div class="arrow">6 种 Shell · 第 8 节</div>
+    </a>
+    <a class="decision-card" href="#charts">
+      <div class="ico">📈</div>
+      <h3>"怎么画图表才不会显得廉价?"</h3>
+      <p class="q">柱状图、折线、堆叠、仪表 —— 高度 = 数据，别做出"barcode 失败"。</p>
+      <div class="arrow">8 种图表现场 · 第 9 节</div>
+    </a>
+    <a class="decision-card" href="#workflow">
+      <div class="ico">📝</div>
+      <h3>"这是个表单 / 发布流 / 设置页"</h3>
+      <p class="q">不是 dashboard —— 用户来"做完一件事"。失败 = 提交了错的。</p>
+      <div class="arrow">Workflow UI · 第 10 节</div>
+    </a>
+    <a class="decision-card" href="#commerce">
+      <div class="ico">🛒</div>
+      <h3>"商品详情 / 列表 / 购物车 / 结账"</h3>
+      <p class="q">要兼顾品牌灵魂(PDP)和任务效率(PLP/结账) —— 别一套贯穿。</p>
+      <div class="arrow">Commerce UI · 第 11 节</div>
+    </a>
+    <a class="decision-card" href="#anti-cheap">
+      <div class="ico">🚫</div>
+      <h3>"页面做完但看着还是 AI 廉价"</h3>
+      <p class="q">不知道哪里不对 —— 走一遍反 slop 黑名单 12 项硬规则。</p>
+      <div class="arrow">Anti-slop 自检 · 第 12 节</div>
+    </a>
+    <a class="decision-card" href="#commands">
+      <div class="ico">⌘</div>
+      <h3>"我已经写了一半, 想针对性迭代"</h3>
+      <p class="q">用 `/finesse` 系列命令: quieter / bolder / animate / soul / densify ...</p>
+      <div class="arrow">10 个动词命令 · 第 13 节</div>
+    </a>
+  </div>
+</section>
+
+<!-- ============== 1. THE THREE DIALS ============== -->
+<section id="dials">
+  <div class="container">
+    <div class="head">
+      <div>
+        <div class="eyebrow">§1 · Three dials</div>
+        <h2>三个拨盘 <em style="font-style:italic;color:var(--muted)">三拨盘</em></h2>
+      </div>
+      <p class="right" style="font-size:14px">每个生成都从这三个数字开始。拖它们 — 下面的标签会跟着变化，告诉你每个值适合什么。</p>
+    </div>
+
+    <div class="dials">
+      <div class="dial">
+        <h4><span class="dot"></span>SOUL · 灵魂</h4>
+        <p>多少 personality？保守还是奔放？决定你会不会用 serif、会不会用大留白、会不会用暗调。</p>
+        <div class="dial-readout" id="soulOut">7<small>/ 10</small></div>
+        <input id="soulRange" type="range" min="1" max="10" value="7" />
+      </div>
+      <div class="dial">
+        <h4><span class="dot"></span>SPECTACLE · 奇观</h4>
+        <p>多少视觉冲击？仪表盘锁在 1–3，品牌页可以拉到 10。高于 7 一定要有真引擎 + reduced-motion fallback。</p>
+        <div class="dial-readout" id="specOut">5<small>/ 10</small></div>
+        <input id="specRange" type="range" min="1" max="10" value="5" />
+      </div>
+      <div class="dial">
+        <h4><span class="dot"></span>DENSITY · 信息密度</h4>
+        <p>每屏多少信息？仪表盘拉满（8–9），品牌页压低（1–3）。密度高的页面必须有好的留白节奏。</p>
+        <div class="dial-readout" id="densOut">4<small>/ 10</small></div>
+        <input id="densRange" type="range" min="1" max="10" value="4" />
+      </div>
+    </div>
+
+    <div class="router-pill" id="recommend" style="margin-top:30px">
+      <strong style="color:var(--ink)">建议路由：</strong>
+      <span id="recText"></span>
+    </div>
+  </div>
+</section>
+
+<!-- ============== 2. REGISTERS ============== -->
+<section id="register-brand">
+  <div class="container">
+    <div class="head">
+      <div>
+        <span class="num">§2 — BRAND REGISTER</span>
+        <h2>Brand 注册：<em style="font-style:italic">设计即产品</em></h2>
+      </div>
+      <p class="right" style="font-size:14.5px">
+        落地页 · 品牌站 · 上线页 · portfolio · hero page。
+        优化方向：<strong>视觉冲击 × 灵魂表达 × 第一印象</strong>。配 dark-by-default、grain、`clamp()` 大字、真实引擎。
+      </p>
+    </div>
+
+    <h3 style="font-family:var(--font-serif);font-size:26px;margin-bottom:6px">通用工艺底线 <small style="font-size:13px;color:var(--dim);display:block;margin-top:6px;font-style:italic;font-family:var(--font-sans)">brand 与 product 共用 — 这是最低线</small></h3>
+    <div class="grid cols-4" style="margin-top:24px">
+      <div class="persona-card">
+        <div class="persona-fits">Floor · 底线 #1</div>
+        <div class="persona-name">Tinted neutrals</div>
+        <p style="font-size:13px;color:var(--muted);line-height:1.5">不准用纯 <code style="background:rgba(255,255,255,.06);padding:2px 6px;border-radius:4px">#fff</code> / <code style="background:rgba(255,255,255,.06);padding:2px 6px;border-radius:4px">#000</code>。向 brand hue 偏 OKLCH 0.005–0.015。这一个动作就能让 80% 的廉价感消失。</p>
+      </div>
+      <div class="persona-card">
+        <div class="persona-fits">Floor · 底线 #2</div>
+        <div class="persona-name">Hairline borders</div>
+        <p style="font-size:13px;color:var(--muted);line-height:1.5"><code style="background:rgba(255,255,255,.06);padding:2px 6px;border-radius:4px">rgba(255,255,255,.07–.22)</code> 半透明边。硬 <code style="background:rgba(255,255,255,.06);padding:2px 6px;border-radius:4px">#ccc</code> / <code style="background:rgba(255,255,255,.06);padding:2px 6px;border-radius:4px">#333</code> 廉价读数 = 廉价感。</p>
+      </div>
+      <div class="persona-card">
+        <div class="persona-fits">Floor · 底线 #3</div>
+        <div class="persona-name">Tinted shadows</div>
+        <p style="font-size:13px;color:var(--muted);line-height:1.5">阴影向 ink 染色（<code style="background:rgba(255,255,255,.06);padding:2px 6px;border-radius:4px">rgba(30,20,70,.06)</code>），绝不纯黑。带 hue 的阴影才有质感。</p>
+      </div>
+      <div class="persona-card">
+        <div class="persona-fits">Floor · 底线 #4</div>
+        <div class="persona-name">Contrast floors</div>
+        <p style="font-size:13px;color:var(--muted);line-height:1.5">正文 ink vs bg ≥ <strong>7:1</strong> · muted ≥ <strong>3.5:1</strong> · 组件 ≥ <strong>3:1</strong>。亮暗模式分别测试，不能反色互换就以为 OK。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============== 3. HERO ENGINES ============== -->
+<section id="engines">
+  <div class="container">
+    <div class="head">
+      <div>
+        <span class="num">§3 — BRAND SUBSTRATE · HERO ENGINES</span>
+        <h2>五套引擎 · <em style="font-style:italic">一站到底的视觉奇观</em></h2>
+      </div>
+      <p class="right" style="font-size:14.5px">
+        每个品牌页只该用 <strong>一套</strong>。下面是真实可跑的 mini 实现 — 鼠标移上去、滚动，等待，会动。
+      </p>
+    </div>
+
+    <div class="grid cols-2" style="grid-template-columns:1fr 1fr">
+
+      <!-- A · Three.js (simulated via Canvas 2D since no three here) -->
+      <div class="engine-card">
+        <div class="engine-demo">
+          <canvas id="engineA"></canvas>
+        </div>
+        <div class="engine-info">
+          <div class="letter">ENGINE A · THREE.JS + GLSL</div>
+          <h4>粒子星系 / 3D 深度</h4>
+          <div class="use">天文学 · AI · 加密 · 网络图 · metaball 流体</div>
+          <p>22K 粒子 via <code>BufferGeometry + ShaderMaterial</code>。加法混合辉光、cyan/magenta on near-black、滚动相机。载入 ~150KB gz，必须版本化 CDN + <code style="font-size:11px">IntersectionObserver</code> 懒加载。</p>
+        </div>
+      </div>
+
+      <!-- B · Canvas 2D -->
+      <div class="engine-card">
+        <div class="engine-demo">
+          <canvas id="engineB"></canvas>
+        </div>
+        <div class="engine-info">
+          <div class="letter">ENGINE B · CANVAS 2D</div>
+          <h4>粒子 / 字段 / 实时数据</h4>
+          <div class="use">音乐波形 · 量化 K 线 · 余烬 · 极光 · 流星雨 · 火焰</div>
+          <p>无依赖。DPR 自适应。trail fade 而非全清，可读为"残影"。实时数据用 ring buffer + 自动 fit min/max。下方是 live 演示。</p>
+        </div>
+      </div>
+
+      <!-- D · GSAP scroll reveal (will be triggered) -->
+      <div class="engine-card">
+        <div class="engine-demo" id="engineDDemo" style="display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#1a1830,#0f0d1a);position:relative;overflow:hidden">
+          <h4 style="font-family:var(--font-mono);font-size:42px;font-weight:800;letter-spacing:-.04em;color:#fff;opacity:.05;position:absolute;left:30px;top:30px">SECTION 04</h4>
+          <div id="revealBlocks" style="display:flex;gap:14px;flex-wrap:wrap;justify-content:center">
+            <div style="width:120px;height:120px;background:linear-gradient(135deg,var(--accent),var(--accent-2));border-radius:14px;opacity:0;transform:translateY(40px)"></div>
+            <div style="width:120px;height:120px;background:linear-gradient(135deg,#FFC15C,#FF7C77);border-radius:14px;opacity:0;transform:translateY(40px)"></div>
+            <div style="width:120px;height:120px;background:linear-gradient(135deg,#6FDB9C,#5fb7e9);border-radius:14px;opacity:0;transform:translateY(40px)"></div>
+          </div>
+        </div>
+        <div class="engine-info">
+          <div class="letter">ENGINE D · GSAP SCROLLTRIGGER</div>
+          <h4>滚动叙事 / 揭示 / 横向 pan</h4>
+          <div class="use">所有灵魂值都在 4–7 之间的过渡性英雄 — 工作horse</div>
+          <p>Reveal stagger · 横滚画廊 · 卡片 pin-shrink。下方色块会进入视口时 fade-up（IntersectionObserver + GSAP）。无需 GSAP 时用 Motion / CSS <code style="font-size:11px">animation-timeline: view()</code>。</p>
+        </div>
+      </div>
+
+      <!-- E · CSS-only -->
+      <div class="engine-card">
+        <div class="engine-demo" id="engineEDemo" style="position:relative;overflow:hidden">
+          <div class="layer-day" style="position:absolute;inset:0;background:linear-gradient(135deg,#FFE6D5,#FFD9B5);"></div>
+          <div class="layer-night" id="layerNight" style="position:absolute;inset:0;background:linear-gradient(135deg,#1a1830,#06040E);-webkit-mask:radial-gradient(circle 100px at -400px -400px,#000 40%,transparent 72%);mask:radial-gradient(circle 100px at -400px -400px,#000 40%,transparent 72%);will-change:mask;"></div>
+          <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--ink);font-family:var(--font-serif);font-size:30px;font-style:italic;mix-blend-mode:difference">鼠标移过来 →</div>
+        </div>
+        <div class="engine-info">
+          <div class="letter">ENGINE E · CSS-ONLY</div>
+          <h4>鼠标遮罩 / 3D transform / 变字重</h4>
+          <div class="use">Quiet Luxury · Brutal · 极致性能 · 最大记忆点</div>
+          <p>这是 STUDIO QUIET LUXURY 的招牌招 — 双层叠加 + 鼠标位置更新遮罩，<strong>零 JS 库</strong>。CSS 3D 处理小型 3D（tilt / flip / coverflow），CSS scroll-timeline 处理原生滚动驱动的揭示。</p>
+        </div>
+      </div>
+
+    </div>
+
+    <p style="margin-top:30px;font-size:13.5px;color:var(--dim);text-align:center;font-style:italic">（引擎 C · WebGL FBO 着色器适用流体动力学 / 反应扩散 / 体渲染 — 最重，仅当灵魂 = 涌现 / 物理时使用，自带 reduced-motion 静态渐变 fallback）</p>
+  </div>
+</section>
+
+<!-- ============== 4. STYLE PERSONAS ============== -->
+<section id="personas">
+  <div class="container">
+    <div class="head">
+      <div>
+        <span class="num">§4 — STYLE PERSONAS · 灵魂矩阵</span>
+        <h2>十种灵魂 <em style="font-style:italic;color:var(--muted)">同名重复是冗余，旋转是美德</em></h2>
+      </div>
+      <p class="right" style="font-size:14.5px">
+        命名你的行业 · 命名该行业的默认 · 选一个击败它的灵魂 · 锁定配色 + 字体 + 强调色 · 选引擎。
+        不允许连续两次 ship 同一个灵魂。
+      </p>
+    </div>
+
+    <div class="grid cols-5">
+      <div class="persona-card">
+        <div class="swatches"><div style="background:#22e3ff"></div><div style="background:#ff2d8e"></div><div style="background:#04060D"></div><div style="background:#ECECF2"></div></div>
+        <div class="persona-name">Cinematic Tech</div>
+        <div class="persona-fits">天文 · AI · crypto · deep-tech</div>
+        <div class="persona-notes">Cinematic cool (cyan/magenta on near-black) · 加法混合辉光 · 滚动相机</div>
+        <div class="persona-engine">A · Three.js particles</div>
+      </div>
+      <div class="persona-card">
+        <div class="swatches"><div style="background:#00DC50"></div><div style="background:#020806"></div><div style="background:#0A1A14"></div><div style="background:#C8F0D8"></div></div>
+        <div class="persona-name">Phosphor Terminal</div>
+        <div class="persona-fits">量化 · 安全 · 基础设施 · dev tools</div>
+        <div class="persona-notes">单一荧光绿 · CRT 扫描线 + 闪烁 · 等宽字体优先</div>
+        <div class="persona-engine">B · Canvas data viz</div>
+      </div>
+      <div class="persona-card">
+        <div class="swatches"><div style="background:#A8331F"></div><div style="background:#F4F1E9"></div><div style="background:#1A1714"></div><div style="background:#857F73"></div></div>
+        <div class="persona-name">Editorial Publication</div>
+        <div class="persona-fits">杂志 · 电影 · 期刊 · 摄影</div>
+        <div class="persona-notes">Playfair + Spectral · 灰度摄影 · 规则细线 · 首字下沉</div>
+        <div class="persona-engine">D · GSAP scroll-reveal</div>
+      </div>
+      <div class="persona-card">
+        <div class="swatches"><div style="background:#C87820"></div><div style="background:#FF6820"></div><div style="background:#070402"></div><div style="background:#E0CFB0"></div></div>
+        <div class="persona-name">Warm Heritage</div>
+        <div class="persona-fits">威士忌 · 咖啡 · 蒸馏所</div>
+        <div class="persona-notes">Fraunces / EB Garamond · 余烬粒子 · 暗角 · 印刷质感</div>
+        <div class="persona-engine">B · Canvas fire/particles</div>
+      </div>
+      <div class="persona-card">
+        <div class="swatches"><div style="background:#B8922A"></div><div style="background:#E8C870"></div><div style="background:#0C0A08"></div><div style="background:#F5E5B8"></div></div>
+        <div class="persona-name">Gold Luxury</div>
+        <div class="persona-fits">名表 · 香水 · 高级餐饮</div>
+        <div class="persona-notes">Cormorant Garamond + JetBrains Mono · 双色金 · 慢揭示</div>
+        <div class="persona-engine">D · GSAP scrub + parallax</div>
+      </div>
+      <div class="persona-card">
+        <div class="swatches"><div style="background:#ECE7DC"></div><div style="background:#14110D"></div><div style="background:#FF3B1D"></div><div style="background:#8A8479"></div></div>
+        <div class="persona-name">Brutal Typographic</div>
+        <div class="persona-fits">时装周 · 音乐 · 文化</div>
+        <div class="persona-notes">Anton + Inter · 大字号 + mix-blend-mode: difference · 刻骨字</div>
+        <div class="persona-engine">E · CSS mix-blend / D · GSAP</div>
+      </div>
+      <div class="persona-card">
+        <div class="swatches"><div style="background:#F0F0EE"></div><div style="background:#2D5A3D"></div><div style="background:#787878"></div><div style="background:#E8E4D8"></div></div>
+        <div class="persona-name">Quiet Luxury Minimal</div>
+        <div class="persona-fits">建筑 · 酒店 · 工作室 · wellness</div>
+        <div class="persona-notes">Raleway 100–900 · 双层遮罩 · 最大留白 · 浅色主题</div>
+        <div class="persona-engine">E · CSS mask/parallax</div>
+      </div>
+      <div class="persona-card">
+        <div class="swatches"><div style="background:#C0562F"></div><div style="background:#6E6A3E"></div><div style="background:#2A1B11"></div><div style="background:#E8D0BE"></div></div>
+        <div class="persona-name">Organic / Botanical</div>
+        <div class="persona-fits">花艺 · 护肤 · 食品 · 永续</div>
+        <div class="persona-notes">Spectral + Inter · 柔和粒子漂移 · 灰转彩 hover</div>
+        <div class="persona-engine">B · Canvas organic particles</div>
+      </div>
+      <div class="persona-card">
+        <div class="swatches"><div style="background:#0066FF"></div><div style="background:#D4FF00"></div><div style="background:#0A0A0F"></div><div style="background:#1A1A1F"></div></div>
+        <div class="persona-name">Electric Nightlife</div>
+        <div class="persona-fits">俱乐部 · 音乐节 · 游戏 · 电竞</div>
+        <div class="persona-notes">Duotone neon on black · glitch · 日文雨 · bloom</div>
+        <div class="persona-engine">A/B · particles + glitch</div>
+      </div>
+      <div class="persona-card">
+        <div class="swatches"><div style="background:#8b5cf6"></div><div style="background:#22d3ee"></div><div style="background:#07070f"></div><div style="background:#fafafa"></div></div>
+        <div class="persona-name">Scientific Emergence</div>
+        <div class="persona-fits">研究 · 模拟 · 生成艺术</div>
+        <div class="persona-notes">violet/cyan on 深黑 · 流体 / 反应扩散 / ray-march</div>
+        <div class="persona-engine">C · WebGL FBO</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============== 5. MOTION VOCABULARY ============== -->
+<section id="motion">
+  <div class="container">
+    <div class="head">
+      <div>
+        <span class="num">§5 — EXTENDED MOTION VOCABULARY</span>
+        <h2>二级动效词汇 <em style="font-style:italic;color:var(--muted)">不是英雄引擎，是辅音</em></h2>
+      </div>
+      <p class="right" style="font-size:14.5px">
+        这些是除 hero 引擎外，<strong>整页可自由使用</strong> 的小型 GSAP / CSS 技巧。每个都需要 motivated reason + <code>prefers-reduced-motion</code> 兜底。
+      </p>
+    </div>
+
+    <div class="grid cols-4">
+      <div class="persona-card">
+        <div class="persona-name">Split-char reveal</div>
+        <p style="font-size:13px;color:var(--muted);line-height:1.5">逐字符 / 词向上揭示代替整行 fade。Premium 代理站招牌动作。</p>
+        <button id="btnSplit" class="meta-tag" style="margin-top:auto;font-family:var(--font-mono);font-size:11px;background:var(--accent-soft);color:var(--accent);border:0;cursor:pointer;padding:8px 14px;border-radius:6px;width:fit-content">▶ 重放</button>
+        <h4 id="splitTarget" style="font-family:var(--font-serif);font-size:28px;line-height:1.1;overflow:hidden"><span style="display:inline-block;transform:translateY(0)">把</span> <span style="display:inline-block">标</span> <span style="display:inline-block">题</span> <span style="display:inline-block">拆</span> <span style="display:inline-block">成</span> <span style="display:inline-block">字</span> <span style="display:inline-block">再</span> <span style="display:inline-block">拼</span> <span style="display:inline-block">回</span> <span style="display:inline-block">去</span></h4>
+      </div>
+      <div class="persona-card">
+        <div class="persona-name">Magnetic button</div>
+        <p style="font-size:13px;color:var(--muted);line-height:1.5">CTA 按钮吸附指针几像素。珍贵稀缺 — 整个页面只放 1–2 个，多了喧宾夺主。</p>
+        <button id="magBtn" class="cta-btn" style="margin-top:auto;background:var(--accent);color:#06040E;border:0;padding:14px 26px;border-radius:999px;font-weight:600;font-size:14px;cursor:pointer;width:fit-content;will-change:transform">悬停我 →</button>
+      </div>
+      <div class="persona-card">
+        <div class="persona-name">Curtain wipe</div>
+        <p style="font-size:13px;color:var(--muted);line-height:1.5">实色面板 scale 收回去，露出下面内容。<strong>只用于比较 / before-after 节拍</strong>，不要乱用。</p>
+        <div id="curtainWrap" style="position:relative;height:80px;border-radius:8px;overflow:hidden;background:linear-gradient(135deg,#9d8cff,#FF6BA0);margin-top:auto">
+          <div id="curtain" style="position:absolute;inset:0;background:var(--accent);transform-origin:right center;transition:transform 1s cubic-bezier(.7,0,.3,1)"></div>
+          <span style="position:absolute;inset:0;display:grid;place-items:center;color:#fff;font-weight:600;font-family:var(--font-serif);font-size:18px">揭示遮罩下</span>
+        </div>
+        <button id="btnCurtain" class="meta-tag" style="margin-top:8px;font-family:var(--font-mono);font-size:11px;background:var(--accent-soft);color:var(--accent);border:0;cursor:pointer;padding:8px 14px;border-radius:6px;width:fit-content">▶ 重放</button>
+      </div>
+      <div class="persona-card">
+        <div class="persona-name">Scan-line sweep</div>
+        <p style="font-size:13px;color:var(--muted);line-height:1.5">细发光线扫过数据 / 图表块，给"测量"的隐喻加钩子。</p>
+        <div style="position:relative;height:80px;border-radius:8px;background:rgba(255,255,255,.04);border:1px solid var(--border);overflow:hidden;margin-top:auto">
+          <div style="position:absolute;top:30px;left:0;right:0;text-align:center;font-family:var(--font-mono);font-size:11px;color:var(--dim);letter-spacing:.18em">AWAITING SCAN</div>
+          <div id="scanLine" style="position:absolute;top:0;bottom:0;width:2px;background:linear-gradient(to bottom,transparent,var(--accent),transparent);left:0;box-shadow:0 0 12px var(--accent-glow)"></div>
+        </div>
+        <button id="btnScan" class="meta-tag" style="margin-top:8px;font-family:var(--font-mono);font-size:11px;background:var(--accent-soft);color:var(--accent);border:0;cursor:pointer;padding:8px 14px;border-radius:6px;width:fit-content">▶ 重放</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============== 6. 3D EFFECTS ============== -->
+<section id="3d-effects">
+  <div class="container">
+    <div class="head">
+      <div>
+        <span class="num">§6 — 3D EFFECTS · 深度</span>
+        <h2>3D 效果谱 <em style="font-style:italic;color:var(--muted)">CSS 伪 3D × Three.js 真 3D</em></h2>
+      </div>
+      <p class="right" style="font-size:14.5px">
+        默认选 <strong>CSS 3D</strong> — 覆盖 80% 3D 需求、零风险、零卡顿。需要"真渲染物体"（旋转的 3D 模型、变形图像面）才上 Three.js。
+        移动鼠标到下方色块上试试。
+      </p>
+    </div>
+
+    <div class="demo-3d">
+      <div class="demo-3d-card">
+        <h4>Pointer-tilt</h4>
+        <small>CSS 3D · ±12° · glare 跟随</small>
+        <div class="inner-card">鼠标移过来</div>
+      </div>
+      <div class="demo-3d-card">
+        <h4>Flip card</h4>
+        <small>CSS 3D · :focus-within 可达</small>
+        <div class="inner-card" tabindex="0">点击 / 聚焦试试</div>
+      </div>
+      <div class="demo-3d-card">
+        <h4>Coverflow</h4>
+        <small>CSS 3D · 沿 Z 推开的卡片轮播</small>
+        <div class="inner-card">3 in focus</div>
+      </div>
+      <div class="demo-3d-card">
+        <h4>Depth-parallax</h4>
+        <small>CSS 3D · 真实透视图层分离</small>
+        <div class="inner-card">鼠标移过来</div>
+      </div>
+    </div>
+
+    <p style="margin-top:24px;font-size:13.5px;color:var(--dim);text-align:center;font-style:italic">（Three.js 真 3D 适用：图像位移面、产品/模型查看器、滚动飞行镜头 — 同样需要 <code>IntersectionObserver</code> 懒加载、<code>renderer.dispose()</code> 清理、<code>prefers-reduced-motion</code> 静态海报 fallback）</p>
+  </div>
+</section>
+
+<!-- ============== 7. PRODUCT REGISTER ============== -->
+<section id="register-product">
+  <div class="container">
+    <div class="head">
+      <div>
+        <span class="num">§7 — PRODUCT REGISTER</span>
+        <h2>Product 注册：<em style="font-style:italic">设计服务产品</em></h2>
+      </div>
+      <p class="right" style="font-size:14.5px">
+        仪表盘 · 后台 · 分析 · 数据表 · app shell · 设置 · 工作台 · 电商。优化方向：<strong>清晰 × 密度 × 可用性</strong>。
+        不继承 brand 的 grain / vignette / 大 hero 字 / dark-default / 真引擎 — 这是<em>不同的设计语言</em>。
+      </p>
+    </div>
+
+    <h3 style="font-family:var(--font-serif);font-size:26px;margin-bottom:6px">产品底层 <small style="font-size:13px;color:var(--dim);display:block;margin-top:6px;font-style:italic;font-family:var(--font-sans)">Reference: product-ui.md §0</small></h3>
+
+    <div class="grid cols-3" style="margin-top:24px">
+      <div class="persona-card">
+        <div class="persona-name">Off-tint page</div>
+        <p style="font-size:13px;color:var(--muted);line-height:1.5">页面绝非纯 <code style="background:rgba(255,255,255,.06);padding:2px 6px;border-radius:4px">#fff</code> / <code style="background:rgba(255,255,255,.06);padding:2px 6px;border-radius:4px">#000</code>。向 brand hue 染色。深色面板向上变亮，亮色面板向下变浅。</p>
+      </div>
+      <div class="persona-card">
+        <div class="persona-name">Hairline or none</div>
+        <p style="font-size:13px;color:var(--muted);line-height:1.5">卡片要么用 1px 7% 透明度边，要么完全无边界由阴影分隔。<strong>绝不允许</strong>硬 <code style="background:rgba(255,255,255,.06);padding:2px 6px;border-radius:4px">#ccc</code> 框。</p>
+      </div>
+      <div class="persona-card">
+        <div class="persona-name">Whisper tinted shadow</div>
+        <p style="font-size:13px;color:var(--muted);line-height:1.5"><code style="background:rgba(255,255,255,.06);padding:2px 6px;border-radius:4px">0 1px 3px rgba(ink-tint,.05)</code>，向 ink 染色。大阴影只给浮动外壳 / 模态。</p>
+      </div>
+      <div class="persona-card">
+        <div class="persona-name">Distinct palette</div>
+        <p style="font-size:13px;color:var(--muted);line-height:1.5">禁止蓝+绿+橙通用三件套！选 §4 的 12 种 past-ready 组合，或自配 5 中性色阶 + 16 强调色。</p>
+      </div>
+      <div class="persona-card">
+        <div class="persona-name">KPI anatomy</div>
+        <p style="font-size:13px;color:var(--muted);line-height:1.5">顶部图标 chip + 状态 chip → 标签 → 大数字（tabular-nums，从 0 计数）→ 可选 sparkline。统一走这套。</p>
+      </div>
+      <div class="persona-card">
+        <div class="persona-name">SPECTACLE = 1–4</div>
+        <p style="font-size:13px;color:var(--muted);line-height:1.5">仪表盘不要 hero 引擎。仅做反馈型动效：reveal stagger、number roll-up、chart draw-on。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============== 8. SHELLS ============== -->
+<section id="shells">
+  <div class="container">
+    <div class="head">
+      <div>
+        <span class="num">§8 — LAYOUT SHELLS · 6 种信息架构</span>
+        <h2>六种 shell</h2>
+      </div>
+      <p class="right" style="font-size:14.5px">
+        没有一种适合所有场景。侧栏、浮动面板、bento、triptych、中心化 bento、<em>workflow</em> — 各有失效模式。
+        错配（如把 dashboard 套到 console）= 做完也没人用得动。
+      </p>
+    </div>
+
+    <div class="shell-row">
+      <div class="shell-tile">
+        <h4>01</h4>
+        <div class="nm">Canonical sidebar<small>侧栏 + topbar</small></div>
+        <div class="mini-shell" style="grid-template-columns:18px 1fr">
+          <div class="sidebar" style="grid-row:1/3"></div>
+          <div></div>
+          <div></div>
+        </div>
+      </div>
+      <div class="shell-tile">
+        <h4>02</h4>
+        <div class="nm">Floating panel<small>整个面板浮起</small></div>
+        <div class="mini-shell" style="grid-template-rows:14px 1fr">
+          <div style="background:rgba(157,140,255,.18)"></div>
+          <div style="margin:6px"></div>
+        </div>
+      </div>
+      <div class="shell-tile">
+        <h4>03</h4>
+        <div class="nm">Bento console<small>非对称 fr 列</small></div>
+        <div class="mini-shell" style="grid-template-columns:2fr 1fr 1fr;grid-template-rows:1fr 1fr;height:60%">
+          <div style="grid-row:1/3;background:rgba(157,140,255,.18)"></div>
+          <div></div><div></div>
+          <div></div><div></div>
+        </div>
+      </div>
+      <div class="shell-tile">
+        <h4>04</h4>
+        <div class="nm">Top pill-nav<small>无侧栏</small></div>
+        <div class="mini-shell" style="grid-template-rows:14px 1fr">
+          <div style="background:rgba(157,140,255,.18);border-radius:999px;height:14px"></div>
+          <div style="margin-top:8px"></div>
+        </div>
+      </div>
+      <div class="shell-tile">
+        <h4>05</h4>
+        <div class="nm">Centered bento / triptych<small>三列 masonry</small></div>
+        <div class="mini-shell" style="grid-template-columns:30% 1fr 30%;height:60%">
+          <div></div><div></div><div></div>
+        </div>
+      </div>
+      <div class="shell-tile">
+        <h4>06</h4>
+        <div class="nm">Workflow shell<small>表单 + aside</small></div>
+        <div class="mini-shell" style="grid-template-columns:18px 1fr 30%;height:60%">
+          <div class="sidebar" style="grid-row:1/2"></div>
+          <div></div>
+          <div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============== 9. CHARTS ============== -->
+<section id="charts">
+  <div class="container">
+    <div class="head">
+      <div>
+        <span class="num">§9 — CHART CRAFTING · 25 种图表</span>
+        <h2>图表手作现场 <em style="font-style:italic;color:var(--muted)">数据驱动几何，绝不假装</em></h2>
+      </div>
+      <p class="right" style="font-size:14.5px">
+        高度 = 数值 / 最大值。×轴标签每柱一个。≤12 列。trend over time 用线 / 面。
+        <strong>barcode 警钟</strong>：均匀高 / 顶到框 / 太细 / 无标签 = 不许 ship。
+      </p>
+    </div>
+
+    <div class="chart-grid">
+      <div class="chart-card">
+        <h4>Bar · 柱状（正确）</h4>
+        <div class="chart-canvas" id="cBar"></div>
+        <pre>height = value / max
+≤12 列 · 每列标签</pre>
+      </div>
+      <div class="chart-card">
+        <h4>Line · 折线（draw-in）</h4>
+        <div class="chart-canvas" id="cLine"></div>
+        <pre>stroke-dasharray → 0
+reveal 1.6s power2.out</pre>
+      </div>
+      <div class="chart-card">
+        <h4>Area · 面积</h4>
+        <div class="chart-canvas" id="cArea"></div>
+        <pre>path 关闭到底
+垂直渐变 accent → 透</pre>
+      </div>
+      <div class="chart-card">
+        <h4>Donut · 环（grow）</h4>
+        <div class="chart-canvas" id="cDonut"></div>
+        <pre>circumference × (1-pct)
+rotate(-90deg)</pre>
+      </div>
+      <div class="chart-card">
+        <h4>Stacked bar · 堆叠</h4>
+        <div class="chart-canvas" id="cStacked"></div>
+        <pre>列高 = total/max
+段高 = v/total 列高</pre>
+      </div>
+      <div class="chart-card">
+        <h4>Gauge · 半环仪表</h4>
+        <div class="chart-canvas" id="cGauge"></div>
+        <pre>scaling C × 270/360
+needle rotate -135+pct*270</pre>
+      </div>
+      <div class="chart-card">
+        <h4>Sparkline · 微折线</h4>
+        <div class="chart-canvas" id="cSpark"></div>
+        <pre>bare polyline
+non-scaling-stroke</pre>
+      </div>
+      <div class="chart-card">
+        <h4>Concentric rings · 同心环</h4>
+        <div class="chart-canvas" id="cConc"></div>
+        <pre>嵌套 div 半径递减
+staggered scale-in</pre>
+      </div>
+    </div>
+
+    <p style="margin-top:30px;font-size:13.5px;color:var(--dim);text-align:center;font-style:italic">完整 25 种图表 × 可访问性等级 × 库选择，详见 <code style="background:rgba(255,255,255,.06);padding:2px 8px;border-radius:4px">references/dataviz.md</code></p>
+  </div>
+</section>
+
+<!-- ============== 10. WORKFLOW ============== -->
+<section id="workflow">
+  <div class="container">
+    <div class="head">
+      <div>
+        <span class="num">§10 — WORKFLOW UI</span>
+        <h2>Workflow 页面 <em style="font-style:italic;color:var(--muted)">你<em>操作</em>的页面，而非读</em></h2>
+      </div>
+      <p class="right" style="font-size:14.5px">
+        发布 / 上线 / 提交 / 保存配置。失败模式不是"读不懂"，而是"做不完"。三栏：rail · numbered sections · sticky aside with live preview + pre-submit check。
+      </p>
+    </div>
+
+    <div class="workflow">
+      <aside class="wf-rail">
+        <div class="nav-item"><span class="dot"></span>概览</div>
+        <div class="nav-item active"><span class="dot"></span>发布任务</div>
+        <div class="nav-item"><span class="dot"></span>团队管理</div>
+        <div class="nav-item"><span class="dot"></span>设置</div>
+        <div class="nav-item"><span class="dot"></span>财务</div>
+      </aside>
+      <div class="wf-form">
+        <div class="section-card">
+          <div class="num">1</div>
+          <div>
+            <h5>任务基础信息</h5>
+            <div class="desc">起头一行 — 先填清楚再说别的。</div>
+            <label style="font-size:11px;color:var(--dim);letter-spacing:.12em;text-transform:uppercase;display:block;margin-bottom:6px">任务标题 <span style="color:var(--bad)">*</span></label>
+            <input type="text" value="2026 春季新品发布主视觉设计" />
+          </div>
+        </div>
+        <div class="section-card">
+          <div class="num">2</div>
+          <div>
+            <h5>分发方式</h5>
+            <div class="desc">选了会影响价格、时长、能见度。</div>
+            <div class="wf-radio-group">
+              <div class="wf-radio">
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px"><div style="width:14px;height:14px;border-radius:999px;border:1.5px solid var(--border-strong)"></div><span class="lbl">公开大厅</span></div>
+                <small>任务展示在平台大厅，达人可见并参与。</small>
+              </div>
+              <div class="wf-radio on">
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px"><div style="width:14px;height:14px;border-radius:999px;background:var(--accent);box-shadow:0 0 0 2px var(--accent-soft);border:1.5px solid var(--accent)"></div><span class="lbl">定向邀请</span></div>
+                <small>只向 3 位指定达人发出邀请，他们各自报价。</small>
+              </div>
+              <div class="wf-radio">
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px"><div style="width:14px;height:14px;border-radius:999px;border:1.5px solid var(--border-strong)"></div><span class="lbl">中介代理</span></div>
+                <small>由中介全权处理，平台不直接对接达人。</small>
+              </div>
+              <div class="wf-radio">
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px"><div style="width:14px;height:14px;border-radius:999px;border:1.5px solid var(--border-strong)"></div><span class="lbl">定价矩阵</span></div>
+                <small>按使用次数 / 周期计费，先定底价再开放。</small>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="section-card">
+          <div class="num">3</div>
+          <div>
+            <h5>预算与时间</h5>
+            <div class="desc">系统会从这两项推算可承接的达人层级。</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+              <div>
+                <label style="font-size:11px;color:var(--dim);letter-spacing:.12em;text-transform:uppercase;display:block;margin-bottom:6px">预算 <span style="color:var(--bad)">*</span></label>
+                <input type="text" value="¥ 48,000" />
+              </div>
+              <div>
+                <label style="font-size:11px;color:var(--dim);letter-spacing:.12em;text-transform:uppercase;display:block;margin-bottom:6px">截止 <span style="color:var(--bad)">*</span></label>
+                <input type="text" value="2026-08-30" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <aside class="wf-aside">
+        <h5>实时预览</h5>
+        <div class="preview-row"><span>可见范围</span><b>仅邀请 · 3 人</b></div>
+        <div class="preview-row"><span>预估单价</span><b>¥ 18,400</b></div>
+        <div class="preview-row"><span>服务费</span><b>¥ 3,200</b></div>
+        <div class="preview-row" style="border-top:1px solid var(--border-strong);padding-top:14px;margin-top:6px"><span style="color:var(--ink);font-weight:500">合计</span><b style="font-size:18px;color:var(--accent)">¥ 51,200</b></div>
+
+        <div class="wf-precheck">
+          <h5>提交前检查</h5>
+          <li>标题已填写</li>
+          <li>分发方式已选</li>
+          <li>预算与截止已填</li>
+          <li class="warn">附件未上传（可后补）</li>
+        </div>
+
+        <button style="background:var(--accent);color:#06040E;border:0;padding:14px;border-radius:10px;font-weight:600;font-size:14px;cursor:pointer;margin-top:auto">保存为草稿</button>
+        <button style="background:var(--ink);color:#06040E;border:0;padding:14px;border-radius:10px;font-weight:600;font-size:14px;cursor:pointer">提交发布</button>
+      </aside>
+    </div>
+
+    <p style="margin-top:24px;font-size:13.5px;color:var(--dim);text-align:center;font-style:italic">上方完整演练了：numbered section cards · <strong>radio-card group</strong>（区别于默认 radio-list 的关键升级）· live preview aside · pre-submit checklist · 派生预算（合计可下钻）。<strong>禁用提交按钮且不说原因 = 设计硬错。</strong></p>
+  </div>
+</section>
+
+<!-- ============== 11. COMMERCE ============== -->
+<section id="commerce">
+  <div class="container">
+    <div class="head">
+      <div>
+        <span class="num">§11 — COMMERCE REGISTER</span>
+        <h2>电商注册 <em style="font-style:italic;color:var(--muted)">brand 灵魂 + product 任务的混合体</em></h2>
+      </div>
+      <p class="right" style="font-size:14.5px">
+        商品详情页（PDP）卖<strong>氛围</strong>，可以保留灵魂；列表页（PLP）·购物车·结账走<strong>任务</strong>（密度高、奇观低）。
+        每页按其工作路由。
+      </p>
+    </div>
+
+    <div class="grid cols-4" style="margin-top:30px">
+      <div class="persona-card">
+        <div class="persona-fits">PDP</div>
+        <div class="persona-name">商品详情</div>
+        <p style="font-size:13px;color:var(--muted);line-height:1.5">画廊 + 信息列（桌面 sticky）。变体不可隐藏只可禁用 — 抹去尺寸 = 假装没有。CTA 主+次不并列。</p>
+      </div>
+      <div class="persona-card">
+        <div class="persona-fits">PLP</div>
+        <div class="persona-name">列表 / 类目</div>
+        <p style="font-size:13px;color:var(--muted);line-height:1.5"><code style="background:rgba(255,255,255,.06);padding:2px 6px;border-radius:4px">repeat(auto-fill, minmax(220px,1fr))</code> · 卡片基线对齐（底部锁定的 CTA）· 过滤器实时反映 N 个结果。</p>
+      </div>
+      <div class="persona-card">
+        <div class="persona-fits">CART</div>
+        <div class="persona-name">购物车</div>
+        <p style="font-size:13px;color:var(--muted);line-height:1.5">就地编辑数量 / 变体 / 删除（小计随改而变）。空购物车是引导状态而非空页。</p>
+      </div>
+      <div class="persona-card">
+        <div class="persona-fits">CHECKOUT</div>
+        <div class="persona-name">结账</div>
+        <p style="font-size:13px;color:var(--muted);line-height:1.5">三步而非一堵墙 · guest 可结 · 费用从<strong>第一个字段</strong>起就透明（不允许 drip pricing）· 订单号 + 明细 + 寄达预估 = 当下最高信任时刻。</p>
+      </div>
+    </div>
+
+    <div style="background:rgba(255,124,119,.08);border:1px solid rgba(255,124,119,.3);border-radius:var(--r-lg);padding:24px 28px;margin-top:36px">
+      <h4 style="color:var(--bad);font-family:var(--font-sans);font-size:12px;letter-spacing:.18em;text-transform:uppercase;font-weight:600;margin-bottom:12px">⚠ 暗黑模式黑名单（不只是风格 — 多国法规可罚）</h4>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;font-size:13.5px;color:var(--muted)">
+        <div>• 假倒计时（刷新会重置）<br/>• 假库存 / 假"14 人正在看"<br/>• opt-out 默认勾选</div>
+        <div>• 隐藏费用（drip pricing）<br/>• 虚假比较 / 伪造销量<br/>• 强迫账户注册才结账</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============== 12. ANTI-CHEAP CHECKER ============== -->
+<section id="anti-cheap">
+  <div class="container">
+    <div class="head">
+      <div>
+        <span class="num">§12 — ANTI-SLOP CHECKER</span>
+        <h2>廉价感自检 <em style="font-style:italic;color:var(--muted)">30 秒决定能不能 ship</em></h2>
+      </div>
+      <p class="right" style="font-size:14.5px">
+        完整黑名单在 <code>references/anti-cheap.md</code>。这是节选 — 勾选你的页面，告诉你失分项。
+      </p>
+    </div>
+
+    <div class="checker">
+      <div>
+        <h4>布局 / 视觉 / 类型 / 内容</h4>
+        <div class="check-row" data-check="hardban">
+          <div class="q">
+            <b>❶ 没有 em-dash 装饰</b>
+            <small>作为排比、戏剧停顿、装饰性旁白 — 即便已经写出来了</small>
+          </div>
+          <div>
+            <label><input type="checkbox" data-score="yes" />通过</label>
+            <label><input type="checkbox" data-score="no" />存在</label>
+          </div>
+        </div>
+        <div class="check-row" data-check="tel">
+          <div class="q">
+            <b>❷ eyebrow 数量 ≤ ⌈sections / 3⌉</b>
+            <small>每节顶部那个超细 uppercase 标签 — AI 最爱滥用</small>
+          </div>
+          <div>
+            <label><input type="checkbox" data-score="yes" />≤ 节数 / 3</label>
+            <label><input type="checkbox" data-score="no" />过多</label>
+          </div>
+        </div>
+        <div class="check-row" data-check="tel">
+          <div class="q">
+            <b>❸ 没有渐变文字作默认招式</b>
+            <small><code>background-clip: text</code> 双色 duotone 可例外；单独禁止</small>
+          </div>
+          <div>
+            <label><input type="checkbox" data-score="yes" />不存在</label>
+            <label><input type="checkbox" data-score="no" />存在</label>
+          </div>
+        </div>
+        <div class="check-row" data-check="hardban">
+          <div class="q">
+            <b>❹ 没有 AI 紫蓝光（除非明确要）</b>
+            <small>渐变按钮 · 霓虹 mesh 背景 · 发光 CTA</small>
+          </div>
+          <div>
+            <label><input type="checkbox" data-score="yes" />没有</label>
+            <label><input type="checkbox" data-score="no" />有</label>
+          </div>
+        </div>
+        <div class="check-row" data-check="tel">
+          <div class="q">
+            <b>❺ 没有假精确数字</b>
+            <small><code>92%</code>、<code>4.1×</code>、<code>48k</code> 假装为规格</small>
+          </div>
+          <div>
+            <label><input type="checkbox" data-score="yes" />都标数据出处</label>
+            <label><input type="checkbox" data-score="no" />瞎编</label>
+          </div>
+        </div>
+        <div class="check-row" data-check="tel">
+          <div class="q">
+            <b>❻ 字体不是 reflex 默认</b>
+            <small>Inter / Fraunces / Instrument Serif / Playfair / Cormorant / Space Grotesk / Syne / DM Sans 等 — 用它们要说出理由，否则换新的</small>
+          </div>
+          <div>
+            <label><input type="checkbox" data-score="yes" />有理由或换了字体</label>
+            <label><input type="checkbox" data-score="no" />默认而未申辩</label>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <h4>图表 / 数据 / 交互</h4>
+        <div class="check-row" data-check="hardban">
+          <div class="q">
+            <b>❼ 柱状图有 x 轴标签 & height = value/max</b>
+            <small>不出现均匀高 / 顶到框 / 太细 / barcode 的失败</small>
+          </div>
+          <div>
+            <label><input type="checkbox" data-score="yes" />都对</label>
+            <label><input type="checkbox" data-score="no" />有错</label>
+          </div>
+        </div>
+        <div class="check-row" data-check="tel">
+          <div class="q">
+            <b>❽ 趋势用线 / 面积，不用柱</b>
+            <small>一根根细瘦列墙 = 错了图类型</small>
+          </div>
+          <div>
+            <label><input type="checkbox" data-score="yes" />对</label>
+            <label><input type="checkbox" data-score="no" />错</label>
+          </div>
+        </div>
+        <div class="check-row" data-check="hardban">
+          <div class="q">
+            <b>❾ 不用 div 假装"产品截图"</b>
+            <small>除非这 div 是该产品的自有组件（CMS 预览、教学图），不是赝品</small>
+          </div>
+          <div>
+            <label><input type="checkbox" data-score="yes" />符合边界</label>
+            <label><input type="checkbox" data-score="no" />伪造假截图</label>
+          </div>
+        </div>
+        <div class="check-row" data-check="tel">
+          <div class="q">
+            <b>❿ 没有任何 motion 被声称却未实现</b>
+            <small>说的 SPECTACLE 7 但页面静止 = 谎言</small>
+          </div>
+          <div>
+            <label><input type="checkbox" data-score="yes" />动效都活了</label>
+            <label><input type="checkbox" data-score="no" />存在谎言</label>
+          </div>
+        </div>
+        <div class="check-row" data-check="hardban">
+          <div class="q">
+            <b>⓫ 总是提供 prefers-reduced-motion 兜底</b>
+            <small>reveal stagger / magnetic / canvas loop 都必须冻结到静态帧</small>
+          </div>
+          <div>
+            <label><input type="checkbox" data-score="yes" />有兜底</label>
+            <label><input type="checkbox" data-score="no" />没兜底</label>
+          </div>
+        </div>
+        <div class="check-row" data-check="tel">
+          <div class="q">
+            <b>⓬ 对比度 WCAG AA（按钮 · 占位 · 错误文字）</b>
+            <small>不只是测纯背景，要测"按钮上文字 vs 按钮 bg"</small>
+          </div>
+          <div>
+            <label><input type="checkbox" data-score="yes" />≥ 4.5:1</label>
+            <label><input type="checkbox" data-score="no" />存疑</label>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="verdict" id="verdict" style="display:none"></div>
+    <button id="gradeBtn" style="margin-top:20px;background:var(--accent);color:#06040E;border:0;padding:14px 24px;border-radius:10px;font-weight:600;font-size:14px;cursor:pointer">▶ 跑一次分级</button>
+  </div>
+</section>
+
+<!-- ============== 13. COMMANDS ============== -->
+<section id="commands">
+  <div class="container">
+    <div class="head">
+      <div>
+        <span class="num">§13 — VERB COMMANDS · 动词命令</span>
+        <h2>10 个动词 <em style="font-style:italic;color:var(--muted)">不要每次都走完全流程</em></h2>
+      </div>
+      <p class="right" style="font-size:14.5px">
+        完整 <code>craft</code> 流程是 default。如果你只想针对一处迭代，用下面这些命令 — 它只载入对应 reference，做一件事。
+      </p>
+    </div>
+
+    <div class="cmds">
+      <div class="cmd"><code>/craft</code><div class="body"><h4>完整 build</h4><p>默认。Brand Read → 三拨盘 → 底层 → 引擎 → 装配 → 黑名单 → pre-flight。</p></div></div>
+      <div class="cmd"><code>/init</code><div class="body"><h4>新项目：写 PRODUCT.md</h4><p>新建空白项目时先跑 — 注册、灵魂、锁定拨盘、反示例，每条后续任务都读这个 brief。</p></div></div>
+      <div class="cmd"><code>/document</code><div class="body"><h4>已有项目：导出设计系统</h4><p>把现有代码的设计意图提取成 design-model.yaml，报告 drift。</p></div></div>
+      <div class="cmd"><code>/audit</code><div class="body"><h4>只读诊断</h4><p>跑黑名单 + spectacle-show + pre-flight，输出发现列表。<strong>不改代码</strong>。</p></div></div>
+      <div class="cmd"><code>/bolder</code><div class="body"><h4>加大胆 +2</h4><p>SPECTACLE 升 2，引擎升级一级（CSS-only → GSAP → Canvas → Three.js）。</p></div></div>
+      <div class="cmd"><code>/quieter</code><div class="body"><h4>压低 −2</h4><p>降一级引擎或拆掉；不要重做整页。</p></div></div>
+      <div class="cmd"><code>/soul</code><div class="body"><h4>换灵魂</h4><p>页面"太通用"或调性错 → 重新选 persona。</p></div></div>
+      <div class="cmd"><code>/animate</code><div class="body"><h4>只动动效</h4><p>动 SPECTACLE 合适但动效不够 → 只动这部分。</p></div></div>
+      <div class="cmd"><code>/depth</code><div class="body"><h4>加 3D 时刻</h4><p>加一个 CSS 伪 3D（tilt / flip / coverflow / depth-parallax）或 Three.js 物体。</p></div></div>
+      <div class="cmd"><code>/densify</code><div class="body"><h4>调密度 ±</h4><p>调 DENSITY 拨盘，加减内容。</p></div></div>
+      <div class="cmd"><code>/redesign</code><div class="body"><h4>改版 — 审计优先</h4><p>现有页升级，audit-then-fix；不要因一个抱怨全重建。</p></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============== FOOTER ============== -->
+<footer>
+  <div class="container">
+    <h3 style="font-size:42px">准备好了吗？</h3>
+    <p style="margin:14px auto 0">这个库最珍贵的是它的<strong>反 AI 廉价痕迹立场</strong>。技术细节可以查 reference，但"宁愿为了反 slop 看起来怪，也不要为了合群而失去灵魂"这一点，要记住。</p>
+    <div class="links">
+      <a href="examples-index.html">→ 13 个范例导览</a>
+      <a href="https://github.com/mouse-lin/finesse-skill" target="_blank" rel="noopener">→ GitHub 仓库</a>
+      <a href="skills/finesse-ui/SKILL.md">→ SKILL.md 全文</a>
+    </div>
+    <p style="margin-top:60px;font-size:12px;color:var(--dim)">本页本身也算一个 meta 示例 — 它用 Cinematic Tech persona，深色，紫色调（不用 AI 紫蓝 glow），用 Cormorant 做标题张力，含真实 grain。所有 11 节都在演示的内容里被演示。</p>
+  </div>
+</footer>
+
+</div>
+
+<!-- ============== SCRIPTS ============== -->
+<script>
+/* ============== Per-section '这怎么用' injectors ============== */
+const HOWTOS = {
+  'register-brand': {
+    q:'这节解决什么问题?',
+    body:'你做的是 <b>品牌面</b>(landing / 上线 / portfolio)。需要定 register、灵魂、引擎、配色 —— 然后让 AI 一气呵成。读 <b>设计 DNA · 通用工艺底线</b>是必备;真正的视觉差异靠选 5 套引擎之一。'
+  },
+  'engines': {
+    q:'这节解决什么问题?',
+    body:'你要决定 <b>hero 用哪种"会动"的形式</b>。5 个引擎按 SOUL × SPECTACLE 选择:A Three.js(7–10 级特效)/ B Canvas 2D(实时数据)/ C WebGL FBO(物理仿真)/ D GSAP(滚动故事)/ E CSS-only(零依赖)。不确定 → 选 D 或 E。'
+  },
+  'personas': {
+    q:'这节解决什么问题?',
+    body:'你的 <b>产品属于什么行业</b> → 默认美学是什么 → 哪个灵魂击败它。10 种人格覆盖了从 AI 到威士忌的所有主流行业。如果都不合,允许"自创"(`inspiration-catalog.md` 给了 48 个真作品可参考)。'
+  },
+  'motion': {
+    q:'这节解决什么问题?',
+    body:'整页可用的 <b>小型动效词汇</b>:split-char 揭示 / magnetic button / curtain wipe / scan-line。每个是独立招式,可叠加在任意页面不破坏设计语法。所有动效必须有 <code>prefers-reduced-motion</code> 兜底。'
+  },
+  '3d-effects': {
+    q:'这节解决什么问题?',
+    body:'你想给某个元素加 <b>空间感</b>。CSS 3D 解决 80% 场景(指针倾斜/翻转/coverflow/视差),Three.js 仅在你需要真渲染物体(旋转 3D 模型、变形图像)。默认 CSS;不要为所有组件都加 3D。'
+  },
+  'register-product': {
+    q:'这节解决什么问题?',
+    body:'你做的是 <b>产品面</b>(dashboard / 后台 / 数据)。先用 <b>通用工艺底线</b>打底,再选 palette(product-palettes.md 的 12 套即用方案),最后选 shell。仪表盘严禁继承 brand 的 grain/vignette/大 hero 字。'
+  },
+  'shells': {
+    q:'这节解决什么问题?',
+    body:'你的仪表盘 <b>用哪种信息架构</b>。6 种 shell 各有适用场景:canonical sidebar(IA 深)/ floating panel(App 类)/ bento console(异构 KPI)/ top pill-nav(IA 浅)/ centered bento / triptych。错配一种 shell 比没有 shell 更差。'
+  },
+  'charts': {
+    q:'这节解决什么问题?',
+    body:'你得 <b>画图表</b>且不能出"廉价感"。本节现场演示 8 种:bar/line/area/donut/stacked-bar/gauge/sparkline/concentric rings。所有 bar 必须 height = v/max 从 0 基线起算,x 轴有 label。'
+  },
+  'workflow': {
+    q:'这节解决什么问题?',
+    body:'你要做的是 <b>"操作型"页面</b>(发布 / 表单 / 设置),不是"读型"。失败模式 = 用户做不完。关键是三栏(rail + 表单 + aside live preview)+ pre-submit check card + draft/commit + radio-card group。'
+  },
+  'commerce': {
+    q:'这节解决什么问题?',
+    body:'你要做 <b>电商页</b>(PDP/PLP/Cart/Checkout)。PDP 可以保留品牌灵魂,PLP/Cart/Checkout 必须降为产品 register —— 高密度、高效率。还要规避 commerce 黑名单(假倒计时、drip pricing、伪库存)。'
+  },
+  'anti-cheap': {
+    q:'这节解决什么问题?',
+    body:'你做完一版, <b>担心还有 AI 廉价痕迹没修干净</b>。这一节是个互动检查器 —— 12 道题覆盖最常见的失败(em-dash 装饰 / 渐变文字 / 紫蓝渐变 / eyebrow 滥用 / barcode 失败的柱状图等)。'
+  },
+  'commands': {
+    q:'这节解决什么问题?',
+    body:'你 <b>已有一版页面,想针对性迭代</b>(不是全重建)。`/finesse` 提供 10 个动词命令:audit / redesign / bolder / quieter / soul / animate / depth / densify / init / document。每个命令只载入对应 reference 不重做整页。'
+  }
+};
+Object.entries(HOWTOS).forEach(function(entry){
+  var id = entry[0], info = entry[1];
+  var sec = document.getElementById(id);
+  if (!sec) return;
+  var container = sec.querySelector('.container, .container-fluid, .wrap') || sec;
+  var box = document.createElement('div');
+  box.className = 'howto';
+  box.innerHTML = '<span class="q">' + info.q + '</span>' + info.body;
+  // Insert right after the first .head or first h2 in container
+  var anchor = container.querySelector('.head, h2');
+  if (anchor && anchor.parentNode === container) anchor.parentNode.insertBefore(box, anchor.nextSibling);
+  else container.insertBefore(box, container.firstChild);
+});
+
+/* ============== Three dials widget ============== */
+const soulR = document.getElementById('soulRange'), specR = document.getElementById('specRange'), densR = document.getElementById('densRange');
+const soulO = document.getElementById('soulOut'), specO = document.getElementById('specOut'), densO = document.getElementById('densOut');
+const recText = document.getElementById('recText');
+function paint(r,o){
+  o.innerHTML = r.value + '<small>/ 10</small>';
+  r.style.setProperty('--v', (r.value - r.min)/(r.max - r.min)*100 + '%');
+}
+function recommend(){
+  paint(soulR,soulO); paint(specR,specO); paint(densR,densO);
+  const s=+soulR.value, sp=+specR.value, d=+densR.value;
+  let reg, engine;
+  if(d >= 6) reg = '产品 / 仪表盘 (Product register)';
+  else if(sp >= 7) reg = '品牌 / 落地页 (Brand register)';
+  else reg = '视情况路由 — 看灵魂更想 hero 还是更想数据';
+
+  if(sp >= 8) engine = ' · 真引擎：A Three.js / C WebGL FBO / D GSAP 大 pan';
+  else if(sp >= 5) engine = ' · 中等引擎：D GSAP ScrollTrigger / B Canvas 2D';
+  else if(sp <= 3) engine = ' · 不需要引擎；最多用 E CSS-only reveal';
+  else engine = '';
+
+  recText.innerHTML = `<strong style="color:var(--ink)">${reg}</strong><span style="color:var(--dim)">${engine} · DENSITY ${d >= 7 ? '高 — 需要好节奏 + 表格规则' : d <= 3 ? '低 — 用大留白 / 单一焦点' : '中等'}</span>`;
+}
+[soulR,specR,densR].forEach(r => r.addEventListener('input', recommend));
+recommend();
+
+/* ============== Engine A — particle field (Canvas 2D simulating Three.js particles) ============== */
+(function(){
+  const c = document.getElementById('engineA');
+  const ctx = c.getContext('2d');
+  let w,h,DPR=Math.min(devicePixelRatio,2);
+  function resize(){ w=c.clientWidth; h=c.clientHeight; c.width=w*DPR; c.height=h*DPR; ctx.setTransform(DPR,0,0,DPR,0,0); }
+  resize(); addEventListener('resize',resize);
+  const N=1200;
+  const P=Array.from({length:N},()=>({
+    a:Math.random()*Math.PI*2,
+    r:Math.pow(Math.random(),.6)*Math.min(w,h)*.55,
+    z:Math.random()*.8+.2,
+    hue:Math.random()<.7?195:330
+  }));
+  let t=0;
+  function loop(){
+    ctx.fillStyle='#04060D'; ctx.fillRect(0,0,w,h);
+    t+=.012;
+    const cx=w/2,cy=h/2;
+    for(const p of P){
+      const a=p.a+t*.15*(1-p.z);
+      const x=cx+Math.cos(a)*p.r*p.z;
+      const y=cy+Math.sin(a)*p.r*p.z*.3;
+      const sz=(1-p.z)*1.2+.5;
+      const alpha=(1-p.z)*.6+.2;
+      ctx.beginPath();ctx.arc(x,y,sz,0,Math.PI*2);
+      ctx.fillStyle=`hsla(${p.hue},90%,65%,${alpha})`;
+      ctx.fill();
+    }
+    requestAnimationFrame(loop);
+  }
+  loop();
+})();
+
+/* ============== Engine B — live K-line / particles ============== */
+(function(){
+  const c = document.getElementById('engineB');
+  const ctx = c.getContext('2d');
+  let w,h,DPR=Math.min(devicePixelRatio,2);
+  function resize(){ w=c.clientWidth; h=c.clientHeight; c.width=w*DPR; c.height=h*DPR; ctx.setTransform(DPR,0,0,DPR,0,0); }
+  resize(); addEventListener('resize',resize);
+  // ring buffer of price-like values
+  const buf = Array.from({length:80}, ()=> 50 + Math.random()*20);
+  let lastT = 0;
+  function loop(){
+    // fade trail
+    ctx.fillStyle='rgba(2,8,6,.15)'; ctx.fillRect(0,0,w,h);
+    // advance buffer
+    buf.shift();
+    const last = buf[buf.length-1];
+    const next = Math.max(10, Math.min(90, last + (Math.random()-.5)*6));
+    buf.push(next);
+
+    const pad=20;
+    const min=Math.min(...buf), max=Math.max(...buf);
+    const range = (max-min)||1;
+
+    // grid
+    ctx.strokeStyle='rgba(0,220,80,.04)'; ctx.lineWidth=1;
+    for(let i=0;i<5;i++){
+      const y = pad + (h-2*pad)*i/4;
+      ctx.beginPath(); ctx.moveTo(pad,y); ctx.lineTo(w-pad,y); ctx.stroke();
+    }
+    // line
+    ctx.beginPath();
+    buf.forEach((v,i)=>{
+      const x = pad + (w-2*pad)*i/(buf.length-1);
+      const y = (h-pad) - (v-min)/range*(h-2*pad);
+      if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+    });
+    ctx.strokeStyle='rgba(0,220,80,.85)'; ctx.lineWidth=1.5; ctx.stroke();
+
+    // dot
+    const lx = pad + (w-2*pad)*(buf.length-1)/(buf.length-1);
+    const ly = (h-pad) - (next-min)/range*(h-2*pad);
+    ctx.beginPath(); ctx.arc(lx,ly,4,0,Math.PI*2);
+    ctx.fillStyle='#00DC50'; ctx.shadowBlur=12; ctx.shadowColor='#00DC50'; ctx.fill(); ctx.shadowBlur=0;
+
+    // scanlines
+    ctx.fillStyle='rgba(0,0,0,.08)';
+    for(let y=0;y<h;y+=3) ctx.fillRect(0,y,w,1);
+
+    requestAnimationFrame(loop);
+  }
+  loop();
+})();
+
+/* ============== Engine D — reveal on view ============== */
+(function(){
+  const blocks = document.querySelectorAll('#revealBlocks > div');
+  const demo = document.getElementById('engineDDemo');
+  const io = new IntersectionObserver(es=>{
+    es.forEach(en=>{
+      if(en.isIntersecting){
+        blocks.forEach((b,i)=>{
+          setTimeout(()=>{
+            b.style.transition='all .8s cubic-bezier(.2,.8,.2,1)';
+            b.style.opacity='1';
+            b.style.transform='translateY(0)';
+          }, i*150);
+        });
+        io.unobserve(demo);
+      }
+    });
+  },{threshold:.4});
+  io.observe(demo);
+
+  // demo auto-reset
+  demo.addEventListener('click', ()=>{
+    blocks.forEach(b=>{
+      b.style.transition='none';
+      b.style.opacity='0';
+      b.style.transform='translateY(40px)';
+    });
+    setTimeout(()=>{
+      blocks.forEach((b,i)=>setTimeout(()=>{
+        b.style.transition='all .8s cubic-bezier(.2,.8,.2,1)';
+        b.style.opacity='1';
+        b.style.transform='translateY(0)';
+      }, i*150));
+    },100);
+  });
+})();
+
+/* ============== Engine E — mouse mask ============== */
+(function(){
+  const layer = document.getElementById('layerNight');
+  const demo = document.getElementById('engineEDemo');
+  demo.addEventListener('pointermove', e=>{
+    const r = demo.getBoundingClientRect();
+    const m = `radial-gradient(circle 100px at ${e.clientX-r.left}px ${e.clientY-r.top}px, #000 40%, transparent 72%)`;
+    layer.style.mask = m; layer.style.webkitMask = m;
+  });
+  demo.addEventListener('pointerleave', ()=>{
+    layer.style.mask = 'radial-gradient(circle 100px at -400px -400px, #000 40%, transparent 72%)';
+    layer.style.webkitMask = layer.style.mask;
+  });
+})();
+
+/* ============== Motion: split-char reveal ============== */
+document.getElementById('btnSplit').addEventListener('click',()=>{
+  const spans = document.querySelectorAll('#splitTarget span');
+  spans.forEach(s=>{
+    s.style.transition='none'; s.style.transform='translateY(120%)'; s.style.opacity='0';
+  });
+  setTimeout(()=>{
+    spans.forEach((s,i)=>{
+      setTimeout(()=>{
+        s.style.transition=`transform .8s cubic-bezier(.2,.8,.2,1) ${i*.04}s, opacity .8s ${i*.04}s`;
+        s.style.transform='translateY(0)';
+        s.style.opacity='1';
+      },50);
+    });
+  },80);
+});
+
+/* ============== Motion: magnetic button ============== */
+(function(){
+  const btn = document.getElementById('magBtn');
+  btn.addEventListener('pointermove', e=>{
+    const r = btn.getBoundingClientRect();
+    const x = (e.clientX - r.left - r.width/2)*.35;
+    const y = (e.clientY - r.top - r.height/2)*.35;
+    btn.style.transform = `translate(${x}px, ${y}px)`;
+  });
+  btn.addEventListener('pointerleave', ()=>{ btn.style.transform=''; });
+})();
+
+/* ============== Motion: curtain wipe ============== */
+document.getElementById('btnCurtain').addEventListener('click',()=>{
+  const c = document.getElementById('curtain');
+  c.style.transform='scaleX(0)';
+  setTimeout(()=>{
+    c.style.transition='none';
+    c.style.transform='scaleX(1)';
+    requestAnimationFrame(()=>{
+      c.style.transition='transform 1s cubic-bezier(.7,0,.3,1)';
+      c.style.transform='scaleX(0)';
+    });
+  },1100);
+});
+
+/* ============== Motion: scan line ============== */
+document.getElementById('btnScan').addEventListener('click',()=>{
+  const s = document.getElementById('scanLine');
+  s.style.transition='none'; s.style.left='-5%';
+  requestAnimationFrame(()=>{
+    s.style.transition='left 2.4s cubic-bezier(.4,0,.6,1)';
+    s.style.left='100%';
+  });
+});
+
+/* ============== 3D demo pointer tilts ============== */
+function attachTilt(card){
+  const inner = card.querySelector('.inner-card');
+  card.addEventListener('pointermove', e=>{
+    const r = card.getBoundingClientRect();
+    const px = (e.clientX - r.left)/r.width -.5;
+    const py = (e.clientY - r.top)/r.height -.5;
+    inner.style.transform = `rotateY(${px*16}deg) rotateX(${-py*16}deg)`;
+  });
+  card.addEventListener('pointerleave', ()=>{
+    inner.style.transition='transform .5s ease-out';
+    inner.style.transform='';
+    setTimeout(()=>inner.style.transition='',600);
+  });
+}
+document.querySelectorAll('.demo-3d-card').forEach(attachTilt);
+
+/* ============== Charts ============== */
+
+// cBar — proper bar (height = value/max)
+(function(){
+  const root = document.getElementById('cBar');
+  const data = [3,5,4,7,6,9,8,11,7,10,12,9];
+  const labels = ['J','F','M','A','M','J','J','A','S','O','N','D'];
+  const max = Math.max(...data)*1.1;
+  root.innerHTML = `<div style="display:flex;align-items:end;gap:4px;width:100%;height:100%">${
+    data.map((v,i)=>`<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px"><div style="width:100%;max-width:18px;height:${(v/max*100).toFixed(1)}%;background:linear-gradient(to top,var(--accent),var(--accent-2));border-radius:3px 3px 0 0"></div><span style="font-family:var(--font-mono);font-size:9px;color:var(--dim)">${labels[i]}</span></div>`).join('')
+  }</div>`;
+})();
+
+// cLine — draw-in line
+(function(){
+  const root = document.getElementById('cLine');
+  const data = [22,28,25,34,30,42,38,46,52,49,58,66];
+  const max = Math.max(...data)*1.1, min = Math.min(...data)*.9;
+  const range = max-min;
+  const W=300, H=160, pad=12;
+  const x = i => pad + i*(W-2*pad)/(data.length-1);
+  const y = v => (H-pad) - (v-min)/range*(H-2*pad);
+  const d = data.map((v,i)=>`${i?'L':'M'}${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(' ');
+  root.innerHTML = `
+    <svg viewBox="0 0 ${W} ${H}" style="width:100%;height:100%">
+      <defs><linearGradient id="lgr" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="var(--accent)" stop-opacity=".4"/><stop offset="1" stop-color="var(--accent)" stop-opacity="0"/></linearGradient></defs>
+      <path d="${d} L${x(data.length-1)},${H-pad} L${x(0)},${H-pad} Z" fill="url(#lgr)"/>
+      <path d="${d}" stroke="var(--accent)" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round" id="linePath"/>
+    </svg>
+  `;
+  // animate
+  const p = root.querySelector('#linePath');
+  const len = p.getTotalLength();
+  p.style.strokeDasharray = len; p.style.strokeDashoffset = len;
+  setTimeout(()=>{
+    p.style.transition = 'stroke-dashoffset 1.6s cubic-bezier(.4,0,.2,1)';
+    p.style.strokeDashoffset = 0;
+  },300);
+})();
+
+// cArea — same data shape (different from above? make a second one)
+(function(){
+  const root = document.getElementById('cArea');
+  const data = [34,40,38,48,52,49,58,62,68,72,70,80];
+  const max = Math.max(...data)*1.1, min = Math.min(...data)*.9;
+  const range = max-min;
+  const W=300, H=160, pad=12;
+  const x = i => pad + i*(W-2*pad)/(data.length-1);
+  const y = v => (H-pad) - (v-min)/range*(H-2*pad);
+  const d = data.map((v,i)=>`${i?'L':'M'}${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(' ');
+  root.innerHTML = `
+    <svg viewBox="0 0 ${W} ${H}" style="width:100%;height:100%">
+      <defs><linearGradient id="agr" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#FF6BA0" stop-opacity=".55"/><stop offset="1" stop-color="#FF6BA0" stop-opacity="0"/></linearGradient></defs>
+      <path d="${d} L${x(data.length-1)},${H-pad} L${x(0)},${H-pad} Z" fill="url(#agr)" id="aFill"/>
+      <path d="${d}" stroke="#FF6BA0" stroke-width="1.6" fill="none" stroke-linecap="round" id="aLine"/>
+    </svg>
+  `;
+  const ln = root.querySelector('#aLine');
+  const fl = root.querySelector('#aFill');
+  const len = ln.getTotalLength();
+  ln.style.strokeDasharray = len; ln.style.strokeDashoffset = len;
+  fl.style.opacity = 0;
+  setTimeout(()=>{
+    ln.style.transition='stroke-dashoffset 1.6s cubic-bezier(.4,0,.2,1)';
+    ln.style.strokeDashoffset = 0;
+    fl.style.transition='opacity .8s ease-out 1s';
+    fl.style.opacity = 1;
+  },300);
+})();
+
+// cDonut — multi-segment
+(function(){
+  const root = document.getElementById('cDonut');
+  const segs = [{v:42,c:'var(--accent)'},{v:28,c:'#FF6BA0'},{v:18,c:'#FFC15C'},{v:12,c:'#6FDB9C'}];
+  const total = segs.reduce((a,s)=>a+s.v,0);
+  const R=44, C=2*Math.PI*R;
+  let acc = 0;
+  root.innerHTML = `
+    <svg viewBox="0 0 120 120" style="width:100%;height:100%;max-width:160px;margin:0 auto;display:block">
+      <circle cx="60" cy="60" r="${R}" fill="none" stroke="rgba(255,255,255,.06)" stroke-width="10"/>
+      <g transform="rotate(-90 60 60)">
+      ${segs.map((s,i)=>{
+        const arc = s.v/total*C;
+        const dash = `${arc} ${C}`;
+        const off = -acc;
+        acc += arc;
+        return `<circle cx="60" cy="60" r="${R}" fill="none" stroke="${s.c}" stroke-width="10" stroke-dasharray="${dash}" stroke-dashoffset="${off}" stroke-linecap="butt" class="seg" data-final="${arc}" data-acc="${off}"/>`;
+      }).join('')}
+      </g>
+      <text x="60" y="58" text-anchor="middle" fill="var(--ink)" font-family="JetBrains Mono" font-size="14" font-weight="500">100%</text>
+      <text x="60" y="74" text-anchor="middle" fill="var(--dim)" font-family="JetBrains Mono" font-size="9" letter-spacing="2">TOTAL</text>
+    </svg>
+  `;
+  // animate grow
+  root.querySelectorAll('.seg').forEach((el,i)=>{
+    const final = +el.dataset.final;
+    const accOff = +el.dataset.acc;
+    el.style.strokeDasharray = `0 ${C}`;
+    setTimeout(()=>{
+      el.style.transition = `stroke-dasharray 1.2s cubic-bezier(.4,0,.2,1) ${i*.15}s`;
+      el.style.strokeDasharray = `${final} ${C}`;
+      el.style.strokeDashoffset = accOff;
+    },200);
+  });
+})();
+
+// cStacked
+(function(){
+  const root = document.getElementById('cStacked');
+  const data = [{Q1:[12,8,5],Q2:[15,11,7],Q3:[18,9,9],Q4:[22,12,11]}];
+  const colors = ['var(--accent)','#FF6BA0','#FFC15C'];
+  const labels = Object.keys(data[0]);
+  const max = 50;
+  root.innerHTML = `<div style="display:flex;align-items:end;gap:14px;width:100%;height:100%">${
+    labels.map(q=>{
+      const segs = data[0][q];
+      const total = segs.reduce((a,b)=>a+b,0);
+      const colH = total/max*100;
+      return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;height:100%">
+        <div style="width:100%;max-width:42px;height:${colH}%;display:flex;flex-direction:column-reverse;align-self:end;align-items:center">
+          ${segs.map((v,i)=>`<div style="width:100%;height:${v/total*100}%;background:${colors[i]};border-radius:${i===0?'4px 4px 0 0':'0'};"></div>`).join('')}
+        </div>
+        <span style="font-family:var(--font-mono);font-size:9px;color:var(--dim)">${q}</span>
+      </div>`;
+    }).join('')
+  }</div>`;
+})();
+
+// cGauge — half ring
+(function(){
+  const root = document.getElementById('cGauge');
+  const pct = 0.72;
+  const R=54, arcLen = 2*Math.PI*R*270/360;
+  root.innerHTML = `
+    <svg viewBox="0 0 140 100" style="width:100%;height:100%;max-width:160px;margin:0 auto;display:block">
+      <path d="M 20 80 A ${R} ${R} 0 1 1 120 80" fill="none" stroke="rgba(255,255,255,.06)" stroke-width="9" stroke-linecap="round"/>
+      <path d="M 20 80 A ${R} ${R} 0 1 1 120 80" fill="none" stroke="var(--accent)" stroke-width="9" stroke-linecap="round" id="gaugeArc" stroke-dasharray="${arcLen}" stroke-dashoffset="${arcLen}"/>
+      <text x="70" y="60" text-anchor="middle" fill="var(--ink)" font-family="Cormorant Garamond" font-size="22" font-weight="500">${Math.round(pct*100)}%</text>
+      <line x1="70" y1="80" x2="${70+(Math.cos((-135+pct*270)*Math.PI/180))*48}" y2="${80+(Math.sin((-135+pct*270)*Math.PI/180))*48}" stroke="var(--ink-2)" stroke-width="1.5" id="gaugeNeedle"/>
+      <circle cx="70" cy="80" r="3" fill="var(--ink-2)"/>
+    </svg>
+  `;
+  setTimeout(()=>{
+    const a = root.querySelector('#gaugeArc');
+    a.style.transition = 'stroke-dashoffset 1.4s cubic-bezier(.4,0,.2,1)';
+    a.style.strokeDashoffset = arcLen * (1-pct);
+  },300);
+})();
+
+// cSpark
+(function(){
+  const root = document.getElementById('cSpark');
+  const data = [4,8,5,7,10,8,12,11,9,14,16,18,15,19,22,21];
+  const max = Math.max(...data), min = Math.min(...data);
+  const range = max-min;
+  const W=300, H=180, pad=10;
+  const x = i => pad + i*(W-2*pad)/(data.length-1);
+  const y = v => (H-pad) - (v-min)/range*(H-2*pad);
+  const pts = data.map((v,i)=>`${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(' ');
+  root.innerHTML = `
+    <svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" style="width:100%;height:100%">
+      <polyline points="${pts}" fill="none" stroke="var(--accent)" stroke-width="1.5" vector-effect="non-scaling-stroke" id="sp"/>
+      <circle cx="${x(data.length-1)}" cy="${y(data[data.length-1])}" r="3" fill="var(--accent)" id="spDot"/>
+    </svg>
+  `;
+  // draw-in
+  const p = root.querySelector('#sp');
+  const len = p.getTotalLength();
+  p.style.strokeDasharray = len; p.style.strokeDashoffset = len;
+  setTimeout(()=>{
+    p.style.transition='stroke-dashoffset 1.4s ease-out';
+    p.style.strokeDashoffset = 0;
+  },300);
+})();
+
+// cConc — concentric rings
+(function(){
+  const root = document.getElementById('cConc');
+  const rings = [
+    {pct:1.0, color:'var(--accent)', label:'TOTAL'},
+    {pct:.78, color:'#FF6BA0', label:'运算'},
+    {pct:.52, color:'#FFC15C', label:'存储'},
+    {pct:.28, color:'#6FDB9C', label:'网络'},
+    {pct:.12, color:'#5fb7e9', label:'缓存'},
+  ];
+  root.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;width:100%;height:100%">
+    <div style="position:relative;width:160px;height:160px;display:grid;place-items:center">
+      ${rings.map((r,i)=>`<div style="position:absolute;width:${160-i*28}px;height:${160-i*28}px;border-radius:999px;background:${r.color};opacity:.${60-i*12};display:grid;place-items:center;color:#fff;font-family:JetBrains Mono;font-size:${10-i*1.5}px;font-weight:500" class="ring" data-i="${i}">${r.label}</div>`).join('')}
+    </div>
+  </div>`;
+  root.querySelectorAll('.ring').forEach((el,i)=>{
+    el.style.transform='scale(.4)';
+    el.style.opacity='0';
+    setTimeout(()=>{
+      el.style.transition=`all .8s cubic-bezier(.2,.8,.2,1) ${i*.12}s`;
+      el.style.transform='scale(1)';
+    },100);
+  });
+})();
+
+/* ============== Anti-cheap checker ============== */
+document.getElementById('gradeBtn').addEventListener('click', ()=>{
+  const rows = document.querySelectorAll('.check-row');
+  let hardFails = 0, softFails = 0;
+  rows.forEach(r=>{
+    const hard = r.dataset.check === 'hardban';
+    const yesBox = r.querySelector('input[data-score="yes"]');
+    const noBox = r.querySelector('input[data-score="no"]');
+    if(yesBox.checked){ r.classList.remove('is-no','is-warn'); r.classList.add('is-yes'); }
+    else if(noBox.checked){
+      r.classList.remove('is-yes');
+      r.classList.add(hard?'is-no':'is-warn');
+      if(hard) hardFails++; else softFails++;
+    } else {
+      r.classList.remove('is-yes','is-no','is-warn');
+    }
+  });
+  const v = document.getElementById('verdict');
+  v.style.display='block';
+  if(hardFails>0){
+    v.className='verdict fail';
+    v.innerHTML = `<strong>⛔ 不可 ship</strong> · ${hardFails} 个 HARD BAN 违反 + ${softFails} 个软警告。${hardFails>0?'硬 BAN 是发布阻断器 — 先修这些。':''}`;
+  } else if(softFails>=3){
+    v.className='verdict warn';
+    v.innerHTML = `<strong>⚠ 可 ship 但很勉强</strong> · ${softFails} 个软警告。修一半可升半级。`;
+  } else {
+    v.className='verdict ok';
+    v.innerHTML = `<strong>✓ 可以 ship</strong> · ${softFails} 个软警告。可发。`;
+  }
+});
+</script>
+</body>
+</html>

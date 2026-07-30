@@ -1,0 +1,2337 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Finesse — Examples Index · 13 个范例一站式导览</title>
+<style>
+  /* ============== The universal craft floor, applied ============== */
+  *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+  :root{
+    --page:#efedf5;
+    --bg:#ffffff;
+    --panel:#f4f3fb;
+    --panel-2:#ebe9f5;
+    --border:rgba(28,22,56,.08);
+    --border-strong:rgba(28,22,56,.16);
+
+    --ink-1:#1a1438;
+    --ink-2:#403a63;
+    --ink-3:#6f6890;
+    --ink-faint:#9892b3;
+
+    --accent:#5B4BD1;
+    --accent-2:#D98A3C;
+    --accent-soft:rgba(91,75,209,.10);
+    --accent-soft-2:rgba(217,138,60,.12);
+    --on-accent:#ffffff;
+    --glow:rgba(91,75,209,.28);
+    --up:#2F7A55;
+    --down:#C0453C;
+    --warn:#B77A16;
+
+    --r:18px;
+    --r-sm:11px;
+    --r-lg:28px;
+    --shadow:0 1px 3px rgba(28,22,56,.06);
+    --shadow-lg:0 40px 90px -50px rgba(28,22,56,.35);
+
+    --font-serif:'Cormorant Garamond','Playfair Display',Georgia,serif;
+    --font-sans:'Inter',system-ui,-apple-system,sans-serif;
+    --font-mono:'JetBrains Mono','SF Mono','Menlo',monospace;
+  }
+
+  html{scroll-behavior:smooth;-webkit-font-smoothing:antialiased}
+  body{background:var(--page);color:var(--ink-1);font-family:var(--font-sans);font-weight:400;line-height:1.55;overflow-x:hidden}
+  body::before{
+    content:'';position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.018;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+  .content{position:relative;z-index:1}
+
+  a{color:inherit;text-decoration:none}
+  button,input{font-family:inherit}
+
+  /* ============== Top matter ============== */
+  .topnav{max-width:1380px;margin:0 auto;padding:24px 36px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border)}
+  .brand{display:flex;align-items:center;gap:12px}
+  .brand-mark{width:34px;height:34px;border-radius:9px;background:var(--ink-1);display:grid;place-items:center;color:var(--bg);font-family:var(--font-serif);font-size:18px;font-weight:500}
+  .brand-name{font-family:var(--font-serif);font-size:20px;font-weight:500;letter-spacing:-.01em}
+  .nav-links{display:flex;gap:28px;font-size:13px;color:var(--ink-3)}
+  .nav-links a{transition:color .2s}
+  .nav-links a:hover{color:var(--ink-1)}
+  .nav-links a.active{color:var(--ink-1);font-weight:500}
+
+  /* ============== Hero ============== */
+  .hero{max-width:1380px;margin:0 auto;padding:90px 36px 60px;display:grid;grid-template-columns:1fr 380px;gap:60px;align-items:end}
+  .eyebrow{font-size:11px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--accent);display:inline-flex;align-items:center;gap:8px;margin-bottom:22px}
+  .eyebrow::before{content:'';width:24px;height:1px;background:var(--accent)}
+  h1.headline{font-family:var(--font-serif);font-weight:500;font-size:clamp(48px,6vw,92px);line-height:.96;letter-spacing:-.025em}
+  h1.headline em{font-style:italic;color:var(--accent)}
+  .lede{font-size:18px;color:var(--ink-2);max-width:540px;margin-top:28px;line-height:1.55}
+  .meta-col{display:flex;flex-direction:column;gap:14px;align-items:flex-end;padding:24px;border:1px solid var(--border);border-radius:var(--r-lg);background:var(--bg);box-shadow:var(--shadow-lg)}
+  .meta-stat{display:flex;align-items:baseline;gap:10px}
+  .meta-stat .n{font-family:var(--font-mono);font-size:42px;font-weight:500;color:var(--ink-1);letter-spacing:-.04em}
+  .meta-stat .label{font-size:12px;color:var(--ink-3);letter-spacing:.06em;text-transform:uppercase}
+  .meta-div{width:100%;height:1px;background:var(--border);margin:4px 0 8px}
+
+  /* ============== Filter bar ============== */
+  .filterbar{max-width:1380px;margin:0 auto;padding:30px 36px;display:flex;flex-wrap:wrap;gap:18px;align-items:center;border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
+  .filter-group{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+  .filter-label{font-size:11px;color:var(--ink-3);letter-spacing:.12em;text-transform:uppercase;font-weight:600;margin-right:4px}
+  .chip{font-size:13px;font-weight:500;padding:7px 14px;border-radius:999px;border:1px solid var(--border-strong);background:transparent;color:var(--ink-2);cursor:pointer;transition:all .2s;font-family:inherit}
+  .chip:hover{border-color:var(--ink-3);color:var(--ink-1)}
+  .chip.is-on{background:var(--ink-1);color:var(--bg);border-color:var(--ink-1)}
+  .searchbox{margin-left:auto;position:relative}
+  .searchbox input{width:280px;padding:10px 14px 10px 38px;border-radius:999px;border:1px solid var(--border-strong);background:var(--bg);color:var(--ink-1);font-size:13px;outline:none;transition:border-color .2s}
+  .searchbox input:focus{border-color:var(--accent)}
+  .searchbox svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--ink-3)}
+
+  /* ============== Section group ============== */
+  section.group{max-width:1380px;margin:0 auto;padding:48px 36px 30px}
+  .group-head{display:flex;align-items:baseline;justify-content:space-between;gap:24px;margin-bottom:28px}
+  .group-title{display:flex;align-items:baseline;gap:14px}
+  .group-title h2{font-family:var(--font-serif);font-weight:500;font-size:38px;letter-spacing:-.02em;line-height:1}
+  .group-title .count{font-family:var(--font-mono);font-size:13px;color:var(--ink-3);padding:4px 10px;border-radius:6px;background:var(--panel-2)}
+  .group-note{font-size:14px;color:var(--ink-3);max-width:480px;text-align:right}
+  .register-tag{display:inline-block;font-size:10.5px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;padding:4px 9px;border-radius:4px;background:var(--accent-soft);color:var(--accent);margin-bottom:14px}
+  .register-tag.product{background:rgba(217,138,60,.12);color:#a85e16}
+
+  /* ============== Card grid ============== */
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(380px,1fr));gap:20px}
+  .card{display:flex;flex-direction:column;background:var(--bg);border:1px solid var(--border);border-radius:var(--r-lg);overflow:hidden;transition:transform .35s cubic-bezier(.2,.8,.2,1),box-shadow .35s;box-shadow:var(--shadow)}
+  .card:hover{transform:translateY(-4px);box-shadow:var(--shadow-lg)}
+  .thumb{aspect-ratio:16/10;position:relative;overflow:hidden;background:var(--panel-2)}
+  .thumb-frame{position:absolute;inset:0;display:flex;flex-direction:column;padding:14px;border-radius:0;transform-origin:top left;transform:scale(.42);width:238%;height:238%;pointer-events:none;user-select:none;border:none}
+  .thumb-frame iframe{width:100%;height:100%;border:0;display:block;background:transparent}
+  .thumb-overlay{position:absolute;inset:0;display:flex;align-items:flex-end;justify-content:space-between;padding:16px;z-index:3;background:linear-gradient(180deg,transparent 50%,rgba(0,0,0,.4) 100%);color:#fff}
+  .thumb-overlay .file{font-family:var(--font-mono);font-size:11px;opacity:.85;letter-spacing:.04em}
+  .thumb-overlay .extbadge{font-size:10px;letter-spacing:.16em;text-transform:uppercase;font-weight:600;padding:4px 8px;background:rgba(255,255,255,.18);backdrop-filter:blur(6px);border-radius:4px;border:1px solid rgba(255,255,255,.25)}
+  .card-body{padding:20px 22px 22px;display:flex;flex-direction:column;gap:12px;flex:1}
+  .card-title{font-family:var(--font-serif);font-size:24px;font-weight:500;line-height:1.18;letter-spacing:-.01em;color:var(--ink-1)}
+  .card-sub{font-size:13px;color:var(--ink-3);font-style:italic;font-family:var(--font-serif)}
+  .meta-row{display:flex;flex-wrap:wrap;gap:6px;margin-top:2px}
+  .meta-tag{font-size:11px;font-weight:500;padding:3px 8px;border-radius:5px;background:var(--panel-2);color:var(--ink-2)}
+  .meta-tag.acc{background:var(--accent-soft);color:var(--accent);font-family:var(--font-mono)}
+  .meta-tag.acc2{background:var(--accent-soft-2);color:#a85e16;font-family:var(--font-mono)}
+  .meta-tag.engine{background:var(--panel);color:var(--ink-1);font-family:var(--font-mono);font-weight:500}
+  .study{margin-top:auto;padding-top:14px;border-top:1px dashed var(--border);font-size:13.5px;color:var(--ink-2);line-height:1.55}
+  .study b{color:var(--ink-1);font-weight:600;font-size:11px;letter-spacing:.1em;text-transform:uppercase;display:block;margin-bottom:4px}
+
+  /* ============== Expand button ============== */
+  .expand-row{display:flex;gap:8px;margin-top:14px;align-items:center}
+  .expand-btn{
+    display:inline-flex;align-items:center;gap:8px;
+    font-size:13px;font-weight:600;color:var(--accent);
+    background:var(--accent-soft);border:1px solid transparent;
+    padding:9px 14px;border-radius:8px;cursor:pointer;
+    transition:.2s;font-family:inherit;flex:1;justify-content:center;
+  }
+  .expand-btn:hover{background:var(--accent);color:#fff}
+  .expand-btn.is-on .chev{transform:rotate(180deg)}
+  .expand-btn .chev{transition:transform .3s;font-size:11px}
+
+  .open-link{
+    font-size:13px;font-weight:600;color:var(--accent-2);
+    padding:9px 14px;border-radius:8px;
+    border:1px solid var(--accent-soft-2);background:transparent;
+    transition:.2s;
+  }
+  .open-link:hover{background:var(--accent-soft-2);color:var(--ink-1)}
+
+  /* ============== Detail panel (expand area) ============== */
+  .detail-panel{
+    margin:0 22px 22px;
+    background:var(--panel);
+    border:1px solid var(--border-strong);
+    border-radius:var(--r);
+    overflow:hidden;
+    max-height:0;
+    transition:max-height .5s cubic-bezier(.2,.8,.2,1),margin .3s;
+  }
+  .detail-panel.is-on{max-height:2400px;margin:14px 22px 22px}
+  .tab-bar{display:flex;gap:0;border-bottom:1px solid var(--border-strong);background:rgba(255,255,255,.4)}
+  .tab{
+    flex:1;font-size:12.5px;font-weight:600;letter-spacing:.08em;
+    padding:14px 12px;text-align:center;background:transparent;border:0;
+    color:var(--ink-3);cursor:pointer;font-family:inherit;
+    border-bottom:2px solid transparent;transition:.2s;
+  }
+  .tab:hover{color:var(--ink-1)}
+  .tab.is-on{color:var(--accent);border-bottom-color:var(--accent);background:var(--bg)}
+  .tab-content{display:none;padding:22px 24px 24px}
+  .tab-content.is-on{display:block}
+  .tab-content h5{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--accent);font-weight:600;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+  .tab-content h5::before{content:'';width:18px;height:1px;background:var(--accent)}
+
+  /* Prompt tab */
+  .prompt-text{
+    font-family:var(--font-mono);font-size:12.5px;line-height:1.65;
+    color:var(--ink-1);background:var(--bg);
+    border:1px solid var(--border);border-radius:8px;
+    padding:18px 20px;
+    max-height:520px;overflow-y:auto;
+    white-space:pre-wrap;
+  }
+  .copy-row{display:flex;justify-content:space-between;align-items:center;margin-top:14px}
+  .copy-btn{
+    background:var(--accent);color:#fff;border:0;padding:10px 18px;
+    border-radius:8px;font-weight:600;font-size:13px;cursor:pointer;
+    font-family:inherit;display:inline-flex;align-items:center;gap:8px;
+    transition:.2s;
+  }
+  .copy-btn:hover{background:#4a3bc0}
+  .copy-btn.copied{background:#2F7A55}
+  .copy-hint{font-size:12px;color:var(--ink-3)}
+
+  /* Colors tab */
+  .swatch-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+  .swatch{
+    background:var(--bg);border:1px solid var(--border);border-radius:10px;
+    overflow:hidden;display:flex;flex-direction:column;
+  }
+  .swatch-color{height:48px;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.85);font-family:var(--font-mono);font-size:10px;letter-spacing:.06em}
+  .swatch-color.dark-text{color:rgba(0,0,0,.55)}
+  .swatch-meta{padding:8px 10px;font-size:11px;color:var(--ink-2);line-height:1.45}
+  .swatch-meta b{display:block;font-family:var(--font-mono);font-size:11px;color:var(--ink-1);margin-bottom:2px}
+
+  /* Layout tab */
+  .layout-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .layout-cell{
+    background:var(--bg);border:1px solid var(--border);border-radius:10px;
+    padding:14px 16px;
+  }
+  .layout-cell label{font-size:10.5px;color:var(--ink-3);letter-spacing:.14em;text-transform:uppercase;font-weight:600;display:block;margin-bottom:4px}
+  .layout-cell b{font-family:var(--font-mono);font-size:13px;color:var(--ink-1);font-weight:500}
+  .layout-cell small{display:block;font-size:11px;color:var(--dim);margin-top:3px;line-height:1.4}
+  .layout-cell.full{grid-column:1/-1}
+
+  /* Code tab */
+  .code-block{
+    background:#0d0a1a;color:#d4d0e8;
+    border-radius:10px;padding:18px 20px;
+    font-family:var(--font-mono);font-size:12px;line-height:1.65;
+    overflow-x:auto;max-height:480px;
+    border:1px solid var(--border);
+  }
+  .code-block .comment{color:#6f6890;font-style:italic}
+  .code-block .key{color:#c98cf0}
+  .code-block .str{color:#9bbc6b}
+  .code-block .num{color:#f3b96b}
+  .code-block .kw{color:#6fb7e9}
+  .code-meta{font-size:12px;color:var(--ink-3);margin-bottom:10px;line-height:1.5}
+  .code-meta b{color:var(--ink-1);font-family:var(--font-mono);font-size:11px}
+
+  /* ============== Use-case chips on cards ============== */
+  .usecases{margin-top:14px;padding-top:14px;border-top:1px dashed var(--border);display:flex;flex-direction:column;gap:10px}
+  .usecase-row{display:flex;align-items:flex-start;gap:10px}
+  .usecase-label{
+    flex-shrink:0;font-size:10.5px;font-weight:700;letter-spacing:.12em;
+    padding:4px 8px;border-radius:5px;text-transform:uppercase;
+    margin-top:2px;font-family:var(--font-mono);min-width:54px;text-align:center;
+  }
+  .usecase-label.good{background:rgba(47,122,85,.12);color:#2F7A55}
+  .usecase-label.bad {background:rgba(192,69,60,.12);color:#C0453C}
+  .usecase-label.prompt{background:var(--accent-soft);color:var(--accent)}
+  .usecase-chips{display:flex;flex-wrap:wrap;gap:5px;flex:1}
+  .chip-tag{
+    font-size:11.5px;padding:3px 9px;border-radius:6px;font-weight:500;
+    border:1px solid transparent;line-height:1.4;
+  }
+  .chip-tag.good{background:rgba(47,122,85,.08);border-color:rgba(47,122,85,.25);color:#2a6c4d}
+  .chip-tag.bad {background:rgba(192,69,60,.06);border-color:rgba(192,69,60,.2);color:#a83830;text-decoration:line-through;text-decoration-color:rgba(168,56,48,.4)}
+  .prompt-marks{
+    list-style:none;padding:0;margin:0;font-size:12px;color:var(--ink-2);
+    line-height:1.55;flex:1;
+  }
+  .prompt-marks li{padding:2px 0;padding-left:8px;border-left:2px solid var(--accent-soft);margin-bottom:4px;font-style:italic}
+
+  /* ============== Empty state ============== */
+  .empty-state{text-align:center;padding:100px 30px;color:var(--ink-3);display:none}
+  .empty-state.is-on{display:block}
+  .empty-state h3{font-family:var(--font-serif);font-size:28px;color:var(--ink-2);margin-bottom:8px;font-weight:500}
+
+  /* ============== Catalog strip ============== */
+  .catalog-strip{max-width:1380px;margin:60px auto 0;padding:48px 36px;background:var(--bg);border-top:1px solid var(--border);border-radius:var(--r-lg) var(--r-lg) 0 0}
+  .catalog-strip h2{font-family:var(--font-serif);font-size:32px;font-weight:500;letter-spacing:-.02em;margin-bottom:14px}
+  .catalog-strip p{font-size:15px;color:var(--ink-2);max-width:680px;margin-bottom:24px}
+  .catalog-table{width:100%;border-collapse:collapse;font-size:13px}
+  .catalog-table th,.catalog-table td{text-align:left;padding:11px 16px;border-bottom:1px solid var(--border)}
+  .catalog-table th{font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3);font-weight:600;background:var(--panel)}
+  .catalog-table td{color:var(--ink-2)}
+  .catalog-table tr:last-child td{border-bottom:0}
+  .catalog-table .engine{display:inline-block;font-family:var(--font-mono);font-size:11px;font-weight:500;background:var(--panel-2);padding:2px 7px;border-radius:4px;color:var(--ink-1)}
+  .catalog-table .persona{font-family:var(--font-serif);font-style:italic;color:var(--ink-1)}
+
+  /* ============== Footer ============== */
+  footer{max-width:1380px;margin:0 auto;padding:50px 36px 70px;display:flex;justify-content:space-between;align-items:flex-start;gap:40px;border-top:1px solid var(--border);font-size:13px;color:var(--ink-3)}
+  footer .col{max-width:480px}
+  footer h4{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-2);margin-bottom:10px;font-weight:600}
+
+  /* ============== Responsive ============== */
+  @media (max-width:880px){
+    .hero{grid-template-columns:1fr;gap:40px;padding:60px 24px 40px}
+    .meta-col{align-items:flex-start}
+    .hero,.filterbar,section.group,.catalog-strip{padding-left:24px;padding-right:24px}
+    .grid{grid-template-columns:1fr}
+    .nav-links{display:none}
+    .searchbox{margin-left:0;width:100%}
+    .searchbox input{width:100%}
+    .layout-grid{grid-template-columns:1fr}
+    .tab{font-size:11px;padding:12px 6px}
+  }
+</style>
+</head>
+<body>
+<div class="content">
+
+<nav class="topnav">
+  <div class="brand">
+    <div class="brand-mark">f</div>
+    <div class="brand-name">finesse · skill study</div>
+  </div>
+  <div class="nav-links">
+    <a href="#group-brand">Brand register</a>
+    <a href="#group-product">Product register</a>
+    <a href="#catalog">More works</a>
+    <a href="capabilities.html">→ Capabilities demo</a>
+    <a href="prompt-builder.html">→ 拼 Prompt</a>
+  </div>
+</nav>
+
+<header class="hero">
+  <div>
+    <div class="eyebrow">Examples Index · 范例索引</div>
+    <h1 class="headline">
+      13 个 shipped<br/>
+      范例的<em>一站式</em>解读<br/>
+      <span style="font-size:.7em;color:var(--ink-3);font-style:italic;font-family:var(--font-serif)">brand × product × 全部派别</span>
+    </h1>
+    <p class="lede">
+      每张卡片都有真实缩略预览 + 4 个可展开标签：<strong>AI复刻Prompt / 真实色板 / 布局参数 / 核心代码</strong>。
+      点 "展开详情" 获取结构化指令 — 直接复制 Prompt 即可让 AI 生成类似的页面。
+    </p>
+  </div>
+  <aside class="meta-col">
+    <div class="meta-stat"><span class="n">13</span><span class="label">HTML 范例</span></div>
+    <div class="meta-div"></div>
+    <div class="meta-stat"><span class="n">4</span><span class="label">展开标签 / 卡</span></div>
+    <div class="meta-stat"><span class="n">13</span><span class="label">完整 Prompt</span></div>
+    <div class="meta-stat"><span class="n">5</span><span class="label">Hero engines · 视觉引擎</span></div>
+    <div class="meta-div"></div>
+    <div class="meta-stat" style="align-self:flex-start"><span class="n">53<span style="font-size:18px;color:var(--ink-3)">→in catalog</span></span><span class="label">技术灵感库</span></div>
+  </aside>
+</header>
+
+<div class="filterbar">
+  <div class="filter-group">
+    <span class="filter-label">Register</span>
+    <button class="chip is-on" data-filter="register" data-val="all">全部</button>
+    <button class="chip" data-filter="register" data-val="brand">Brand</button>
+    <button class="chip" data-filter="register" data-val="product">Product</button>
+  </div>
+  <div class="filter-group">
+    <span class="filter-label">Theme</span>
+    <button class="chip is-on" data-filter="theme" data-val="all">全部</button>
+    <button class="chip" data-filter="theme" data-val="dark">Dark</button>
+    <button class="chip" data-filter="theme" data-val="light">Light</button>
+  </div>
+  <div class="searchbox">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+    <input id="searchInput" type="text" placeholder="按文件名、人格、技术搜索…" />
+  </div>
+</div>
+
+<section class="group" id="group-brand">
+  <div class="group-head">
+    <div class="group-title">
+      <h2>Brand register</h2>
+      <span class="count">5</span>
+    </div>
+    <div class="group-note">设计就是产品本身 — 视觉冲击 × 灵魂表达 × 第一印象。<br/>真实引擎：Three.js · Canvas · WebGL FBO · GSAP · CSS-only</div>
+  </div>
+  <div class="grid" id="grid-brand"></div>
+</section>
+
+<section class="group" id="group-product">
+  <div class="group-head">
+    <div class="group-title">
+      <h2>Product register</h2>
+      <span class="count">8</span>
+    </div>
+    <div class="group-note">设计服务产品 — 清晰 × 信息密度 × 可用性。<br/>从 ProductUI.md 的 6 大 shell 形态取 8 种组合 + 全套图表技法。</div>
+  </div>
+  <div class="grid" id="grid-product"></div>
+</section>
+
+<div class="empty-state" id="emptyState">
+  <h3>没有匹配的范例</h3>
+  <p>试试放宽筛选条件，或在搜索框里换个关键词。</p>
+</div>
+
+<section class="catalog-strip" id="catalog">
+  <h2>其他 48 个作品 — 技术灵感目录</h2>
+  <p>
+    <code style="font-family:var(--font-mono);font-size:13px;color:var(--accent)">examples/</code> 只装了 13 个可独立运行的范例。其余 48 个以
+    <em>技术笔记</em>的形式归档在 <code style="font-family:var(--font-mono);font-size:13px;color:var(--accent)">references/inspiration-catalog.md</code> 里，按人格归类。
+  </p>
+  <table class="catalog-table">
+    <thead><tr><th>Persona</th><th>作品数</th><th>代表性技术</th></tr></thead>
+    <tbody>
+      <tr><td class="persona">Cinematic Tech</td><td>7</td><td><span class="engine">A · B · D</span> 粒子星系 · 假 3D 地球 · 透视网格 · 滚动速度反馈</td></tr>
+      <tr><td class="persona">Phosphor Terminal</td><td>1</td><td><span class="engine">B</span> Matrix 字符雨 + 单荧光绿</td></tr>
+      <tr><td class="persona">Editorial Publication</td><td>4</td><td><span class="engine">D · E</span> 滚动锁定横向 lookbook · 纯 CSS 3D 长廊 · 黑白摄影叙事</td></tr>
+      <tr><td class="persona">Warm Heritage</td><td>2</td><td><span class="engine">B · D</span> 火焰粒子变色 · 横向滚动叙事</td></tr>
+      <tr><td class="persona">Gold Luxury</td><td>6</td><td><span class="engine">B · D</span> 实时表盘 · 程序化 SVG 机芯 · 滚动驱动爆炸视图</td></tr>
+      <tr><td class="persona">Brutal Typographic</td><td>2</td><td><span class="engine">D · E</span> 横向滚动排版 · CSS halftone 孔版印刷仿真</td></tr>
+      <tr><td class="persona">Quiet Luxury Minimal</td><td>5</td><td><span class="engine">B · D · E</span> clip-path · 雪花物理粒子 · 极简视差</td></tr>
+      <tr><td class="persona">Organic / Botanical</td><td>4</td><td><span class="engine">B · D</span> Canvas 水面高度场涟漪 · 有机粒子</td></tr>
+      <tr><td class="persona">Own Lane</td><td>~6</td><td>跳出 10 种人格表的作品 —— 完全可以不归类，这是被允许的</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<footer>
+  <div class="col">
+    <h4>关于这个索引</h4>
+    本页是为 <a href="https://github.com/mouse-lin/finesse-skill" style="color:var(--accent);font-weight:500">finesse-ui skill</a> 制作的研究目录。
+    所有 13 个范例已克隆到 <code style="font-family:var(--font-mono);font-size:12px;color:var(--accent);background:var(--accent-soft);padding:2px 6px;border-radius:4px">skills/finesse-ui/examples/</code>。
+  </div>
+  <div class="col">
+    <h4>下一步</h4>
+    想了解它"为什么这么设计"？去 <a href="capabilities.html" style="color:var(--accent);font-weight:500">capabilities.html</a> 看每个引擎、每个图表技法的现场演示。
+    或者打开 <a href="prompt-builder.html" style="color:var(--accent);font-weight:500">prompt-builder.html</a> 拼一个完整的 AI 复刻指令。
+  </div>
+</footer>
+
+</div>
+
+<script>
+/* =================== Example data (rich) =================== */
+/* Code fields use plain double-quoted strings (no nested templates) to avoid
+   ${ interpolation / backtick balancing issues inside template literals. */
+const EXAMPLES = [
+  /* ====== Aether (Cinematic Tech) ====== */
+  {
+    file:'aether-cinematic-tech.html',
+    name:'Aether',
+    sub:'空间智能引擎 · Cinematic Tech',
+    register:'brand', theme:'dark',
+    persona:'Cinematic Tech',
+    engine:'A · Three.js + GLSL',
+    accent:'#22e3ff · #ff2d8e',
+    paletteFamily:'Cinematic cool',
+    fileSize:'340 lines · 8 sections',
+    bestFor:['AI / 深度学习产品', '加密 / Web3', '天文 / 太空', '游戏发行 / 影视特效', '任何想"显得高科技 + 高预算"的产品'],
+    notFor:['内容为主的官网（博客、文档）', 'B2B 后台或登录页', '低端设备访问多的产品', '不需要视觉冲击的内部系统'],
+    usePrompts:['我在做一个 AI 产品 hero 页', '我的产品与"3D / 空间 / 实时"有关', '我有预算用 three.js (~150KB gz, ~1MB 包含 addons)'],
+    colorTokens:{
+      'bg':'#050507',
+      'env 青':'#22e3ff',
+      'env 品红':'#ff2d8e',
+      'env 电蓝':'#4d6bff',
+      'env 白高光':'#ffffff',
+      'ambient':'#1a1a22',
+      'meta cyan':'#22e3ff',
+      'meta magenta':'#ff3d8e',
+      'meta violet':'#4d6bff'
+    },
+    layout:{
+      'shell':'full-bleed canvas hero',
+      'canvas':'fixed inset:0 z-index:0',
+      'content':'z-index:5 layer',
+      'headline':'clamp(56px,9vw,160px)',
+      'section padding':'120px 52px',
+      'max-width':'1280px',
+      'body weight':'300 (light)',
+      'heading weight':'800'
+    },
+    motion:{
+      lib:'three.js + RoomEnvironment + UnrealBloomPass + EffectComposer',
+      pattern:'漂浮金属球 + 旋转彩色点光，鼠标旋转，滚动下沉',
+      easing:'linear rotation (engineered feel)',
+      reduced:'冻结一帧 composed still frame'
+    },
+    craftMoves:[
+      {title:'金属球 + 彩色环境贴图',
+       detail:'PMREMGenerator 把彩色平面变成 envMap，让黑色金属球反射出大面积虹彩 — 不需要多个光源就把"光感"拉满',
+       code:[
+         'const pmrem = new THREE.PMREMGenerator(renderer);',
+         'function makeColorEnv() {',
+         '  const es = new THREE.Scene();',
+         '  es.add(new RoomEnvironment());',
+         '  const panel = (hex, x, y, z, s, intensity) => {',
+         '    const m = new THREE.Mesh(',
+         '      new THREE.PlaneGeometry(s, s),',
+         '      new THREE.MeshBasicMaterial({ color: new THREE.Color(hex).multiplyScalar(intensity) })',
+         '    );',
+         '    m.position.set(x,y,z); m.lookAt(0,0,0); es.add(m);',
+         '  };',
+         '  panel("#22e3ff",  6,  3,  3, 7, 2.4);  // 青',
+         '  panel("#ff2d8e", -6, -2,  4, 7, 2.4);  // 品红',
+         '  panel("#4d6bff",  0,  5, -5, 7, 2.0);  // 电蓝',
+         '  return es;',
+         '}',
+         'scene.environment = pmrem.fromScene(makeColorEnv(), 0.35).texture;',
+         '',
+         'const blob = new THREE.Mesh(',
+         '  new THREE.IcosahedronGeometry(1, 48),',
+         '  new THREE.MeshStandardMaterial({ color: "#0c0c14", metalness: 1.0, roughness: 0.3, envMapIntensity: 1.6 })',
+         ');',
+         'blob.scale.setScalar(2.0);'
+       ].join('\n')},
+      {title:'GLSL 噪声位移顶点',
+       detail:'在 onBeforeCompile 里注入 snoise 函数，球的顶点被时间驱动的噪声推动 → 表皮持续蠕动但球保持完整',
+       code:[
+         '// 1. 准备 snoise 函数（standard simplex noise）',
+         'const NOISE_FN = [',
+         '  "vec3 mod289(vec3 x){return x-floor(x*(1.0/289.0))*289.0;}",',
+         '  "float snoise(vec3 v){ ... return 42.0*dot(m*m, ...); }"',
+         '].join("\\n");',
+         '',
+         '// 2. 注入 onBeforeCompile，修改顶点 shader',
+         'mat.onBeforeCompile = (shader) => {',
+         '  shader.uniforms.uTime = { value: 0 };',
+         '  shader.vertexShader = "uniform float uTime;\\n" + NOISE_FN',
+         '    + shader.vertexShader.replace(',
+         '      "#include <begin_vertex>",',
+         '      "#include <begin_vertex>\\n" +',
+         '      "     float n = snoise(normalize(position) * 1.5 + uTime * 0.26);\\n" +',
+         '      "     transformed += normal * (n * 0.26); "',
+         '    );',
+         '  mat.userData.shader = shader;  // 留引用给 loop 更新 uniform',
+         '};'
+       ].join('\n')},
+      {title:'滚动下沉 + 鼠标旋转解耦',
+       detail:'滚动只控制 sink/scale（动画变安静），鼠标旋转只控制 rotation.xy — 两个交互互不干扰',
+       code:[
+         'addEventListener("scroll", () => {',
+         '  scrollY = window.scrollY / innerHeight;',
+         '});',
+         '',
+         'function tick() {',
+         '  const sink = Math.min(scrollY, 1.5);',
+         '  // 鼠标驱动旋转，滚动只驱动下沉',
+         '  blob.rotation.y = t * 0.12 + mouse.x * 0.45;',
+         '  blob.rotation.x = mouse.y * 0.3;',
+         '  blob.position.y = Math.sin(t * 0.8) * 0.1 - sink * 1.2;',
+         '  blob.scale.setScalar(2.0 - sink * 0.25);',
+         '}'
+       ].join('\n')}
+    ],
+    fullPrompt:[
+      '为一家"空间智能"公司构建 Aether 这类品牌英雄页。要求：',
+      '',
+      '技术栈：three.js (CDN import map) + RoomEnvironment + UnrealBloomPass + EffectComposer。',
+      '页面布局：全屏固定 canvas 在 z-index:0，内容在 z-index:5。<section> padding 120px 52px · max-width 1280px · margin 0 auto。',
+      '',
+      '设计 token：背景深色 near-black #050507（绝不纯黑）。',
+      '主色 cyan #22e3ff，副色 magenta #ff2d8e，第三色 electric blue #4d6bff —— **不许用 AI 紫蓝渐变 glow**。',
+      'ambient light #1a1a22 强度 1.0。',
+      '',
+      '字体：Inter 300/400/700 + Cormorant Garamond italic + JetBrains Mono。',
+      'display heading clamp(56px,9vw,160px) weight 800 letter-spacing -.045em line-height .9。',
+      'body 用 weight 300 形成对比张力。.label 用 11px uppercase letter-spacing .22em。',
+      '',
+      '核心动效 — 必须实现：',
+      '1. PMREMGenerator + RoomEnvironment + 4 个彩色面板（青/品红/电蓝/白）→ IcosahedronGeometry(1,48) + MeshStandardMaterial(metalness=1.0, roughness=.3) 的反射环境',
+      '2. onBeforeCompile 注入 snoise GLSL 函数，让金属球顶点随时间位移（蠕动感）',
+      '3. UnrealBloomPass 参数 (strength=0.55, radius=0.42, threshold=0.80)',
+      '4. 鼠标控制 blob.rotation.y/x；滚动控制 blob 下沉 + 缩小；点光组旋转',
+      '5. 必须有 prefers-reduced-motion fallback：render 一帧后停止',
+      '',
+      '内容结构：顶部 hero headline · 三个 capability 卡 · data band（3 个统计数字）· CTA · footer。',
+      '',
+      '关键反 slop：',
+      '- 不用 Tailwind/CSS 框架',
+      '- 不用任何紫色 / 蓝紫渐变按钮',
+      '- 内容 z-index 必须 5，canvas 必须 0',
+      '- 移动端保留（dpr 自适应、相机 aspect）'
+    ].join('\n')
+  },
+
+  /* ====== Nova (Brutal Typographic) ====== */
+  {
+    file:'nova-brutal-typographic.html',
+    name:'Nova',
+    sub:'数字时装周 2026 · Brutal Typographic',
+    register:'brand', theme:'light',
+    persona:'Brutal Typographic',
+    engine:'D · GSAP',
+    accent:'#FF3B1D',
+    paletteFamily:'Bone/black + hot red',
+    fileSize:'220 lines · stock photos',
+    bestFor:['时装 / 时尚活动', '音乐 / 演唱会 / 厂牌', '滑板 / 街头 / 潮流品牌', '独立电影 / 艺术展览', '任何想用纯字体显得"狠 / 不羁 / 反 SaaS"的项目'],
+    notFor:['企业 B2B 官网', '医疗 / 金融 / 法律专业感业务', '需要柔和友好感的产品（社交、儿童）', '已有 brand guideline 要求圆角 + 阴影的项目'],
+    usePrompts:['我做的是时装周 / 潮流发布页', '品牌想传达"年轻人 / 反叛 / 大胆"调性', '我故意要拒绝"AI 紫蓝渐变"路线'],
+    colorTokens:{
+      'bone (bg)':'#ECE7DC',
+      'ink':'#14110D',
+      'red accent':'#FF3B1D',
+      'dim':'#8A8479',
+      'card':'#14110D',
+      'hairline':'rgba(255,255,255,.18)'
+    },
+    layout:{
+      'shell':'full-width typographic',
+      'display size':'clamp(80px,15vw,220px)',
+      'tracking':'.11em (Anton)',
+      'kicker':'14px uppercase .35em tracking',
+      'image aspect':'4/5 + 16/9 混合',
+      'radius':'0 (no rounded corners anywhere)'
+    },
+    motion:{
+      lib:'GSAP + ScrollTrigger',
+      pattern:'photo grayscale → scroll-reveal → type effect hero',
+      easing:'power3.out (.6s)',
+      reduced:'冻结到完全显示状态'
+    },
+    craftMoves:[
+      {title:'mix-blend-mode: difference 导航',
+       detail:'导航字体颜色与背景反色叠加 — 移到暗照片上变白，移到亮背景上变骨色。1 行 CSS 制造品牌不可复制性',
+       code:[
+         '/* 背景是骨色 #ECE7DC，图片是黑白摄影 */',
+         'nav {',
+         '  position: fixed;',
+         '  mix-blend-mode: difference;',
+         '  color: #fff;  /* 显示为骨色，因为 difference 在骨色上 ≈ 白 */',
+         '}'
+       ].join('\n')},
+      {title:'外描边 + 实心字 (outline + fill)',
+       detail:'标题用 -webkit-text-stroke 做出空心骨架，再用 z-index:-1 重叠 solid 版本 — 即便一张图也营造"层叠打字机"感',
+       code:[
+         '.outline {',
+         '  -webkit-text-stroke: 1.5px var(--ink);',
+         '  color: transparent;',
+         '  position: relative;',
+         '}',
+         '.outline::after {',
+         '  content: attr(data-text);',
+         '  position: absolute; inset: 0;',
+         '  color: var(--ink);',
+         '  z-index: -1;',
+         '}'
+       ].join('\n')},
+      {title:'骨色卡片 (ink-over-bone)',
+       detail:'黑色卡片背景 + 白色 hairline 边 + Anton 顶部编号 — 与骨色页面形成"骨 vs 墨"二元张力',
+       code:[
+         '.ink-card {',
+         '  background: var(--ink);',
+         '  color: var(--bone);',
+         '  border: 1px solid rgba(255,255,255,.18);',
+         '  padding: 36px 32px;',
+         '}',
+         '.ink-card .num {',
+         '  font-family: "Anton", sans-serif;',
+         '  font-size: 64px;',
+         '  color: var(--red);',
+         '  line-height: 1;',
+         '}'
+       ].join('\n')}
+    ],
+    fullPrompt:[
+      '为一家时装周活动构建 Nova 这类品牌页。要求：',
+      '',
+      '定位：反 editorial-typographic（serif + 米色）+ 反 AI-purple-glow，强制走 brutal typographic 路线（这是 2026 saturated default 之外的 lane）。',
+      '',
+      '技术栈：GSAP + ScrollTrigger。不用紫色 / 不用渐变文字 / 不用任何圆角卡片。',
+      '',
+      '设计 token：',
+      '- 骨色背景 #ECE7DC（不是米色 #F5F1EA，是更"石"一点的色调）',
+      '- ink #14110D（接近黑但不到 #000）',
+      '- 一个 hot red #FF3B1D 作唯一强调色',
+      '- dim #8A8479 作 hairline / muted',
+      '',
+      '字体：Anton 400（display 厚度）+ Inter 400/500 + Cormorant Garamond italic 偶尔用。绝不能用 Playfair / Cormorant / Instrument Serif 等 reflex serifs。',
+      '',
+      '骨架：',
+      '- 顶部导航 position:fixed + mix-blend-mode:difference + color:#fff',
+      '- 主标题 clamp(80px,15vw,220px) Anton，tracking .11em',
+      '- 副标题 Cormorant italic，48px',
+      '- Hero 用真实 grayscale 摄影（Unsplash hotlink 1-2 张），filter:grayscale(1) contrast(1.06)',
+      '- 数据带：3 个黑底卡（var(--ink) bg），每个里面顶部一个红色 Anton 64px 数字编号',
+      '',
+      '关键反 slop：',
+      '- 禁止任何圆角（border-radius: 0）',
+      '- 禁止任何阴影',
+      '- 禁止任何紫蓝渐变',
+      '- 禁止 eyebrow 标签',
+      '- 一行字一行 em-dash 是禁止的',
+      '',
+      'prefers-reduced-motion：冻结整个滚动揭示，所有 section 直接完全显示。'
+    ].join('\n')
+  },
+
+  /* ====== Offscreen (Editorial) ====== */
+  {
+    file:'offscreen-editorial.html',
+    name:'Offscreen',
+    sub:'影像季刊 · Issue 07 · Editorial Publication',
+    register:'brand', theme:'light',
+    persona:'Editorial Publication',
+    engine:'D · GSAP scroll-reveal',
+    accent:'#A8331F',
+    paletteFamily:'Editorial light',
+    fileSize:'183 lines · serif-led',
+    bestFor:['杂志 / 季刊 / 影像集', '独立电影 / 艺术工作室', '文学出版社 / 严肃媒体', '长篇摄影叙事（婚礼、人像、旅行）', '需要"翻杂志"节奏的内容站'],
+    notFor:['快节奏营销页（landing page + 即时 CTA）', '产品功能宣传', '移动优先的场景（杂志感以桌面为先）', '需要大量数据可视化的内容'],
+    usePrompts:['我做的是杂志 / 季刊 / 出版物', '内容是长篇图文 / 摄影叙事', '我要营造"印刷质感"而非"网页感"'],
+    colorTokens:{
+      'paper':'#F4F1E9',
+      'ink':'#1A1714',
+      'dim':'#857F73',
+      'rust accent':'#A8331F',
+      'rule line':'rgba(26,23,20,.12)',
+      'figure bg':'#1A1714'
+    },
+    layout:{
+      'shell':'12-column editorial grid',
+      'display':'clamp(56px,8.5vw,140px)',
+      'body line-length':'60-72ch',
+      'drop-cap':'5-line height, Playfair italic',
+      'rules':'1px solid rgba(0,0,0,.07)',
+      'figure column':'span 5 / 7 of 12'
+    },
+    motion:{
+      lib:'GSAP + ScrollTrigger',
+      pattern:'paragraph-stagger reveal · image crossfade',
+      easing:'power3.out',
+      reduced:'立即显示所有段落和图'
+    },
+    craftMoves:[
+      {title:'首字下沉 (drop cap)',
+       detail:'5 行高度的 Playfair Display italic 首字 — "拉满"印刷感而非流媒体感',
+       code:[
+         'p.lede::first-letter {',
+         '  font-family: "Playfair Display", serif;',
+         '  font-style: italic;',
+         '  font-weight: 900;',
+         '  font-size: 6em;',
+         '  float: left;',
+         '  line-height: .85;',
+         '  margin: 8px 12px 0 -4px;',
+         '  color: var(--rust);',
+         '}'
+       ].join('\n')},
+      {title:'灰度摄影 + hover 慢揭示颜色',
+       detail:'所有图片 filter:grayscale(1) contrast(1.06)，hover 时 transition filter 3s 渐变到 0',
+       code:[
+         'figure img {',
+         '  filter: grayscale(1) contrast(1.06);',
+         '  transition: filter 3s ease-out;',
+         '}',
+         'figure:hover img {',
+         '  filter: grayscale(0) contrast(1);',
+         '}'
+       ].join('\n')},
+      {title:'12 列 nested grid 配 rule-line',
+       detail:'所有章节外层 12 列 grid，每张图用 grid-column: 3 / span 5，制造不对称的"杂志图位"',
+       code:[
+         '.editorial {',
+         '  display: grid;',
+         '  grid-template-columns: repeat(12, 1fr);',
+         '  column-gap: 24px;',
+         '}',
+         '.fig-half { grid-column: 3 / span 5; }',
+         '.fig-third { grid-column: 5 / span 4; }',
+         '.full-rule {',
+         '  border: 0;',
+         '  border-top: 1px solid rgba(26,23,20,.12);',
+         '  margin: 60px 0;',
+         '}'
+       ].join('\n')}
+    ],
+    fullPrompt:[
+      '为一家影像季刊构建 Offscreen 这种 Editorial Publication 页面。要求：',
+      '',
+      '定位：真正的杂志 / 期刊 / 摄影集，而不是"看起来像杂志"的 SaaS。利用 Playfair Display + Spectral 的古典排印血统。',
+      '',
+      '技术栈：GSAP + ScrollTrigger。',
+      '',
+      '设计 token：',
+      '- paper #F4F1E9（不是纯米色，偏 ink 暖度）',
+      '- ink #1A1714（不是纯黑）',
+      '- 一个 rust 强调色 #A8331F，整页只用这一个',
+      '- 规则线 rgba(26,23,20,.12) 1px',
+      '',
+      '字体：Playfair Display（display italic 强调）+ Spectral（body italic）+ Inter。',
+      '',
+      '骨架：',
+      '- 顶部极简 nav（仅 Issue + Section 链接，无 logo 大字）',
+      '- 主标题 "OFFSCREEN — 影像季刊 · Issue 07" 三行排版',
+      '- 每段长文本带 drop-cap 首字',
+      '- 段落间用 1px solid rule 隔开',
+      '- 所有图片 filter:grayscale(1) contrast(1.06)，hover 时 3s 内过渡到 color',
+      '- 图位永远非对称：grid-column 占 5/8 或 3/9 之类的不规则比例',
+      '',
+      '关键反 slop：',
+      '- 不要 eyebrow (tiny uppercase tracking-wide label)',
+      '- 不要 hover 时弹个浮窗',
+      '',
+      'prefers-reduced-motion：所有 GSAP reveal 立即显示，过滤 transition 关闭。'
+    ].join('\n')
+  },
+
+  /* ====== Signal (Phosphor Terminal) ====== */
+  {
+    file:'signal-phosphor-terminal.html',
+    name:'Signal',
+    sub:'量化交易引擎 · Phosphor Terminal',
+    register:'brand', theme:'dark',
+    persona:'Phosphor Terminal',
+    engine:'B · Canvas 2D',
+    accent:'#00DC50',
+    paletteFamily:'Phosphor mono',
+    fileSize:'389 lines · canvas-driven',
+    bestFor:['量化交易 / 算法交易', '网络安全 / 渗透测试服务', '开发者 CLI / DevOps 工具', '数据库 / 服务器监控', '任何想传达"硬核 / 工程感 / 1990s 终端"的产品'],
+    notFor:['消费类 App（用户不懂荧光绿）', '需要强烈情感调性的（婚礼、儿童）', '需要"温暖 + 可亲近"的品牌', '需要多彩 UI 的游戏'],
+    usePrompts:['我做金融 / 安全 / dev tools', '我的用户是工程师而非一般消费者', '我想通过单一荧光绿营造"专业 / 极客"气质'],
+    colorTokens:{
+      'bg':'#020806',
+      'surface':'#060E0A',
+      'ink':'#C8F0D8',
+      'phosphor':'#00DC50',
+      'border':'rgba(0,220,80,.1)',
+      'scanline':'rgba(0,220,80,.05)'
+    },
+    layout:{
+      'shell':'vertical stack with full-bleed canvas hero',
+      'canvas':'fixed inset:0 z-index:0',
+      'mono size':'clamp(20px,2.4vw,38px) (price)',
+      'ticker height':'44px marquee',
+      'clock':'JetBrains Mono 32px'
+    },
+    motion:{
+      lib:'Canvas 2D loop + GSAP reveal',
+      pattern:'live K-line 数据 ring buffer + 实时 ticker',
+      easing:'canvas loop tick rate 60fps',
+      reduced:'冻结 K-line 渲染到当前帧，停止 ticker marquee'
+    },
+    craftMoves:[
+      {title:'实时 K-line canvas — trail fade 而非全清',
+       detail:'每帧用半透明矩形覆盖而不 clearRect，价格点会留残影。给出真实"屏幕光感"',
+       code:[
+         'function frame() {',
+         '  // 与 bg 同色但半透，制造残影',
+         '  ctx.fillStyle = "rgba(2,8,6,.15)";',
+         '  ctx.fillRect(0, 0, W, H);',
+         '',
+         '  // ring buffer 中推入新点',
+         '  buf.shift();',
+         '  buf.push(Math.max(10, Math.min(90, last + (Math.random()-.5)*6)));',
+         '',
+         '  // 画折线',
+         '  ctx.beginPath();',
+         '  buf.forEach((v, i) => {',
+         '    const x = pad + (W-2*pad) * i / (buf.length-1);',
+         '    const y = (H-pad) - (v-min) / range * (H-2*pad);',
+         '    i === 0 ? ctx.moveTo(x,y) : ctx.lineTo(x,y);',
+         '  });',
+         '  ctx.strokeStyle = "rgba(0,220,80,.85)";',
+         '  ctx.stroke();',
+         '  requestAnimationFrame(frame);',
+         '}'
+       ].join('\n')},
+      {title:'CRT 扫描线 + 闪烁（每 3px 一条）',
+       detail:'三层叠加：背景、半透明扫描线、弱闪烁的"磷光点"',
+       code:[
+         '// 扫描线层（每 3px 一条）',
+         'ctx.fillStyle = "rgba(0,0,0,.08)";',
+         'for (let y = 0; y < H; y += 3) ctx.fillRect(0, y, W, 1);',
+         '',
+         '// 顶角微闪烁',
+         'ctx.fillStyle = Math.random() > .95',
+         '  ? "rgba(0,220,80,.04)" : "transparent";',
+         'ctx.fillRect(W*.85, H*.1, 60, 20);'
+       ].join('\n')},
+      {title:'实时 ticker 横向跑马灯',
+       detail:'translateX 配合 setInterval/CSS animation，纯 CSS 实现',
+       code:[
+         '.ticker-track {',
+         '  display: flex; gap: 60px;',
+         '  animation: tickerScroll 40s linear infinite;',
+         '  white-space: nowrap;',
+         '}',
+         '@keyframes tickerScroll {',
+         '  from { transform: translateX(0); }',
+         '  /* 复制一份到 -50% 完成无缝循环 */',
+         '  to { transform: translateX(-50%); }',
+         '}',
+         '.tick-up { color: #00DC50; }',
+         '.tick-dn { color: #FF5252; }'
+       ].join('\n')}
+    ],
+    fullPrompt:[
+      '为一家量化交易机构构建 Signal 这类品牌页。要求：',
+      '',
+      '定位：反"AI SaaS 紫色渐变 + Inter"路线，强制走 Phosphor Terminal 单色美学。',
+      '',
+      '技术栈：原生 Canvas 2D + GSAP（仅用于滚动揭示），不引入其它框架。',
+      '',
+      '设计 token：',
+      '- bg #020806（不是纯黑，绿调子）',
+      '- surface #060E0A',
+      '- 唯一强调色 phosphor green #00DC50',
+      '- ink #C8F0D8（带绿调的浅色文字）',
+      '- 网格 / hairline rgba(0,220,80,.1)',
+      '',
+      '字体：JetBrains Mono weight 300/400/500/700 + Inter 300/400/700。价格 / 时间戳 / 货币一律等宽。',
+      '',
+      '骨架：',
+      '- 顶部 sticky bar：左侧 logo + 实时时钟 + 状态灯',
+      '- Hero：全屏 canvas + 居中标题 + CTA',
+      '- Ticker 跑马灯（CSS animation，40s 循环）',
+      '- 3 节内容：策略 / 业绩 / 技术',
+      '- 策略用 α β γ 编号卡片',
+      '- 业绩用 .perf-val 大字 + .perf-label 小字',
+      '',
+      '核心动效 — 必须实现：',
+      '1. Canvas K-line loop：每帧用 rgba(2,8,6,.15) 残影覆盖 → 画 ring buffer 中 80 个数据点 → scan-line 三像素一行',
+      '2. 实时时钟每秒 setInterval 重写 #livetime textContent',
+      '3. Ticker 用 CSS animation 跑马灯',
+      '',
+      '关键反 slop：',
+      '- 不要渐变按钮',
+      '- 不要"图标 + 文字"的卡片',
+      '- 不要"材料感"阴影',
+      '',
+      '页面要"感觉是给 1990s 量化交易人看的"，不是"Y Combinator 创业公司"。'
+    ].join('\n')
+  },
+
+  /* ====== Studio Forma (Quiet Luxury) ====== */
+  {
+    file:'studio-quiet-luxury.html',
+    name:'Studio Forma',
+    sub:'空间建筑设计 · Quiet Luxury Minimal',
+    register:'brand', theme:'light',
+    persona:'Quiet Luxury Minimal',
+    engine:'E · CSS-only',
+    accent:'#2D5A3D',
+    paletteFamily:'Quiet luxury light',
+    fileSize:'432 lines · CSS-only hero',
+    bestFor:['建筑事务所 / 室内设计', '高端酒店 / 度假村', '极简器物 / 工艺品品牌', '水疗 / 静奢 wellness', '任何想用"留白 + 单一字体字重跨度"传达高级感'],
+    notFor:['需要立即传达产品价值的快消品', 'B2B SaaS（这种留白 = 没信息）', '需要强烈色彩对比的儿童 / 游戏', '已有 logo 限制颜色的品牌'],
+    usePrompts:['我做的是建筑 / 酒店 / 高端工作室官网', '品牌调性是"安静 + 高级 + 少即是多"', '我想避开"米色 + 黄铜"那只 default 野兽'],
+    colorTokens:{
+      'bg':'#EFEFED',
+      'ink':'#141414',
+      'muted':'#787878',
+      'sage accent':'#2D5A3D',
+      'rule':'rgba(20,20,20,.08)',
+      'image bg':'#E5E2DA'
+    },
+    layout:{
+      'shell':'typographic hero + project grid',
+      'display':'clamp(64px,10vw,180px)',
+      'raleway range':'wght 100-900 (7 weights)',
+      'section padding':'140px 60px',
+      'project grid':'repeat(auto-fit,minmax(380px,1fr))',
+      'gutters':'80px'
+    },
+    motion:{
+      lib:'纯 CSS —— 零 JS 库',
+      pattern:'mouse-mask reveal · reveal-on-scroll (IntersectionObserver)',
+      easing:'cubic-bezier(.4,0,.2,1)',
+      reduced:'鼠标遮罩关闭，背景图直接显示'
+    },
+    craftMoves:[
+      {title:'双层鼠标遮罩（CSS-only signature）',
+       detail:'两个 absolute 层，下层是蓝图照片，上层用 radial-gradient mask 跟随鼠标位置揭示。零 JS 库',
+       code:[
+         '<div class="hero" id="hero">',
+         '  <div class="layer-day"></div>  <!-- base photo -->',
+         '  <div class="layer-night" id="nightLayer"></div>  <!-- overlay -->',
+         '</div>',
+         '',
+         '.layer-day, .layer-night { position: absolute; inset: 0; }',
+         '.layer-night {',
+         '  background: url(blueprint.jpg) center/cover;',
+         '  -webkit-mask: radial-gradient(circle 200px at -400px -400px, #000 40%, transparent 72%);',
+         '          mask: radial-gradient(circle 200px at -400px -400px, #000 40%, transparent 72%);',
+         '  backdrop-filter: brightness(2.5) blur(2px);',
+         '  will-change: mask;',
+         '}',
+         '',
+         'addEventListener("pointermove", (e) => {',
+         '  const r = demo.getBoundingClientRect();',
+         '  const m = "radial-gradient(circle 220px at "',
+         '          + (e.clientX - r.left) + "px " + (e.clientY - r.top)',
+         '          + "px, #000 40%, transparent 72%)";',
+         '  layer.style.mask = m; layer.style.webkitMask = m;',
+         '});'
+       ].join('\n')},
+      {title:'Raleway 7 字重跨度(100-900)',
+       detail:'一种字体承载所有角色：thin 100 用 hero 副标题，400 项目描述，800 标题，900 加粗',
+       code:[
+         '@import url("https://fonts.googleapis.com/css2?family=Raleway:wght@100;200;300;400;600;800;900&display=swap");',
+         'body { font-family: "Raleway", sans-serif; font-weight: 300; }',
+         '.hero-title-thin { font-weight: 100; letter-spacing: -.04em; }',
+         '.project-name   { font-weight: 800; letter-spacing: .05em; text-transform: uppercase; }',
+         '.cta-bold       { font-weight: 900; }'
+       ].join('\n')},
+      {title:'4 个 section 顶部 "sec-tag" 编号',
+       detail:'"PHILOSOPHY / 01" 灰色 11px uppercase tracking .2em — 不是 eyebrow 而是"章标"',
+       code:[
+         '.sec-tag {',
+         '  font-size: 11px; letter-spacing: .2em; text-transform: uppercase;',
+         '  color: var(--muted);',
+         '  margin-bottom: 30px;',
+         '}',
+         '.philosophy-quote {',
+         '  font-family: "Raleway", sans-serif;',
+         '  font-weight: 200;',
+         '  font-size: clamp(32px, 4.5vw, 64px);',
+         '  line-height: 1.2;',
+         '  letter-spacing: -.02em;',
+         '}'
+       ].join('\n')}
+    ],
+    fullPrompt:[
+      '为一家空间建筑设计工作室构建 Studio Forma 这种 Quiet Luxury Minimal 页面。要求：',
+      '',
+      '定位：建筑 / 酒店 / 静奢 wellness 工作室的官网。绝不能走"米色黄铜"的 reflex 路线。',
+      '',
+      '技术栈：纯 CSS + 极少 vanilla JS。不引入 GSAP / Lenis / Locomotive。',
+      '',
+      '设计 token：',
+      '- bg #EFEFED（不是米色 #F5F1EA，偏冷偏灰）',
+      '- ink #141414（不是 #000）',
+      '- muted #787878',
+      '- 强调色 sage #2D5A3D（深绿，不鲜亮）',
+      '',
+      '字体：单字族跨字重 Raleway 100/200/300/400/600/800/900。配 JetBrains Mono 给元数据。',
+      '',
+      '骨架：',
+      '- 顶部 sticky 极简 nav',
+      '- Hero：双层遮罩 = 两个 absolute div（base photo + overlay blueprint），mask 用 radial-gradient 跟随鼠标',
+      '- 主标题 + Raleway 100 字重中文',
+      '- 4 节内容：PHILOSOPHY / 01、SELECTED WORKS / 02、PROCESS / 03、CLIENTS MARQUEE',
+      '- 项目网格 repeat(auto-fit,minmax(380px,1fr))，gap 80px',
+      '- 工艺流程用数字 01/02/03/04 编号',
+      '',
+      '核心动效：',
+      '1. 双层鼠标遮罩 —— 这是招牌，必须有',
+      '2. 极简 reveal stagger：IntersectionObserver entry 时 opacity 0→1 + translateY 24→0, cubic-bezier(.4,0,.2,1) .8s',
+      '3. Ticker 用 CSS animation',
+      '',
+      '关键反 slop：',
+      '- 禁止任何边框圆角',
+      '- 禁止任何阴影',
+      '- 禁止 emoji / icon font',
+      '',
+      'prefers-reduced-motion：关闭鼠标遮罩，滚动揭示立即显示。'
+    ].join('\n')
+  },
+
+  /* ====== Buildly (Growth Dashboard) ====== */
+  {
+    file:'buildly-growth-dashboard.html',
+    name:'Buildly',
+    sub:'AI Growth Intelligence · Growth dashboard (dark)',
+    register:'product', theme:'dark',
+    persona:'—',
+    engine:'— (GSAP + SVG)',
+    accent:'#ff6a2b',
+    paletteFamily:'Amber Ops · dark',
+    fileSize:'278 lines · self-contained',
+    bestFor:['AI 产品后台（带 AI 建议卡）', '增长 / 营销 / SaaS 仪表盘', '需要在第 1 屏呈现 5+ KPI 的产品', '需要 AI Recommendations 展示区的产品', '任何中等密度、需要温暖色（不是冷蓝）的产品'],
+    notFor:['监控 / NOC 仪表盘（应选 Pulsegrid）', '需要大量图表的 BI 工具（应选 LiLedgerio 系列）', '不规则 / bento 形态的 console（应选 Postline）', '移动优先（sidebar + topbar 在小屏不友好）'],
+    usePrompts:['我做的是 SaaS / AI 产品的核心仪表盘', '需要在同一屏显示 5+ 关键指标 + AI 建议', '我想用深色 + 暖橙色（不是 SaaS 紫蓝）'],
+    colorTokens:{
+      'bg':'#08080a',
+      'panel':'#141417',
+      'panel-2':'#1a1a1e',
+      'line':'rgba(255,255,255,.08)',
+      'line-2':'rgba(255,255,255,.05)',
+      'ink':'#f4f4f5',
+      'ink-2':'#a1a1aa',
+      'ink-3':'#6b6b73',
+      'accent':'#ff6a2b',
+      'accent-2':'#ff9152',
+      'up':'#34d399',
+      'down':'#f87171'
+    },
+    layout:{
+      'shell':'canonical sidebar 240px + topbar 56px',
+      'kpi row':'grid 5 列',
+      'main padding':'20-22px 26-28px 40px',
+      'card radius':'16px (--r)',
+      'gap':'14-18px'
+    },
+    motion:{
+      lib:'GSAP 3 + ScrollTrigger (local ./lib/)',
+      pattern:'reveal stagger + number roll-up + SVG draw-in',
+      easing:'power3.out (.7s) + power2.out chart',
+      reduced:'reveal 立即显示 + 数据立即填充 + chart 直接显示不动画'
+    },
+    craftMoves:[
+      {title:'5 KPI 数字从 0 计数 GSAP roll-up',
+       detail:'每个 KPI 用 data-to + data-dec + data-suffix 配置目标值和格式，GSAP onUpdate 实时格式化到 textContent',
+       code:[
+         'function rollNums() {',
+         '  document.querySelectorAll(".val[data-to]").forEach(el => {',
+         '    const to = parseFloat(el.dataset.to);',
+         '    const dec = +(el.dataset.dec || 0);',
+         '    const suf = el.dataset.suffix || "";',
+         '    const fmt = v => Math.round(v).toLocaleString() + suf;',
+         '    const o = { v: 0 };',
+         '    gsap.to(o, {',
+         '      v: to, duration: 1.4, ease: "power2.out",',
+         '      onUpdate: () => el.textContent = fmt(o.v)',
+         '    });',
+         '  });',
+         '}',
+         '// HTML: <div class="val num" data-to="248320">0</div>',
+         '// HTML: <div class="val num" data-to="3.8" data-dec="1" data-suffix="%">0%</div>'
+       ].join('\n')},
+      {title:'SVG 双折线 overlay (Sessions vs Conversion)',
+       detail:'compute path 字符串 → stroke-dasharray = path 总长度 → 初始 dashoffset = 总长 → gsap.to(dashoffset, 0)',
+       code:[
+         'const svg = document.getElementById("chart");',
+         'const W=760, H=280, pad=8;',
+         'const [rev, con] = [[130,138,150,...], [120,128,135,...]];',
+         'const X = i => pad + i * (W - pad*2) / (rev.length - 1);',
+         'const Y = v => H - pad - ((v - min) / (max - min)) * (H - pad*2 - 20);',
+         'const path = arr => arr.map((v, i) => (i ? "L" : "M") + X(i) + " " + Y(v)).join(" ");',
+         '',
+         'const lr = svg.querySelector("#lr");',
+         'const len = lr.getTotalLength();',
+         'lr.style.strokeDasharray = len;',
+         'lr.style.strokeDashoffset = reduce ? 0 : len;',
+         '',
+         'if (!reduce) {',
+         '  gsap.to([lr, lc], { strokeDashoffset: 0, duration: 1.6, ease: "power2.out", stagger: .15 });',
+         '}'
+       ].join('\n')},
+      {title:'Donut 多段 arc circumference 数学',
+       detail:'三个并列 <circle>，每个 stroke-dasharray 设 "arc C / 剩余"；rotate(-90 + off*360) 让每段从 12 点起算',
+       code:[
+         'const C = 2 * Math.PI * 48;  // r=48',
+         'document.querySelectorAll(".arc").forEach(a => {',
+         '  const frac = parseFloat(a.dataset.frac);',
+         '  const off = parseFloat(a.dataset.offset || 0);',
+         '  a.setAttribute("transform", "rotate(" + (-90 + off*360) + " 60 60)");',
+         '  const len = frac * C - 3;  // -3 让段间留缝',
+         '  if (reduce) { a.style.strokeDasharray = len + " " + C; return; }',
+         '  a.style.strokeDasharray = "0 " + C;',
+         '  gsap.to(a, { strokeDasharray: len + " " + C, duration: 1.1, delay: .3, ease: "power2.out" });',
+         '});'
+       ].join('\n')}
+    ],
+    fullPrompt:[
+      '为一家名为 Buildly 的 AI Growth 产品构建这种 dashboard。要求：',
+      '',
+      '定位：通用 SaaS dashboard，但**必须**避开"#3B82F6 蓝 + #22C55E 绿 + #F97316 橙"通用三件套。',
+      '本作选 Amber Ops dark —— 暖橙色品牌 + 黄昏灰阶。',
+      '',
+      '技术栈：vanilla JS + GSAP 3 + ScrollTrigger（必须 self-host 到 ./lib/）。不引入 Chart.js / ECharts。',
+      '',
+      '设计 token：',
+      '- bg #08080a（绝对不要用 #000 或 #0a0a0a 蓝调）',
+      '- panel #141417 / panel-2 #1a1a1e',
+      '- hairline rgba(255,255,255,.08)',
+      '- accent #ff6a2b（**禁用任何紫蓝**）',
+      '- accent-2 #ff9152',
+      '- up #34d399 / down #f87171',
+      '',
+      '字体：Inter 单字族。tabular-nums 在所有数字上。',
+      '',
+      '骨架：',
+      '- 经典 shell：左侧 240px 侧栏 + 右侧 56px topbar + main content',
+      '- 5 个 KPI 瓦片 (repeat(5,1fr))：icon chip + status chip → label → 大数字 → prev',
+      '- 双图 grid-2：Sessions vs Conversion 双折线 + 切换按钮；右侧 Traffic Sources donut + Strategy Simulator 滑块',
+      '- AI Recommendations 三列 + confidence %',
+      '- Top Performing Products 表（数字右对齐）',
+      '',
+      '核心动效（必须实现）：',
+      '1. reveal stagger: opacity 0→1 + y 18→0, ease:power3.out, stagger:.08, onStart 触发 rollNums',
+      '2. KPI roll-up: GSAP to v target, onUpdate 格式化',
+      '3. SVG 双折线: stroke-dashoffset 从 path 总长度 → 0',
+      '4. Donut 3 段: dasharray 0→len',
+      '',
+      'prefers-reduced-motion fallback（合规必发）：reveal 立即 opacity 1；数字立即 fmt(target)；chart 不动画',
+      '',
+      '关键反 slop：',
+      '- **不能**用蓝+绿+橙通用 triad',
+      '- **不能**有 hard border 1px solid #333',
+      '- **不能**用纯白 #fff 卡片',
+      '',
+      '数据带 footnote 标"illustrative data"以示诚实。'
+    ].join('\n')
+  },
+
+  /* ====== Stakent (Monitoring) ====== */
+  {
+    file:'stakent-monitoring-dashboard.html',
+    name:'Pulsegrid',
+    sub:'Infrastructure Monitoring · NOC dashboard (dark)',
+    register:'product', theme:'dark',
+    persona:'—',
+    engine:'— (GSAP + SVG)',
+    accent:'#a78bfa',
+    paletteFamily:'Steel Cyan / Violet dark',
+    fileSize:'304 lines · self-contained',
+    bestFor:['服务器 / 基础设施监控（NOC）', 'DevOps / CI/CD dashboard', '实时 SLO / SLA 跟踪', '需要"发光 sparkline"的极客感产品', '任何 7×24 大屏（NOC wall）'],
+    notFor:['面向一般消费者的产品（荧光 violet 太"工程"）', '金融 / 医疗等需要柔和专业感的（应用 Acru 或 PawCare）', '需要表格为主导的运营系统', '需要浅色调明快的（用 Acru）'],
+    usePrompts:['我做的是监控 / DevOps / CI 工具', '我的用户是工程师 / SRE', '我想要"磷光 sparkline"那种极客感'],
+    colorTokens:{
+      'bg':'#0a0a10',
+      'panel':'#13131c',
+      'panel-2':'#1a1a26',
+      'line':'rgba(255,255,255,.07)',
+      'line-2':'rgba(255,255,255,.045)',
+      'ink':'#f5f4fb',
+      'ink-2':'#a5a3b8',
+      'ink-3':'#6b6980',
+      'violet':'#a78bfa',
+      'violet-2':'#8b5cf6',
+      'violet-3':'#c4b5fd',
+      'up':'#4ade80',
+      'down':'#fb7185'
+    },
+    layout:{
+      'shell':'canonical sidebar + topbar',
+      'hero KV':'28-32px display font',
+      'sparkline width':'60-120px inline',
+      'card radius':'18px (--r)',
+      'topbar':'56px'
+    },
+    motion:{
+      lib:'GSAP + 自定义',
+      pattern:'glowing sparklines (feGaussianBlur filter) + 自定义 slider',
+      easing:'power2.out',
+      reduced:'关掉所有 glow 滤镜的 blur 动画'
+    },
+    craftMoves:[
+      {title:'SVG feGaussianBlur 滤镜制造 glowing sparklines',
+       detail:'每个 sparkline 套一层 feGaussianBlur filter，原 stroke 再叠一遍 —— 产生"磷光描边"。',
+       code:[
+         '<svg width="120" height="36">',
+         '  <defs>',
+         '    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">',
+         '      <feGaussianBlur stdDeviation="2.5" result="b"/>',
+         '      <feMerge>',
+         '        <feMergeNode in="b"/>',
+         '        <feMergeNode in="SourceGraphic"/>',
+         '      </feMerge>',
+         '    </filter>',
+         '  </defs>',
+         '  <polyline filter="url(#glow)" stroke="var(--violet)" fill="none"',
+         '    points="..." vector-effect="non-scaling-stroke"',
+         '    stroke-width="1.6"/>',
+         '</svg>'
+       ].join('\n')},
+      {title:'Premium 自定义 slider',
+       detail:'input[type=range] 隐藏 native thumb，::-webkit-slider-thumb 自定义 —— 这是 NOC 仪表盘的灵魂',
+       code:[
+         'input[type=range] {',
+         '  -webkit-appearance: none;',
+         '  height: 4px;',
+         '  background: linear-gradient(90deg, var(--violet) var(--v,50%), var(--line) var(--v,50%));',
+         '  border-radius: 999px;',
+         '}',
+         'input[type=range]::-webkit-slider-thumb {',
+         '  -webkit-appearance: none;',
+         '  width: 16px; height: 16px;',
+         '  background: var(--ink);',
+         '  border: 3px solid var(--violet);',
+         '  border-radius: 999px;',
+         '  box-shadow: 0 0 0 3px rgba(167,139,250,.18);',
+         '}'
+       ].join('\n')},
+      {title:'live 状态进度条',
+       detail:'进度条 height 6px + 灰底白 fill + 实时数值百分比 —— 比 donut 更易读',
+       code:[
+         '.sla-bar { display:flex; align-items:center; gap:8px; }',
+         '.sla-bar .track { flex:1; height:6px; background: var(--line-2); border-radius: 999px; overflow: hidden; }',
+         '.sla-bar .fill { height: 100%; background: var(--violet); border-radius: 999px;',
+         '  transform-origin: left; transform: scaleX(0); transition: transform .8s cubic-bezier(.2,.8,.2,1); }',
+         '.sla-bar.on .fill { transform: scaleX(1); }'
+       ].join('\n')}
+    ],
+    fullPrompt:[
+      '为一家 NOC（网络运营中心）监控产品构建这种夜间 dashboard。要求：',
+      '',
+      '定位：基础设施监控 / 实时 SLO / 异常告警场景。比 Buildly 更"工程感"。',
+      '',
+      '技术栈：vanilla JS + GSAP + SVG（手作，不引入 Chart.js）。',
+      '',
+      '设计 token：',
+      '- bg #0a0a10（不是 #000，偏蓝灰）',
+      '- panel #13131c / panel-2 #1a1a26',
+      '- hairline rgba(255,255,255,.07)',
+      '- 强调色用 violet #a78bfa（亮度高 + chroma ≤ 0.23），三个 violet 阶：a78bfa / 8b5cf6 / c4b5fd',
+      '- up #4ade80 / down #fb7185',
+      '',
+      '字体：Inter + JetBrains Mono。',
+      '',
+      '骨架：',
+      '- 经典 shell',
+      '- 顶部 metric strip 4 个并列 KV',
+      '- 中部 SLA-bar live',
+      '- 下部 4 个 sparkline 卡（CPU/Mem/Net/Lat）—— 签名招',
+      '- 自定义 slider 阈值调节器',
+      '',
+      '核心动效（必须实现）：',
+      '1. SVG <filter id="glow"> 用 feGaussianBlur(stdDeviation=2.5) 套 polyline',
+      '2. 自定义 range slider: input[type=range] + ::-webkit-slider-thumb',
+      '3. Reveal stagger + counter roll-up',
+      '',
+      'prefers-reduced-motion：移除 SVG filter；slider snap 立即到位。',
+      '',
+      '关键反 slop：',
+      '- 不能用 AI 紫色 glow on dark（#a78bfa 是合规的 —— 亮度高，chroma ≤ 0.18）',
+      '- 不能用 hard border 1px #333',
+      '- 不能用纯 white card on dark',
+      '- "磷光 sparkline" 是必须',
+      '',
+      '数据：所有数值带 .unm 或 "mock" 标记。'
+    ].join('\n')
+  },
+
+  /* ====== Acru (Financial Light) ====== */
+  {
+    file:'acru-financial-dashboard.html',
+    name:'Acru',
+    sub:'Team Productivity · Finance dashboard (light)',
+    register:'product', theme:'light',
+    persona:'—',
+    engine:'— (vanilla JS + CSS)',
+    accent:'#8bc34a',
+    paletteFamily:'Sage Ledger · light',
+    fileSize:'325 lines · self-contained',
+    bestFor:['财务 / 会计 / 税务后台', '团队生产力 / 项目跟踪', 'B2B 中后台（浅色调专业感）', '需要堆叠柱状图 + 半环仪表的报表页', '任何用浅色 + 微调中性色调传达"严谨但温和"的产品'],
+    notFor:['AI / 监控产品（应选 Pulsegrid 暗色）', '需要多色块对比的产品（应选 Subhub 分色卡）', '需要图片 hotspot 的产品（应选 PawCare）', '窄屏 / 移动优先的场景'],
+    usePrompts:['我做的是财务 / 团队 / B2B 后台', '需要浅色调（不要黑色 dashboard 的压迫感）', '我的图表主要是堆叠柱 + 仪表'],
+    colorTokens:{
+      'page':'#eef0ec',
+      'card':'#ffffff',
+      'ink-1':'#1a1c19',
+      'ink-2':'#6b6f68',
+      'ink-3':'#9a9e96',
+      'line':'#e7e9e4',
+      'line-2':'#eef0eb',
+      'green':'#8bc34a',
+      'green-d':'#6fa838',
+      'lime':'#aee15a',
+      'red':'#e56a5a'
+    },
+    layout:{
+      'shell':'canonical sidebar 240px + topbar (light variant)',
+      'page':'tinted off-white #eef0ec 不要纯 #f5f5f5',
+      'card radius':'20px (--r)',
+      'control radius':'14px (--r-sm)',
+      'gap':'16-18px'
+    },
+    motion:{
+      lib:'vanilla JS（不用 GSAP）',
+      pattern:'CSS class toggle + requestAnimationFrame counter',
+      easing:'cubic-bezier(.4,0,.2,1)',
+      reduced:'立即显示所有数值'
+    },
+    craftMoves:[
+      {title:'堆叠柱状图：height = value/max from zero baseline',
+       detail:'**这是 dashboard 最高失败率点**。bar 必须从 0 开始（不裁切基线），height = v/max × 容器高度',
+       code:[
+         '.col {',
+         '  flex: 1;',
+         '  display: flex; flex-direction: column;',
+         '  align-items: center;',
+         '  height: 100%;',
+         '  justify-content: flex-end;  /* 关键：从底部对齐 */',
+         '}',
+         '.bar {',
+         '  width: 100%; max-width: 18px;',
+         '  /* height 由 JS 计算: v / max * 100% —— 必须从 0 基线起算 */',
+         '  background: linear-gradient(to top, var(--green), var(--lime));',
+         '  border-radius: 3px 3px 0 0;',
+         '}',
+         '.lab { font-family: var(--font-mono); font-size: 9px; color: var(--ink-3); margin-top: 4px; }'
+       ].join('\n')},
+      {title:'半环仪表数学 C × 270/360',
+       detail:'用 circumference 数学做半环：dasharray = "arcLen C"，起点从 -135° (7 点位置)',
+       code:[
+         'const R = 54;',
+         'const arcLen = 2 * Math.PI * R * 270/360;  // 半环 270°',
+         'svg.setAttribute("transform", "rotate(-135 60 60)");',
+         '',
+         'const arc = document.getElementById("arc");',
+         'arc.style.strokeDasharray = reduce',
+         '  ? (arcLen + " " + 2*Math.PI*R)',
+         '  : ("0 " + 2*Math.PI*R);',
+         '',
+         'if (!reduce) {',
+         '  gsap.to(arc, {',
+         '    strokeDasharray: arcLen + " " + 2*Math.PI*R,',
+         '    duration: 1.4, ease: "power2.out"',
+         '  });',
+         '}',
+         '/* 中央数字 + needle 从 -135 + pct*270° */'
+       ].join('\n')},
+      {title:'Tooltip 按 chart container 定位，非 viewport',
+       detail:'tooltip absolute 坐标用 chart\'s boundingClientRect 计算 —— viewport 坐标在 chart 不在页面原点时会错位',
+       code:[
+         'tooltip.addEventListener("mouseenter", e => {',
+         '  const bar = e.currentTarget;',
+         '  const barRect = bar.getBoundingClientRect();',
+         '  const chartRect = chart.getBoundingClientRect();',
+         '  tip.style.left = (barRect.left - chartRect.left + barRect.width/2 - tipW/2) + "px";',
+         '  tip.style.top = (barRect.top - chartRect.top - tipH - 8) + "px";',
+         '});'
+       ].join('\n')}
+    ],
+    fullPrompt:[
+      '为一家财务/团队生产力 SaaS 构建 Acru 这种 light-sidebar dashboard。要求：',
+      '',
+      '定位：浅色调金融/团队生产力场景（非 SaaS 蓝），选用 Sage Ledger —— 浅鼠尾草灰底 + 鲜绿强调色。',
+      '',
+      '技术栈：纯 vanilla JS + CSS。不用 GSAP / ScrollTrigger。',
+      '',
+      '设计 token：',
+      '- page #eef0ec（不是 #f5f5f5 要 tinge 向 accent hue）',
+      '- card #ffffff',
+      '- **green accent #8bc34a**（不是 SaaS 蓝）',
+      '- green-d #6fa838（深主按钮）',
+      '',
+      '字体：Inter 单字族，tabular-nums 在数字上。',
+      '',
+      '骨架：',
+      '- 经典 shell（左 240 sidebar + topbar 56 + content）',
+      '- 顶部 metric strip',
+      '- 中段 grid-2：左堆叠柱状图 + 右半环仪表',
+      '- 下段 grid-3：信用卡样式 widget + 2 个紧凑卡',
+      '',
+      '核心动效：',
+      '1. 数字从 0 计数（requestAnimationFrame 而非 GSAP）',
+      '2. 堆叠柱：height = v/max × 100%（从 0 基线）',
+      '3. 半环仪表：circumference × 270/360 + rotate(-135) + needle -135+pct×270',
+      '4. hover tooltip：定位用 chart.getBoundingClientRect() 而非 viewport',
+      '',
+      '关键反 slop（**chart 章节最常考题**）：',
+      '- **不能**所有柱子等高（height 必须由 v/max 计算）',
+      '- **不能**柱子顶到容器顶部',
+      '- **不能**柱 ≤ 12 列（再多就改 line chart）',
+      '- **不能**柱太细 < gap',
+      '- **不能**无 x 轴 label',
+      '',
+      '数字格式：Currency 右对齐 tabular-nums，Date 左对齐。'
+    ].join('\n')
+  },
+
+  /* ====== Pawcare (Health) ====== */
+  {
+    file:'pawcare-adaptive-health.html',
+    name:'PawCare+',
+    sub:'Pet Health Companion · Health app (floating)',
+    register:'product', theme:'light',
+    persona:'—',
+    engine:'— (vanilla JS)',
+    accent:'#1f8a86',
+    paletteFamily:'Mint & Coral · light',
+    fileSize:'505 lines · self-contained',
+    bestFor:['健康 / 健身 / 医疗 App', '宠物 / 园艺 / 摄影等生活类', '需要图片 + hotspot 注解的产品', '需要 floating panel 浮起框架', '需要 accent-picker（用户换主题色）的产品'],
+    notFor:['B2B 后台（floating panel 不是企业感）', '数据密集型分析（应选 Subhub / Postline）', '需要侧栏深度的产品（应选 Buildly）', '不规则 bento 布局（应选 Postline / Subhub）'],
+    usePrompts:['我做的是健康 / 生活类 App', '页面需要"产品照片 + 注解点"展示', '我想要个"漂浮面板"的现代 App 感（而不是 sidebar）'],
+    colorTokens:{
+      'page':'#e6e9df',
+      'bg':'#f5f6f0',
+      'card':'#ffffff',
+      'ink-1':'#181a10',
+      'ink-2':'#6a6f5f',
+      'ink-3':'#a0a492',
+      'accent':'#1f8a86',
+      'accent-l':'#d7f0ee',
+      'accent-d':'#0f5f5c',
+      'coral':'#ef6b4d'
+    },
+    layout:{
+      'shell':'floating rounded panel (整个 dashboard 是个 28px 圆角大卡)',
+      'panel':'max-width 1380, margin 18px auto',
+      'panel radius':'28px (--r-lg)',
+      'panel shadow':'0 40px 90px -50px rgba(20,24,20,.35)',
+      'inner layout':'grid 3-col (280/1fr/320) with hotspots'
+    },
+    motion:{
+      lib:'vanilla JS + CSS',
+      pattern:'hotspot 注解 staggered fade-in + ECG scaleY 0→1',
+      easing:'cubic-bezier(.2,.8,.2,1)',
+      reduced:'hotspot 立即显示，ECG 满波形'
+    },
+    craftMoves:[
+      {title:'图片上的 hotspot 注解（percentage 定位）',
+       detail:'hotspot div 绝对定位 top/left 用 percentage（不是 px），让热点在不同图片尺寸下都跟随',
+       code:[
+         '.hero-img { position: relative; }',
+         '.hotspot {',
+         '  position: absolute;',
+         '  display: inline-flex; align-items: center; gap: 7px;',
+         '  background: rgba(21,23,14,.62);',
+         '  backdrop-filter: blur(6px);',
+         '  border-radius: 20px;',
+         '  padding: 6px 12px;',
+         '  font-size: 11px; color: #fff;',
+         '  opacity: 0;',
+         '  animation: fadeIn .5s cubic-bezier(.2,.8,.2,1) forwards;',
+         '}',
+         '.hs-1 { top: 14%; left: 52%; animation-delay: 1.0s; }',
+         '.hs-2 { top: 44%; left: 16%; animation-delay: 1.2s; }',
+         '.hs-3 { top: 72%; left: 58%; animation-delay: 1.4s; }'
+       ].join('\n')},
+      {title:'accent-picker + dark-mode toggle 互不依赖',
+       detail:'两个变量独立变化：data-accent 修改 --accent，data-mode 翻转整个 :root 字典。组合 = 4 个变体',
+       code:[
+         '/* 重音通过 [data-accent] 修改 */',
+         '[data-accent="coral"]    { --accent: #ef6b4d; --accent-l: #fde3da; --accent-d: #a5451f; }',
+         '[data-accent="neutral"] { --accent: #7b8064; --accent-l: #eef0e2; --accent-d: #4f5440; }',
+         '',
+         '/* 模式通过 [data-mode] 整 root */',
+         '[data-mode="dark"] { --bg: #181a10; --ink: #f4f4f5; --card: #23261c; ... }',
+         '',
+         '/* JS 独立切换两者 */',
+         'document.querySelectorAll("[data-accent]").forEach(b =>',
+         '  b.addEventListener("click", () => {',
+         '    document.body.dataset.accent = b.dataset.accent;',
+         '    document.body.dataset.mode = currentMode;  // 保持模式不变',
+         '  })',
+         ');'
+       ].join('\n')},
+      {title:'ECG 波形 + scaleY 0→1 动画',
+       detail:'手绘 SVG polyline 模拟心电图，配合 transform-origin bottom 的 scaleY 心电图"画线"效果',
+       code:[
+         '<svg class="ecg" viewBox="0 0 200 50">',
+         '  <polyline fill="none" stroke="var(--accent)" stroke-width="1.6"',
+         '    points="0,25 20,25 25,15 30,40 35,10 40,35 45,25 60,25 80,25 85,15 90,40 95,10 100,35 105,25 200,25"/>',
+         '</svg>',
+         '',
+         '.ecg polyline {',
+         '  transform-origin: center;',
+         '  animation: ecgDraw 1.6s cubic-bezier(.2,.8,.2,1) 1s backwards;',
+         '}',
+         '@keyframes ecgDraw {',
+         '  from { transform: scaleY(0); opacity: 0; }',
+         '  to   { transform: scaleY(1); opacity: 1; }',
+         '}'
+       ].join('\n')}
+    ],
+    fullPrompt:[
+      '为一家宠物健康 App 构建 PawCare+ 这种浮动面板的健康 dashboard。要求：',
+      '',
+      '定位：health / wellness app，浅色调 + sage 半浮起面板。**这是 product-ui.md §0.1 的"floating panel"形态**。',
+      '',
+      '技术栈：vanilla JS + CSS。不用 GSAP。',
+      '',
+      '设计 token（来自 Mint & Coral 集合）：',
+      '- page #e6e9df（页面是 tinted off-white，向 sage 偏）',
+      '- bg #f5f6f0（卡片浮起的 page 是淡 sage）',
+      '- card #ffffff',
+      '- accent #1f8a86（teal 主重音） + accent-l #d7f0ee + accent-d #0f5f5c',
+      '- coral #ef6b4d（第二重音）',
+      '',
+      '字体：Inter + JetBrains Mono。',
+      '',
+      '骨架（**floating panel 是关键**）：',
+      '- 整个 dashboard 是一个 <div class="panel"> 容器：max-width 1380 · margin 18px auto · padding 30px · border-radius 28px · background rgba(255,255,255,.96) · box-shadow 0 40px 90px -50px',
+      '- 顶栏：logo + 标签 + 4 个 tab 链接 + 搜索 + accent picker + 通知 + 用户',
+      '- hero img：占满宽的宠物照片，**3 个 hotspot pill 注解**叠加在身体特定位置',
+      '- 三栏布局：左 280px 信息 / 中 1fr 日期 + 心率 / 右 320px appointments',
+      '',
+      '核心动效：',
+      '1. hotspot pill background rgba(21,23,14,.62) backdrop-filter:blur(6px) · opacity 0 → 1 · staggered 120-150ms',
+      '2. ECG polyline scaleY 0→1 · 1.6s cubic-bezier(.2,.8,.2,1)',
+      '3. accent picker 切换 [data-accent] 属性，dark-mode 切换 [data-mode]，两者独立',
+      '',
+      '关键反 slop：',
+      '- **不能** 边框硬 1px solid #ccc',
+      '- **不能** 阴影纯黑 0,0,0',
+      '',
+      'prefers-reduced-motion：hotspot 立即全显示，ECG 满波形。'
+    ].join('\n')
+  },
+
+  /* ====== Nodeflux (API Console / bento) ====== */
+  {
+    file:'nodeflux-api-console.html',
+    name:'Postline',
+    sub:'Email Delivery Console · API console (re-themed)',
+    register:'product', theme:'light',
+    persona:'—',
+    engine:'— (vanilla JS + GSAP)',
+    accent:'#0d9488',
+    paletteFamily:'Teal & Clay · light',
+    fileSize:'404 lines · self-contained',
+    bestFor:['API / 开发者控制台', '中间页（auth / token / 用量）', '需要"一个 hero key-card + 多 stats + 多 utility"的 console', '不希望有 sidebar 的中等密度面板', '需要按内容重要性分大小的真正 bento'],
+    notFor:['需要 5+ 个并列重要 KPI（应选 Buildly）', '需要表格为主导的（应选 Subhub）', '需要工作流表单的（应选 workflow-ui.md，不是本例）', '需要表格列操作（应选 triptych）'],
+    usePrompts:['我做的是 API / 开发者产品的控制台', '信息有清晰的"一个主 + 多个次"层级', '我想用真正的 bento 网格（非 6 个 1fr 均匀）'],
+    colorTokens:{
+      'page':'#e9e6dd',
+      'bg':'#f6f4ef',
+      'card':'#ffffff',
+      'ink-1':'#191a19',
+      'ink-2':'#5f6660',
+      'ink-3':'#94998f',
+      'accent':'#0d9488',
+      'accent-d':'#0b7a70',
+      'accent-l':'#ccfbf1',
+      'accent-2':'#f59e0b',
+      'accent-2-l':'#fef3c7',
+      'black':'#161816'
+    },
+    layout:{
+      'shell':'floating panel + TRUE bento',
+      'bento cols':'2.15fr 1.7fr 1fr 1fr 1fr',
+      'panel radius':'32px',
+      'panel padding':'26px 30px 38px',
+      'shadow':'0 40px 90px -50px rgba(20,24,20,.35)'
+    },
+    motion:{
+      lib:'vanilla JS + GSAP',
+      pattern:'staggered scale-in for concentric ring cluster + line/area draw-in',
+      easing:'cubic-bezier(.2,.8,.2,1) + back.out',
+      reduced:'所有 scale/draw 直接最终态'
+    },
+    craftMoves:[
+      {title:'真正的 bento grid 配方: 2.15fr 1.7fr 1fr 1fr 1fr',
+       detail:'**不是** 6 个 1fr 均匀网格 —— 宽度编码 importance。最左占 2.15fr 是 hero key-card',
+       code:[
+         '.bento {',
+         '  display: grid;',
+         '  grid-template-columns: 2.15fr 1.7fr 1fr 1fr 1fr;',
+         '  gap: 18px;',
+         '  /* 顺序: hero | metric | stat | stat | stat | stat */',
+         '}',
+         '.bento > .key-card {',
+         '  background: linear-gradient(160deg, var(--black) 0%, var(--accent-d) 100%);',
+         '  color: #fff;',
+         '}',
+         '.bento > .metrics-stack { display: flex; flex-direction: column; gap: 18px; }'
+       ].join('\n')},
+      {title:'Concentric ring cluster（嵌套 div 而非 arc）',
+       detail:'用嵌套 div + decreasing opacity，比 donut 更易读 + 更能表达 hierarchical cumulative 数据',
+       code:[
+         '.rings { position: relative; width: 160px; height: 160px; }',
+         '.ring {',
+         '  position: absolute;',
+         '  width: 160px; height: 160px;',
+         '  border-radius: 999px;',
+         '  display: grid; place-items: center;',
+         '  opacity: 0;',
+         '}',
+         '/* 外圈 100% 透明 0.65 */',
+         '.ring:nth-child(1) { background: var(--accent); opacity: .65;',
+         '  transform: scale(.4);',
+         '  animation: ringIn .8s cubic-bezier(.2,.8,.2,1) .1s forwards; }',
+         '/* 内圈更小更深 */',
+         '.ring:nth-child(2) { width: 132px; height: 132px; inset: 14px;',
+         '  background: var(--accent-2); opacity: .65;',
+         '  animation-delay: .22s; }',
+         '',
+         '@keyframes ringIn {',
+         '  from { transform: scale(.4); opacity: 0; }',
+         '  to   { transform: scale(1); opacity: .65; }',
+         '}'
+       ].join('\n')},
+      {title:'Activity waveform（canvas trail fade）',
+       detail:'64 个柱条用 canvas 画，每帧 rgba trail fade 实现流动感',
+       code:[
+         'const cv = canvas.getContext("2d");',
+         'function frame() {',
+         '  cv.fillStyle = "rgba(246,244,239,.15)";  // 与 bg 同色但半透',
+         '  cv.fillRect(0, 0, w, h);',
+         '  bars.shift();',
+         '  bars.push(Math.random() * .8 + .2);',
+         '  bars.forEach((v, i) => {',
+         '    const x = i * (w / bars.length);',
+         '    const y = h - v * h;',
+         '    cv.fillStyle = "hsla(173, 80%, 38%, " + (.4 + v*.5) + ")";',
+         '    cv.fillRect(x + 1, y, w/bars.length - 2, v * h);',
+         '  });',
+         '  requestAnimationFrame(frame);',
+         '}'
+       ].join('\n')}
+    ],
+    fullPrompt:[
+      '为一家邮件投递 API 构建 Postline 这种 console 类 dashboard。要求：',
+      '',
+      '定位：API / 中后台产品，技术感强 + 信息层级清晰。选用 Teal & Clay —— 深 teal + 暖琥珀。',
+      '',
+      '技术栈：vanilla JS + GSAP + 自定义 canvas。',
+      '',
+      '设计 token（来自 Teal & Clay 集合）：',
+      '- page #e9e6dd（暖 page）',
+      '- bg #f6f4ef',
+      '- card #ffffff',
+      '- accent #0d9488（teal） + accent-d #0b7a70 + accent-l #ccfbf1',
+      '- accent-2 #f59e0b（partner hue）',
+      '- black #161816（深 key-card 用）',
+      '',
+      '骨架（**bento + floating panel 的合体**）：',
+      '- 整个 <main> 在 <div class="panel"> 内',
+      '- panel 内 grid 是真正的 bento: grid-template-columns: 2.15fr 1.7fr 1fr 1fr 1fr',
+      '- 列 1: 大深 key-card（API Key 区，黑底 + teal 渐变）',
+      '- 列 2: multi-stat stack（4 个堆叠的 stat）',
+      '- 列 3-6: utility tile',
+      '',
+      '核心动效：',
+      '1. concentric ring cluster: 5 个嵌套 div，每层尺寸递减 14px，opacity 0→.65，staggered 120ms',
+      '2. canvas waveform: trail fade rgba + 64 bar 实时滚动',
+      '3. latency sparkline: SVG stroke-dasharray draw-in',
+      '',
+      '关键反 slop：',
+      '- **不能**用 6 列 1fr（必须 2.15fr 1.7fr 1fr 1fr 1fr）',
+      '- **不能**每张卡都长方形面积相等',
+      '- **不能**紫色 / 蓝紫渐变'
+    ].join('\n')
+  },
+
+  /* ====== Inkline (Publishing CMS / triptych) ====== */
+  {
+    file:'inkline-publishing-cms.html',
+    name:'Helphub',
+    sub:'Knowledge Base Console · Publishing CMS (re-themed)',
+    register:'product', theme:'light',
+    persona:'—',
+    engine:'— (vanilla JS)',
+    accent:'#6d28d9',
+    paletteFamily:'Violet Console · light',
+    fileSize:'375 lines · self-contained',
+    bestFor:['CMS / 知识库 / 帮助中心', '文档站点（前端编辑器 / 索引）', '需要 "296 + 1fr + 320" 三栏布局的页面', '需要 CSS 浏览器 mockup 的产品功能预览', '内容 / 资产编辑后台'],
+    notFor:['数据密度高的报表页（应用 Acru / Subhub）', '需要 sidebar 的复杂后台（应用 Buildly）', '需要登录态 / 个人中心的简单页面', '需要 hover / drag 等复杂交互的产品预览'],
+    usePrompts:['我做的是 CMS / 知识库 / 帮助中心', '信息结构是"索引 + 内容 + 工具"三栏', '我要展示"产品在自身内的预览"（mockup 是组件）'],
+    colorTokens:{
+      'page':'#e9e9ec',
+      'card':'#ffffff',
+      'ink-1':'#1b1b1d',
+      'ink-2':'#616166',
+      'ink-3':'#96969c',
+      'line':'#e2e2e7',
+      'line-2':'#ececef',
+      'accent':'#6d28d9',
+      'accent-2':'#f59e0b',
+      'accent-soft':'#efe7fc',
+      'green':'#16a34a',
+      'amber-soft':'#fdf1dd'
+    },
+    layout:{
+      'shell':'top-nav **triptych** 296px 1fr 320px',
+      'align-items':'start (masonry)',
+      'panel radius':'20px',
+      'topbar height':'64px',
+      'browse gap':'16px'
+    },
+    motion:{
+      lib:'vanilla JS + GSAP',
+      pattern:'staggered hotspot fade-in + line chart draw-in',
+      easing:'cubic-bezier(.2,.8,.2,1) + power2.out',
+      reduced:'hotspot 直接显示，chart 不动画'
+    },
+    craftMoves:[
+      {title:'Triptych 网格: 296px 1fr 320px + align-items: start',
+       detail:'**这是 product-ui.md §1 三列非对称的精确配方**。align-items: start 让三列内容独立高度',
+       code:[
+         '.triptych {',
+         '  display: grid;',
+         '  grid-template-columns: 296px 1fr 320px;',
+         '  gap: 20px;',
+         '  align-items: start;  /* 关键！让三列高度独立 */',
+         '}',
+         '/* 左: 工具列表 (296) */',
+         '/* 中: 内容 / 数据图表 (1fr) */',
+         '/* 右: workspace / 提示 (320) */',
+         '',
+         '/* mobile fallback */',
+         '@media (max-width: 980px) {',
+         '  .triptych { grid-template-columns: 1fr; }',
+         '}'
+       ].join('\n')},
+      {title:'CSS 浏览器预览 mockup（圆角顶部 chrome）',
+       detail:'制作一个假浏览器窗口：圆角顶部 + 三个彩色按钮 + 中间是"网页内容"。注意：这是组件本体而非赝品截图',
+       code:[
+         '.browser-mock {',
+         '  background: var(--card);',
+         '  border-radius: 14px 14px 8px 8px;',
+         '  overflow: hidden;',
+         '  box-shadow: 0 12px 40px -10px rgba(20,20,20,.15);',
+         '}',
+         '.browser-chrome {',
+         '  background: var(--panel-2);',
+         '  padding: 10px 14px;',
+         '  display: flex; align-items: center; gap: 8px;',
+         '}',
+         '.browser-chrome .dot { width: 11px; height: 11px; border-radius: 999px; }',
+         '.browser-chrome .dot:nth-child(1) { background: #ff5f57; }',
+         '.browser-chrome .dot:nth-child(2) { background: #febc2e; }',
+         '.browser-chrome .dot:nth-child(3) { background: #28c840; }',
+         '.browser-body { padding: 24px; }',
+         '',
+         '/* hotspot 在 .browser-body 内 */',
+         '.hotspot {',
+         '  position: absolute;',
+         '  animation: fadeUp .5s cubic-bezier(.2,.8,.2,1) backwards;',
+         '}',
+         '.hs-1 { top: 18%; left: 28%; animation-delay: .4s; }',
+         '.hs-2 { top: 52%; left: 64%; animation-delay: .52s; }',
+         '.hs-3 { top: 78%; left: 32%; animation-delay: .64s; }'
+       ].join('\n')},
+      {title:'Top-nav (无侧栏) + 4 个 tab 链接',
+       detail:'这种场景 IA 浅（≤5 节），用 pill nav 替代侧栏。顶部 sticky，链接按钮式 selected',
+       code:[
+         '.topbar {',
+         '  display: flex; align-items: center;',
+         '  gap: 20px; padding: 16px 32px;',
+         '  border-bottom: 1px solid var(--line);',
+         '}',
+         '.tabs { display: flex; gap: 4px; }',
+         '.tab-link {',
+         '  padding: 8px 16px; border-radius: 999px;',
+         '  font-size: 13px; color: var(--ink-2);',
+         '  transition: .2s;',
+         '}',
+         '.tab-link.on {',
+         '  background: var(--accent-soft);',
+         '  color: var(--accent);',
+         '  font-weight: 600;',
+         '}'
+       ].join('\n')}
+    ],
+    fullPrompt:[
+      '为一家知识库/内容发布控制台构建 Helphub 这种 triptych 形态。要求：',
+      '',
+      '定位：内容平台 / publishing CMS / knowledge base —— 信息密度中等、需要"读"的页面。',
+      '',
+      '技术栈：vanilla JS + GSAP。',
+      '',
+      '设计 token（Violet Console 集合）：',
+      '- page #e9e9ec',
+      '- card #ffffff',
+      '- accent #6d28d9（深紫罗兰）',
+      '- accent-2 #f59e0b（partner hue）',
+      '- accent-soft #efe7fc',
+      '',
+      '骨架（**核心：triptych**）：',
+      '- 顶部 sticky topbar: logo + 4 个 pill tabs + 搜索 + 通知 + avatar',
+      '- 主页 **triptych**：',
+      '  - 左 296px: 工具列表',
+      '  - 中 1fr: 内容 / 数据图',
+      '  - 右 320px: workspace 笔记',
+      '- **align-items: start**（关键）',
+      '- 一张**浏览器预览 mockup** 在中部 —— 这是组件本体',
+      '',
+      '核心动效：',
+      '1. line chart draw-in: SVG path stroke-dasharray 总长度 → 0',
+      '2. 浏览器 mockup 内 3 个 hotspot pin：percentage 定位 + staggered 120ms fade-up',
+      '',
+      '关键反 slop：',
+      '- **不能** triptych 用 align-items: stretch',
+      '- **不能** 浏览器 mockup 没有 chrome',
+      '- **不能** eyebrow 顶部小标签'
+    ].join('\n')
+  },
+
+  /* ====== Huddle (Learning) ====== */
+  {
+    file:'huddle-team-workspace.html',
+    name:'Skillhub',
+    sub:'Course Learning Console · Team workspace (re-themed)',
+    register:'product', theme:'light',
+    persona:'—',
+    engine:'— (vanilla JS)',
+    accent:'#6c5ce7',
+    paletteFamily:'Violet & Coral · light',
+    fileSize:'340 lines · self-contained',
+    bestFor:['团队协作 / 项目工作台', '在线学习 / 课程平台', '聊天 / 任务跟踪 / leaderboard 类', '需要顶部 pill nav（无 sidebar）+ 居中 bento 的产品', 'IA 浅（≤5 个顶部 tab）的产品'],
+    notFor:['IA 深（需要多层 sidebar）的产品', '需要密集表格的产品（应选 Subhub）', 'B2B 后台严肃场景（应选 Buildly）', '需要真实终端感的产品（应选 Pulsegrid）'],
+    usePrompts:['我做的是协作 / 学习 / 项目工作台', 'IA 很浅（≤5 个 tab）', '我想用"居中 bento + 顶部 pill nav"取代 sidebar'],
+    colorTokens:{
+      'page':'#eef1fb',
+      'card':'#ffffff',
+      'ink-1':'#1c1d2b',
+      'ink-2':'#63647a',
+      'ink-3':'#9797ac',
+      'line':'#e7e9f6',
+      'line-2':'#f0f1fa',
+      'accent':'#6c5ce7',
+      'accent-2':'#ff8b6b',
+      'accent-soft':'#efeaff',
+      'up':'#2fb680',
+      'down':'#f0616a'
+    },
+    layout:{
+      'shell':'top-nav centered bento (no sidebar)',
+      'bento':'repeat(auto-fit, minmax(280px, 1fr))',
+      'gap':'18px',
+      'card radius':'20px',
+      'panel padding':'24px'
+    },
+    motion:{
+      lib:'vanilla JS',
+      pattern:'grouped bars 0→1 + chat bubble fade-in + voice waveform live',
+      easing:'cubic-bezier(.4,0,.2,1)',
+      reduced:'所有 bar/waveform 直接最终态'
+    },
+    craftMoves:[
+      {title:'多弧段 donut 用 arc 累计 start angle',
+       detail:'每个 segment rotate start angle 是前面所有段弧度之和（累加器），不是独立的 -90°',
+       code:[
+         'function renderDonut(segments, cx, cy, r) {',
+         '  let acc = 0;  // 累加器',
+         '  const total = segments.reduce((a,s) => a + s.v, 0);',
+         '  const C = 2 * Math.PI * r;',
+         '  segments.forEach((s, i) => {',
+         '    const arc = (s.v / total) * C;',
+         '    const startAngle = -90 + acc * 360 / C;  // 累加！',
+         '    acc += s.v / total;',
+         '    return "<circle cx=\\"" + cx + "\\" cy=\\"" + cy',
+         '      + "\\" r=\\"" + r',
+         '      + "\\" stroke=\\"" + s.color',
+         '      + "\\" stroke-width=\\"11\\" fill=\\"none\\""',
+         '      + " stroke-linecap=\\"butt\\""',
+         '      + " stroke-dasharray=\\"" + arc + " " + C + "\\""',
+         '      + " transform=\\"rotate(" + startAngle',
+         '      + " " + cx + " " + cy + ")\\""',
+         '      + " class=\\"seg\\" data-final=\\"" + arc + "\\"/>";',
+         '  }).join("");',
+         '}'
+       ].join('\n')},
+      {title:'Voice waveform canvas 实时模拟（16 柱随机）',
+       detail:'模拟语音消息的实时波形。柱条高度随机，每帧 shift 一位并填充',
+       code:[
+         'const cv = canvas.getContext("2d");',
+         'const bars = new Array(16).fill(0).map(() => Math.random());',
+         'function frame() {',
+         '  cv.fillStyle = "rgba(238,241,251,.4)";  // bg 同色 trail fade',
+         '  cv.fillRect(0, 0, w, h);',
+         '  bars.shift();',
+         '  bars.push(Math.random() * .8 + .2);',
+         '  bars.forEach((v, i) => {',
+         '    const x = i * (w / bars.length);',
+         '    const h2 = v * 18;',
+         '    cv.fillStyle = "rgba(108,92,231," + (.5 + v * .5) + ")";',
+         '    cv.fillRect(x + 1, h/2 - h2/2, w/bars.length - 2, h2);',
+         '  });',
+         '  requestAnimationFrame(frame);',
+         '}'
+       ].join('\n')},
+      {title:'Chat bubbles 配不同 user avatar',
+       detail:'聊天气泡内嵌 inline avatar，配 accent / my 区分',
+       code:[
+         '.bubble {',
+         '  background: var(--card);',
+         '  border-radius: 16px;',
+         '  padding: 12px 14px;',
+         '  font-size: 13px;',
+         '  position: relative;',
+         '}',
+         '.bubble.me { background: var(--accent); color: #fff; margin-left: auto; }',
+         '.bubble + .bubble { margin-top: 8px; }',
+         '',
+         '.avatar {',
+         '  width: 30px; height: 30px; border-radius: 999px;',
+         '  background: var(--coral-soft);',
+         '  display: grid; place-items: center;',
+         '  font-size: 12px; font-weight: 600;',
+         '  color: var(--accent-2);',
+         '  flex-shrink: 0;',
+         '}'
+       ].join('\n')}
+    ],
+    fullPrompt:[
+      '为一家在线课程学习平台构建 Skillhub 这种 centered-bento 工作台。要求：',
+      '',
+      '定位：team workspace / 在线学习 / 协作 —— **top-nav 没有侧栏**因为 IA 浅。',
+      '',
+      '技术栈：纯 vanilla JS。',
+      '',
+      '设计 token（Violet & Coral 集合）：',
+      '- page #eef1fb（lilac 染色的 page）',
+      '- card #ffffff',
+      '- accent #6c5ce7（深紫罗兰） + accent-soft #efeaff',
+      '- accent-2 #ff8b6b（coral partner hue）',
+      '- up #2fb680 / down #f0616a',
+      '',
+      '骨架（**centered bento, no sidebar**）：',
+      '- 顶部 sticky topbar: logo + 4 个 tab + 搜索 + 通知 + avatar',
+      '- 主区 bento: grid-template-columns: repeat(auto-fit, minmax(280px, 1fr))',
+      '- 不对称内容：彩色 task card · multi-arc donut · grouped bar · leaderboard · chat bubbles · voice waveform',
+      '',
+      '核心动效：',
+      '1. donut 多弧段：start angle 累加器管理',
+      '2. voice waveform：canvas 16 柱随机 + rgba trail fade',
+      '3. chat bubble 渐现',
+      '',
+      '关键反 slop：',
+      '- centered bento 不能每张卡都长方形面积相等',
+      '- 不要用 SaaS 紫蓝（这是合规紫罗兰 #6c5ce7）'
+    ].join('\n')
+  },
+
+  /* ====== Ledgerio (Treasury / Asymmetric Bento) ====== */
+  {
+    file:'ledgerio-treasury-console.html',
+    name:'Subhub',
+    sub:'Subscription Analytics Console · Treasury (re-themed)',
+    register:'product', theme:'light',
+    persona:'—',
+    engine:'— (vanilla JS + GSAP)',
+    accent:'#5b3fd6',
+    paletteFamily:'Mint & Lavender · light',
+    fileSize:'437 lines · self-contained',
+    bestFor:['订阅分析 / MRR / churn 仪表盘', '财务 / 国库 / 资产配置页', '需要"右详左概"1fr 1.35fr 不对称布局', '需要在表格中嵌入 mini-bar 的报表', '色块分隔的卡片布局（mint / lavender / dark pulse）'],
+    notFor:['AI 产品（应选 Buildly）', '需要图片 hotspot 的产品（应选 PawCare）', '单一表 / 简单表格（应选 Inkline triptych）', '需要监测 / 工程感的（应选 Pulsegrid）'],
+    usePrompts:['我做的是订阅 / 财务 / 资产分析仪表盘', '我想用色块分隔不同的卡片类型（不是统一白卡）', '我需要"右详左概"的不对称 bento 布局'],
+    colorTokens:{
+      'page':'#dee2d4',
+      'bg':'#eef1e6',
+      'card':'#ffffff',
+      'ink-1':'#161710',
+      'ink-2':'#63665a',
+      'ink-3':'#9a9c8e',
+      'line':'#e7e9dd',
+      'line-2':'#f0f2e7',
+      'mint':'#b6f6c4',
+      'mint-d':'#0f8a3e',
+      'mint-ink':'#0c3d1f',
+      'lav':'#cdc0f7',
+      'lav-d':'#5b3fd6',
+      'lav-ink':'#2b1c66',
+      'black':'#15140f'
+    },
+    layout:{
+      'shell':'floating panel + asymmetric bento 1fr 1.35fr',
+      'panel radius':'32px',
+      'panel padding':'30px 36px 44px',
+      'bento gap':'20px',
+      'detail width':'1.35fr（更宽的右列承载详情）'
+    },
+    motion:{
+      lib:'vanilla JS + GSAP',
+      pattern:'stacked bar grow + table mini-bar scaleX 0→1 + timeline dot in',
+      easing:'cubic-bezier(.2,.8,.2,1) + power2.out',
+      reduced:'所有 bar/table 直接最终态'
+    },
+    craftMoves:[
+      {title:'表格里嵌动画 mini-bar（allocation table）',
+       detail:'每个表格行最后一列放 8px 圆角进度条，transform: scaleX 0→1 动画。这把表格转成"半图半表"',
+       code:[
+         '.alloc-bar {',
+         '  height: 8px; border-radius: 999px;',
+         '  background: var(--line-2);',
+         '  overflow: hidden;',
+         '}',
+         '.alloc-bar i {',
+         '  display: block;',
+         '  height: 100%;',
+         '  border-radius: 999px;',
+         '  background: var(--mint-d);',
+         '  transform-origin: left;',
+         '  transform: scaleX(0);',
+         '  transition: transform .8s cubic-bezier(.2,.8,.2,1);',
+         '}',
+         '.alloc-bar.is-in i { transform: scaleX(1); }',
+         '/* trigger via IO when table in view */'
+       ].join('\n')},
+      {title:'不对称 bento 1fr 1.35fr（左详情型布局）',
+       detail:'**不是** 2 个 1fr / 4 个 1fr，是 1fr 1.35fr —— 让右列承载详情，左列保留概要',
+       code:[
+         '.asym-bento {',
+         '  display: grid;',
+         '  grid-template-columns: 1fr 1.35fr;',
+         '  gap: 20px;',
+         '}',
+         '.alloc-table { grid-column: 1 / 2; }   /* 左: 概要表 */',
+         '.detail-stack {                        /* 右: 详情（更宽）*/',
+         '  grid-column: 2 / 3;',
+         '  display: flex; flex-direction: column; gap: 20px;',
+         '}',
+         '@media (max-width: 980px) {',
+         '  .asym-bento { grid-template-columns: 1fr; }',
+         '}'
+       ].join('\n')},
+      {title:'色块分隔卡片（dark pulse · mint gauge · mint/lav price）',
+       detail:'整个 page 用强饱和色块做卡片：深色 pulse、mint gauge、lav 价格 —— 用"色色相异"区分卡片类型',
+       code:[
+         '.pulse {',
+         '  background: var(--black); color: var(--mint);',
+         '  border-radius: 22px; padding: 24px;',
+         '  position: relative; overflow: hidden;',
+         '}',
+         '.pulse::before {',
+         '  content: ""; position: absolute; inset: 0;',
+         '  background: radial-gradient(280px 200px at 90% -10%, var(--mint-glow), transparent 60%);',
+         '  pointer-events: none;',
+         '}',
+         '',
+         '.mint-price { background: var(--mint); color: var(--mint-ink); }',
+         '.lav-cap    { background: var(--lav); color: var(--lav-ink); }',
+         '.pricecard .pval { font-size: 24px; font-weight: 800; letter-spacing: -.02em; }'
+       ].join('\n')}
+    ],
+    fullPrompt:[
+      '为一家订阅分析 SaaS（重命名为 Subhub）构建这种不对称 bento 财务 console。要求：',
+      '',
+      '定位：subscription analytics —— **不要**用 green-on-black 那套，改用 Mint & Lavender。',
+      '',
+      '技术栈：vanilla JS + GSAP。',
+      '',
+      '设计 token（Mint & Lavender 集合）：',
+      '- page #dee2d4（sage 偏冷的 page）',
+      '- bg #eef1e6',
+      '- card #ffffff',
+      '- mint #b6f6c4 / mint-d #0f8a3e / mint-ink #0c3d1f',
+      '- lav #cdc0f7 / lav-d #5b3fd6 / lav-ink #2b1c66',
+      '- black #15140f（深 key-card）',
+      '',
+      '骨架（**asymmetric bento 1fr 1.35fr**）：',
+      '- floating panel：max-width 1420px, margin 14px auto, padding 30 36 44, radius 32px',
+      '- **asym-bento**：',
+      '  - 左 1fr: pulse key-card + multi-stat stack + allocation table',
+      '  - 右 1.35fr: mint-price card + lav-cap card + forecast timeline',
+      '',
+      '核心动效：',
+      '1. allocation table 内 mini-bar scaleX 0→1, staggered, cubic-bezier(.2,.8,.2,1), .8s',
+      '2. stacked bar column grow：height = total / max × 100%',
+      '3. forecast timeline 各 .on dot 渐入',
+      '',
+      '关键反 slop：',
+      '- 不能用蓝绿通用三件套（用 mint + lavender）',
+      '- asymmetric 不能是 1fr 1fr',
+      '- mini-bar 必须 scaleX 而非 width transition（保证 transform-only 60fps）'
+    ].join('\n')
+  }
+];
+
+/* =================== Card rendering =================== */
+function card(ex){
+  const isProduct = ex.register === 'product';
+  const safeId = ex.file.replace(/[^a-z0-9]/gi, '-');
+  const swatches = Object.entries(ex.colorTokens).slice(0, 12).map(([k, v]) => {
+    const isLight = isColorLight(v);
+    return '<div class="swatch"><div class="swatch-color ' + (isLight ? 'dark-text' : '')
+      + '" style="background:' + v + '">' + v
+      + '</div><div class="swatch-meta"><b>' + k + '</b>' + v + '</div></div>';
+  }).join('');
+  const layoutCells = Object.entries(ex.layout).map(([k, v]) =>
+    '<div class="layout-cell"><label>' + k + '</label><b>' + v + '</b></div>'
+  ).join('');
+  const codeSnippets = ex.craftMoves.map((m, i) =>
+    '<div class="code-meta" style="margin-top:' + (i ? '24px' : '0') + '">'
+    + '<b>招式 ' + (i + 1) + ' — ' + m.title + '</b><br>' + m.detail + '</div>'
+    + '<pre class="code-block">' + highlightCode(m.code) + '</pre>'
+  ).join('');
+  const craftList = ex.craftMoves.map(m =>
+    '<li style="padding:8px 0;border-bottom:1px dashed var(--border);font-size:13.5px;color:var(--ink-2);line-height:1.5">'
+    + '<b style="color:var(--ink-1)">' + m.title + '</b> — '
+    + m.detail.split('。')[0] + '。</li>'
+  ).join('');
+
+  // Use-case chips (bestFor / notFor / usePrompts)
+  const searchBits = [].concat(ex.craftMoves.map(m => m.title))
+    .concat(ex.bestFor || []).concat(ex.usePrompts || []).join(' ');
+  let useCasesHtml = '';
+  if (ex.bestFor || ex.notFor || ex.usePrompts) {
+    const bf = (ex.bestFor || []).map(function(x){ return '<span class="chip-tag good">' + x + '</span>'; }).join('');
+    const nf = (ex.notFor  || []).map(function(x){ return '<span class="chip-tag bad">'  + x + '</span>'; }).join('');
+    const up = (ex.usePrompts || []).map(function(x){ return '<li>「' + x + '」</li>'; }).join('');
+    useCasesHtml = '<div class="usecases">'
+      + (bf ? '<div class="usecase-row best"><span class="usecase-label good">适合</span><div class="usecase-chips">' + bf + '</div></div>' : '')
+      + (nf ? '<div class="usecase-row bad"><span class="usecase-label bad">别用</span><div class="usecase-chips">' + nf + '</div></div>' : '')
+      + (up ? '<div class="usecase-row prompts"><span class="usecase-label prompt">触发语</span><ul class="prompt-marks">' + up + '</ul></div>' : '')
+      + '</div>';
+  }
+
+  return ''
+    + '<article class="card" data-register="' + ex.register + '" data-theme="' + ex.theme
+    + '" data-search="' + (ex.file + ' ' + ex.name + ' ' + ex.sub + ' ' + ex.persona + ' ' + ex.engine + ' ' + searchBits).toLowerCase()
+    + '" data-id="' + safeId + '">'
+    +   '<div class="thumb">'
+    +     '<div class="thumb-frame">'
+    +       '<iframe data-src-iframe="skills/finesse-ui/examples/' + ex.file + '"'
+    +       ' loading="lazy" sandbox="allow-same-origin" scrolling="no" tabindex="-1"></iframe>'
+    +     '</div>'
+    +     '<div class="thumb-overlay">'
+    +       '<span class="file">' + ex.file + '</span>'
+    +       '<span class="extbadge">' + (isProduct ? 'PRODUCT' : 'BRAND') + '</span>'
+    +     '</div>'
+    +   '</div>'
+    +   '<div class="card-body">'
+    +     '<span class="register-tag ' + (isProduct ? 'product' : '') + '">' + ex.register + '</span>'
+    +     '<h3 class="card-title">' + ex.name + '</h3>'
+    +     '<div class="card-sub">' + ex.sub + '</div>'
+    +     '<div class="meta-row">'
+    +       (ex.persona && ex.persona !== '—' ? '<span class="meta-tag">' + ex.persona + '</span>' : '')
+    +       (ex.engine && ex.engine !== '—' ? '<span class="meta-tag engine">' + ex.engine + '</span>' : '')
+    +       (ex.accent ? '<span class="meta-tag acc">' + ex.accent + '</span>' : '')
+    +     '</div>'
+    +     '<div style="margin-top:6px">'
+    +       '<b style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-1);font-weight:600;display:block;margin-bottom:6px">核心招式</b>'
+    +       '<ul style="list-style:none;padding:0;margin:0">' + craftList + '</ul>'
+    +     '</div>'
+    +     useCasesHtml
+    +     '<div class="expand-row">'
+    +       '<button class="expand-btn" data-target="' + safeId + '">'
+    +         '<span class="label">展开详情 · AI 复刻 Prompt</span>'
+    +         '<span class="chev">▼</span>'
+    +       '</button>'
+    +       '<a class="open-link" href="skills/finesse-ui/examples/' + ex.file + '" target="_blank" rel="noopener">在新标签打开 ↗</a>'
+    +     '</div>'
+    +   '</div>'
+    +   '<div class="detail-panel" id="panel-' + safeId + '">'
+    +     '<div class="tab-bar">'
+    +       '<button class="tab is-on" data-tab="prompt-' + safeId + '" data-pane="pane-prompt-' + safeId + '">AI 复刻 Prompt</button>'
+    +       '<button class="tab" data-tab="colors-' + safeId + '" data-pane="pane-colors-' + safeId + '">真实色板 (' + Object.keys(ex.colorTokens).length + ')</button>'
+    +       '<button class="tab" data-tab="layout-' + safeId + '" data-pane="pane-layout-' + safeId + '">布局参数 (' + Object.keys(ex.layout).length + ')</button>'
+    +       '<button class="tab" data-tab="code-' + safeId + '" data-pane="pane-code-' + safeId + '">核心代码 (' + ex.craftMoves.length + ' 招)</button>'
+    +     '</div>'
+    +     '<div class="tab-content is-on" id="pane-prompt-' + safeId + '">'
+    +       '<h5>AI 复刻 Prompt — 复制到 Claude/Codex</h5>'
+    +       '<div class="prompt-text" id="prompt-' + safeId + '">' + ex.fullPrompt + '</div>'
+    +       '<div class="copy-row">'
+    +         '<span class="copy-hint">结构化指令 · 直接粘贴到任何 AI 编程助手</span>'
+    +         '<button class="copy-btn" data-copy="prompt-' + safeId + '">📋 复制 Prompt</button>'
+    +       '</div>'
+    +     '</div>'
+    +     '<div class="tab-content" id="pane-colors-' + safeId + '">'
+    +       '<h5>真实 :root 设计 token</h5>'
+    +       '<p style="font-size:13px;color:var(--ink-3);margin-bottom:16px">从源文件 :root 块提取的色值 —— 鼠标悬停色块复制 hex。</p>'
+    +       '<div class="swatch-grid">' + swatches + '</div>'
+    +     '</div>'
+    +     '<div class="tab-content" id="pane-layout-' + safeId + '">'
+    +       '<h5>关键布局参数</h5>'
+    +       '<p style="font-size:13px;color:var(--ink-3);margin-bottom:16px">源文件量到的像素 / fr / em 值。</p>'
+    +       '<div class="layout-grid">' + layoutCells + '</div>'
+    +     '</div>'
+    +     '<div class="tab-content" id="pane-code-' + safeId + '">'
+    +       '<h5>' + ex.craftMoves.length + ' 个招牌招式的核心代码</h5>'
+    +       '<p style="font-size:13px;color:var(--ink-3);margin-bottom:16px">每招都是这个范例"为什么看上去贵"的具体代码。</p>'
+    +       codeSnippets
+    +     '</div>'
+    +   '</div>'
+    + '</article>';
+}
+
+/* Tiny syntax highlighter */
+function highlightCode(s){
+  return s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/(\/\/[^\n]*)/g, '<span class="comment">$1</span>')
+    .replace(/\/\*[\s\S]*?\*\//g, function(m){ return '<span class="comment">' + m + '</span>'; })
+    .replace(/(`[^`]*`)/g, '<span class="str">$1</span>')
+    .replace(/('[^']*')/g, '<span class="str">$1</span>')
+    .replace(/("[^"]*")/g, '<span class="str">$1</span>')
+    .replace(/\b(const|let|var|function|return|if|else|new|this|true|false|null|undefined|for|while|class)\b/g, '<span class="kw">$1</span>')
+    .replace(/(\$\{[^}]+\})/g, '<span class="key">$1</span>');
+}
+
+function isColorLight(hex){
+  if (!hex || !hex.startsWith('#') || hex.length !== 7) return false;
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  const lum = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  return lum > 0.65;
+}
+
+const gridBrand = document.getElementById('grid-brand');
+const gridProduct = document.getElementById('grid-product');
+gridBrand.innerHTML = EXAMPLES.filter(function(e){ return e.register === 'brand'; }).map(card).join('');
+gridProduct.innerHTML = EXAMPLES.filter(function(e){ return e.register === 'product'; }).map(card).join('');
+
+/* =================== Expand panel =================== */
+document.addEventListener('click', function(e){
+  const btn = e.target.closest('.expand-btn');
+  if (btn) {
+    const id = btn.dataset.target;
+    const panel = document.getElementById('panel-' + id);
+    const isOn = panel.classList.toggle('is-on');
+    btn.classList.toggle('is-on', isOn);
+    btn.querySelector('.label').textContent = isOn ? '收起详情' : '展开详情 · AI 复刻 Prompt';
+    return;
+  }
+  const tab = e.target.closest('.tab');
+  if (tab) {
+    const c = tab.closest('.card');
+    c.querySelectorAll('.tab').forEach(function(t){ t.classList.toggle('is-on', t === tab); });
+    c.querySelectorAll('.tab-content').forEach(function(p){
+      p.classList.toggle('is-on', p.id === tab.dataset.pane);
+    });
+    return;
+  }
+  const cbtn = e.target.closest('.copy-btn');
+  if (cbtn) {
+    const target = document.getElementById(cbtn.dataset.copy);
+    const text = target.innerText;
+    navigator.clipboard.writeText(text).then(function(){
+      const orig = cbtn.innerHTML;
+      cbtn.innerHTML = '✓ 已复制到剪贴板';
+      cbtn.classList.add('copied');
+      setTimeout(function(){ cbtn.innerHTML = orig; cbtn.classList.remove('copied'); }, 2200);
+    }).catch(function(){
+      cbtn.innerHTML = '复制失败 — 请手动选择文本';
+    });
+    return;
+  }
+  const sw = e.target.closest('.swatch');
+  if (sw) {
+    const meta = sw.querySelector('.swatch-meta');
+    const color = meta.querySelector('b').nextSibling ? meta.querySelector('b').nextSibling.textContent.trim() : '';
+    if (color) {
+      navigator.clipboard.writeText(color).then(function(){
+        sw.style.outline = '2px solid var(--accent)';
+        setTimeout(function(){ sw.style.outline = ''; }, 800);
+      });
+    }
+  }
+});
+
+/* =================== Filtering =================== */
+const state = { register: 'all', theme: 'all', q: '' };
+function applyFilters(){
+  const cards = document.querySelectorAll('.card');
+  let anyOn = false;
+  cards.forEach(function(c){
+    const r = state.register === 'all' || c.dataset.register === state.register;
+    const t = state.theme === 'all' || c.dataset.theme === state.theme;
+    const q = !state.q || c.dataset.search.includes(state.q);
+    const show = r && t && q;
+    c.style.display = show ? '' : 'none';
+    if (show) anyOn = true;
+  });
+  document.getElementById('emptyState').classList.toggle('is-on', !anyOn);
+}
+
+document.querySelectorAll('[data-filter]').forEach(function(btn){
+  btn.addEventListener('click', function(){
+    const f = btn.dataset.filter;
+    const v = btn.dataset.val;
+    state[f] = v;
+    document.querySelectorAll('[data-filter="' + f + '"]').forEach(function(b){
+      b.classList.toggle('is-on', b === btn);
+    });
+    applyFilters();
+  });
+});
+document.getElementById('searchInput').addEventListener('input', function(e){
+  state.q = e.target.value.trim().toLowerCase();
+  applyFilters();
+});
+
+/* =================== Lazy iframe loads =================== */
+const io = new IntersectionObserver(function(entries){
+  entries.forEach(function(en){
+    const f = en.target.querySelector('iframe[data-src-iframe]');
+    if (!f) return;
+    if (en.isIntersecting && !f.src) f.src = f.dataset.srcIframe;
+  });
+}, { rootMargin: '200px' });
+document.querySelectorAll('.card').forEach(function(c){ io.observe(c); });
+
+window.addEventListener('DOMContentLoaded', function(){
+  document.querySelectorAll('.thumb-frame iframe').forEach(function(f, i){
+    if (i < 4 && !f.src) f.src = f.dataset.srcIframe;
+  });
+});
+</script>
+</body>
+</html>

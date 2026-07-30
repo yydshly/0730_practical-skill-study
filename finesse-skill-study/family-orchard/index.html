@@ -1,0 +1,2574 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>拾穗果园 · 北纬 35° 时令果品</title>
+
+<!--
+  拾穗果园 SHISUI ORCHARD
+  — 家庭果园品牌官网 · Quiet Luxury · Forest palette
+  — 单 HTML self-contained · CSS-only engine · SVG 自托管插画
+  — 图片走本地 _assets/ 下 10 张 SVG，无任何远程依赖
+-->
+
+<style>
+  /* ============== Forest palette (Quiet Luxury) ============== */
+  *,*::before,*::after { margin:0; padding:0; box-sizing:border-box; }
+  :root {
+    --page:        #EFEFED;   /* page bg, off-white tinted cool */
+    --bg:          #FFFFFF;   /* card bg */
+    --ink:         #15140F;
+    --ink-2:       #4a4a3d;
+    --ink-3:       #75756a;
+    --hairline:    rgba(21,20,15,.08);
+    --accent:      #2F5233;   /* deep forest green */
+    --accent-2:    #1c3a1f;   /* CTA bg */
+    --accent-3:    #5d8a5e;   /* mid green for hover */
+    --bone:        #E8E4D8;   /* fruit-skin warm white */
+    --amber:       #C87820;   /* autumn warm pop */
+    --focus-ring:  0 0 0 3px rgba(47,82,51,.25);
+
+    /* 严禁 box-shadow（除 focus ring）· 严禁 border-radius（除必要处）· 严禁 gradient-text */
+  }
+  [data-theme="dark"] {
+    --page:        #12180F;
+    --bg:          #1a2014;
+    --ink:         #E8E4D8;
+    --ink-2:       #b0aea3;
+    --ink-3:       #75756a;
+    --hairline:    rgba(232,228,216,.10);
+    --accent:      #5d8a5e;
+    --accent-2:    #7ba87b;
+    --accent-3:    #a3c89e;
+    --bone:        #2a3a25;
+    --amber:       #d99444;
+    --focus-ring:  0 0 0 3px rgba(125,175,130,.35);
+  }
+
+  html { scroll-behavior: smooth; -webkit-font-smoothing: antialiased; }
+  body {
+    background: var(--page);
+    color: var(--ink);
+    font-family: 'Raleway', 'Helvetica Neue', system-ui, -apple-system, sans-serif;
+    font-weight: 400;
+    line-height: 1.6;
+    overflow-x: hidden;
+    transition: background .5s ease, color .4s ease;
+  }
+
+  a { color: inherit; text-decoration: none; }
+  button, input, select, textarea { font-family: inherit; }
+
+  /* ===== 工艺日志（changelog） ===== */
+  .journal {
+    border-bottom: 1px solid var(--hairline);
+    padding: 56px 40px 60px;
+    max-width: 1240px;
+    margin: 0 auto;
+  }
+  .journal-h { margin-bottom: 32px; }
+  .journal-h h2 em { font-style: italic; color: var(--accent); font-weight: 400; }
+  .journal-rail {
+    display: flex;
+    align-items: stretch;
+    gap: 4px;
+    overflow-x: auto;
+    padding-bottom: 8px;
+    scrollbar-width: thin;
+  }
+  .journal-node {
+    display: flex; flex-direction: column; align-items: center;
+    background: none; border: 0; padding: 14px 18px;
+    cursor: pointer; text-align: center;
+    flex-shrink: 0;
+    transition: opacity .2s;
+    position: relative; min-width: 122px;
+  }
+  .journal-node .journal-dot {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    display: grid; place-items: center;
+    font-family: var(--font-mono); font-size: 13px; font-weight: 600;
+    color: var(--ink-3);
+    border: 1.5px solid var(--hairline);
+    background: var(--page);
+    transition: all .25s;
+  }
+  .journal-node.done .journal-dot {
+    background: var(--accent); border-color: var(--accent); color: var(--bone);
+  }
+  .journal-node.todo .journal-dot {
+    color: var(--ink-faint);
+    border-style: dashed;
+  }
+  .journal-node.is-active .journal-dot {
+    transform: scale(1.1);
+    box-shadow: 0 0 0 6px var(--accent-soft);
+  }
+  .journal-node .journal-label {
+    display: flex; flex-direction: column; gap: 2px;
+    margin-top: 10px; color: var(--ink);
+  }
+  .journal-node .ver {
+    font-family: var(--font-mono); font-size: 10.5px;
+    color: var(--ink-3); letter-spacing: 0.1em;
+  }
+  .journal-node .ttl {
+    font-size: 13px; font-weight: 500;
+    color: var(--ink); letter-spacing: -0.005em;
+  }
+  .journal-node .hint {
+    font-size: 11px; color: var(--ink-3);
+    line-height: 1.4;
+  }
+  .journal-node.todo .ttl { color: var(--ink-3); }
+  .journal-node.todo .hint { color: var(--ink-faint); }
+  .journal-conn {
+    flex-shrink: 0;
+    width: 32px;
+    align-self: center;
+    height: 2px;
+    background: var(--hairline);
+    transform: translateY(-13px);
+  }
+  .journal-conn.done { background: var(--accent); }
+  .journal-detail {
+    margin-top: 28px;
+    background: var(--bg);
+    border: 1px solid var(--hairline);
+    padding: 24px 26px;
+  }
+  .journal-detail h4 {
+    font-family: var(--font-serif);
+    font-size: 22px; font-weight: 500;
+    margin-bottom: 10px;
+  }
+  .journal-detail h4 small {
+    margin-left: 10px; font-size: 11px; letter-spacing: 0.18em;
+    color: var(--accent); text-transform: uppercase; font-weight: 600;
+    vertical-align: middle;
+  }
+  .journal-detail p { font-size: 14px; line-height: 1.7; }
+  .journal-detail code {
+    background: var(--bone); padding: 2px 6px;
+    border-radius: 3px; font-size: 12.5px;
+  }
+
+  /* ===== 顶部 nav ===== */
+  .nav {
+    position: sticky; top: 0; z-index: 50;
+    background: color-mix(in srgb, var(--page) 88%, transparent);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border-bottom: 1px solid var(--hairline);
+  }
+  .nav-inner {
+    max-width: 1240px; margin: 0 auto; padding: 18px 36px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .brand { display: flex; align-items: center; gap: 14px; font-weight: 600; }
+  .brand .mark {
+    width: 30px; height: 30px;
+    background: var(--accent);
+    color: var(--bone);
+    display: grid; place-items: center;
+    font-weight: 300; font-size: 15px;
+  }
+  .brand small {
+    font-size: 10.5px; font-weight: 400; letter-spacing: 0.32em;
+    color: var(--ink-3); text-transform: uppercase;
+    margin-left: 2px;
+  }
+  .nav-right { display: flex; align-items: center; }
+  .nav-links {
+    display: flex; gap: 30px; font-size: 13px; font-weight: 500; color: var(--ink-2);
+  }
+  .nav-links a {
+    position: relative; padding: 4px 0; transition: color .25s;
+  }
+  .nav-links a:hover { color: var(--ink); }
+  .nav-links .ord {
+    padding: 8px 18px; background: var(--accent); color: var(--bone);
+    font-weight: 500; letter-spacing: 0.04em;
+  }
+  .nav-links .ord:hover { background: var(--accent-2); color: var(--bone); }
+  .theme-toggle {
+    margin-left: 22px;
+    background: transparent; border: 1px solid var(--hairline);
+    color: var(--ink-2); padding: 8px 12px; font-size: 11.5px;
+    letter-spacing: 0.08em; cursor: pointer; transition: .2s;
+  }
+  .theme-toggle:hover { color: var(--ink); border-color: var(--ink-2); }
+
+  /* hamburger button (mobile only — hidden on desktop) */
+  .hamburger {
+    display: none;
+    width: 40px; height: 40px;
+    margin-left: 12px;
+    background: transparent;
+    border: 1px solid var(--hairline);
+    cursor: pointer;
+    flex-direction: column; gap: 4px;
+    align-items: center; justify-content: center;
+    transition: .2s;
+  }
+  .hamburger span {
+    display: block;
+    width: 18px; height: 1.5px;
+    background: var(--ink);
+    transition: transform .25s, opacity .25s;
+  }
+  .hamburger:hover { border-color: var(--ink-2); }
+  .hamburger.is-open span:nth-child(1) { transform: translateY(5.5px) rotate(45deg); }
+  .hamburger.is-open span:nth-child(2) { opacity: 0; }
+  .hamburger.is-open span:nth-child(3) { transform: translateY(-5.5px) rotate(-45deg); }
+
+  /* drawer (mobile slide-in) */
+  .drawer {
+    position: fixed; top: 0; right: 0; bottom: 0;
+    width: min(340px, 88vw);
+    background: var(--page);
+    border-left: 1px solid var(--hairline);
+    transform: translateX(100%);
+    transition: transform .35s cubic-bezier(.2,.8,.2,1);
+    z-index: 200;
+    display: flex; flex-direction: column;
+    padding: 60px 32px 32px;
+    overflow-y: auto;
+  }
+  .drawer.is-open { transform: translateX(0); }
+  .drawer-backdrop {
+    position: fixed; inset: 0;
+    background: rgba(0, 0, 0, .42);
+    opacity: 0; pointer-events: none;
+    transition: opacity .3s;
+    z-index: 199;
+  }
+  .drawer-backdrop.is-open { opacity: 1; pointer-events: auto; }
+  .drawer a {
+    display: block;
+    padding: 14px 0;
+    font-size: 17px; font-weight: 400;
+    color: var(--ink);
+    border-bottom: 1px solid var(--hairline);
+    letter-spacing: -0.005em;
+  }
+  .drawer a.ord {
+    margin-top: 20px; text-align: center;
+    background: var(--accent); color: var(--bone);
+    padding: 16px; border: 0;
+    font-weight: 500; letter-spacing: 0.04em;
+  }
+  .drawer-tools {
+    margin-top: 24px;
+    display: flex; align-items: center; gap: 12px;
+    color: var(--ink-3); font-size: 12px;
+    letter-spacing: 0.08em; text-transform: uppercase;
+  }
+  .drawer-tools button {
+    background: transparent; border: 1px solid var(--hairline);
+    padding: 8px 12px; cursor: pointer;
+    color: var(--ink-2); font-size: 11.5px;
+    letter-spacing: 0.08em;
+  }
+
+  /* ===== 共用排印 ===== */
+  .sec-tag {
+    font-size: 11px; font-weight: 600; letter-spacing: 0.32em;
+    color: var(--accent); text-transform: uppercase; margin-bottom: 22px;
+  }
+  h1, h2, h3 { letter-spacing: -0.02em; line-height: 1.05; font-weight: 600; }
+  h2 {
+    font-size: clamp(34px, 4.4vw, 60px); font-weight: 300;
+    margin-bottom: 18px;
+  }
+  h2 .em { font-style: italic; color: var(--accent); font-weight: 400; }
+  p.lede {
+    font-size: 17px; color: var(--ink-2);
+    max-width: 580px; font-weight: 300;
+  }
+  section { padding: 110px 36px; max-width: 1240px; margin: 0 auto; }
+  section + section { padding-top: 40px; }
+
+  /* =====================================================
+     §1 — HERO  Cinematic multi-layer depth
+     五层叠合，模拟晨光穿过果园的氛围感
+     ===================================================== */
+  .hero { padding-top: 0; padding-bottom: 0; max-width: none; }
+  .hero-stage {
+    position: relative;
+    height: 94vh; min-height: 680px;
+    overflow: hidden;
+    background: #1a1812;
+  }
+  /* 第 1 层：真实晨光果园照片 */
+  .layer {
+    position: absolute; inset: 0;
+    background: center / cover no-repeat;
+    will-change: mask, transform, opacity;
+    transition: opacity .8s ease;
+  }
+  .layer-base {
+    background-image: url('_assets/img/hero.jpg');
+    background-position: center 60%;
+  }
+  /* 第 2 层：上方天空暖色加权（柔和的 dawn glow） */
+  .layer-dawn {
+    background: linear-gradient(180deg,
+      rgba(244, 213, 179, 0.32) 0%,
+      rgba(244, 213, 179, 0.12) 25%,
+      rgba(232, 192, 148, 0.04) 50%,
+      rgba(0, 0, 0, 0.0) 100%);
+    mix-blend-mode: soft-light;
+    pointer-events: none;
+  }
+  /* 第 3 层：下方暗角（形成 vigratte，将视线聚焦中央果实区） */
+  .layer-vig {
+    background: radial-gradient(ellipse 80% 65% at 50% 55%,
+      transparent 35%,
+      rgba(20, 16, 12, 0.25) 75%,
+      rgba(20, 16, 12, 0.55) 100%);
+    pointer-events: none;
+  }
+  /* 第 4 层：颗粒（超轻） */
+  .layer-grain {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    opacity: 0.07;
+    mix-blend-mode: overlay;
+    pointer-events: none;
+  }
+  /* 第 5 层：暖色聚光圈（鼠标 hover 时局部提亮） */
+  .layer-spot {
+    background: radial-gradient(circle 380px at 50% 50%,
+      rgba(255, 240, 215, 0) 0%,
+      rgba(255, 240, 215, 0.05) 55%,
+      rgba(20, 16, 12, 0.18) 95%);
+    opacity: 0;
+    transition: opacity .3s ease;
+    pointer-events: none;
+  }
+  /* 鼠标 hover 时整层亮 + mask 反向（让中心进一步提亮） */
+  .hero-stage.is-active .layer-spot {
+    opacity: 1;
+  }
+  .hero-text {
+    position: absolute;
+    left: 48px; bottom: 100px;
+    z-index: 5;
+    color: var(--ink);
+    max-width: 780px;
+  }
+  .hero-kicker {
+    font-size: 11.5px; letter-spacing: 0.34em; font-weight: 500;
+    text-transform: uppercase; color: var(--accent);
+    margin-bottom: 22px; opacity: .9;
+  }
+  .hero-title {
+    font-weight: 200;
+    font-size: clamp(54px, 8vw, 124px);
+    line-height: .94; letter-spacing: -.03em;
+    color: var(--ink);
+    /* 让标题读起来稳：给一个细微文字阴影 */
+    text-shadow: 0 1px 0 rgba(255,255,255,.7);
+  }
+  .hero-title .thin { font-weight: 100; color: var(--accent); }
+  .hero-title .accent { color: var(--amber); font-style: italic; font-weight: 400; }
+  .hero-sub {
+    margin-top: 28px; font-size: 17px; font-weight: 300;
+    max-width: 540px; color: var(--ink-2);
+    line-height: 1.7;
+  }
+  .hero-meta {
+    position: absolute; right: 48px; top: 28px;
+    z-index: 5;
+    display: flex; gap: 32px; font-size: 11px; color: var(--ink-2);
+    letter-spacing: 0.18em; text-transform: uppercase;
+  }
+  .hero-meta span { display: block; }
+  .hero-meta span b {
+    display: block; font-weight: 600; color: var(--ink);
+    font-family: 'JetBrains Mono','SF Mono', monospace;
+    letter-spacing: 0.04em;
+    margin-bottom: 4px; font-size: 14px;
+  }
+  .hero-hint {
+    position: absolute; right: 48px; bottom: 36px;
+    font-size: 10.5px; letter-spacing: 0.28em;
+    text-transform: uppercase; color: var(--ink-3);
+    z-index: 5; opacity: .8;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .hero-hint::before {
+    content: ''; width: 18px; height: 1px; background: var(--ink-3);
+  }
+  .hero-scroll {
+    position: absolute; left: 48px; bottom: 36px;
+    width: 1px; height: 56px;
+    background: linear-gradient(180deg, var(--ink-2), transparent);
+    opacity: .5; z-index: 5;
+  }
+
+  /* =====================================================
+     图片来源披露条
+     ===================================================== */
+  .img-disclosure {
+    background: rgba(91, 75, 209, .06);
+    border-bottom: 1px solid var(--hairline);
+  }
+  .img-disclosure-inner {
+    max-width: 1240px;
+    margin: 0 auto;
+    padding: 14px 40px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    font-size: 13px;
+    color: var(--ink-2);
+    line-height: 1.6;
+  }
+  @media (max-width: 920px) {
+    .img-disclosure-inner { padding: 12px 22px; flex-wrap: wrap; }
+  }
+  .img-disclosure-mark {
+    width: 22px; height: 22px;
+    background: var(--accent);
+    color: var(--bone);
+    border-radius: 50%;
+    display: grid; place-items: center;
+    font-family: var(--font-mono); font-size: 12px; font-weight: 700;
+    flex-shrink: 0;
+  }
+  .img-disclosure-text strong { color: var(--accent); font-weight: 600; }
+  .img-disclosure-cta {
+    color: var(--accent);
+    font-weight: 600;
+    cursor: pointer;
+    margin-left: 6px;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    text-decoration-thickness: 1px;
+  }
+  .img-disclosure-detail {
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px dashed var(--hairline);
+    font-size: 12.5px; line-height: 1.7;
+    color: var(--ink-2); flex-basis: 100%;
+  }
+  .img-disclosure-detail strong { color: var(--ink); font-weight: 600; display: inline-block; margin-top: 6px; }
+  .img-disclosure-detail code { background: var(--bg); padding: 1px 5px; border-radius: 3px; font-size: 12px; }
+  .img-disclosure-detail em { font-style: italic; color: var(--ink-3); }
+
+  /* photo-guide (expanded disclosure) */
+  .photo-guide {
+    margin-top: 22px;
+    padding-top: 22px;
+    border-top: 1px dashed var(--hairline);
+    font-size: 13px;
+    color: var(--ink-2);
+    line-height: 1.6;
+  }
+  .photo-guide[hidden] { display: none; }
+  .photo-guide-h {
+    display: flex; align-items: baseline; justify-content: space-between;
+    flex-wrap: wrap; gap: 8px;
+    margin-bottom: 14px;
+  }
+  .photo-guide-h h5 {
+    font-family: var(--font-serif); font-size: 17px; font-weight: 500;
+    color: var(--ink); letter-spacing: -.005em;
+  }
+  .photo-guide-h small {
+    font-size: 11px; color: var(--ink-3); letter-spacing: 0.06em;
+    text-transform: uppercase; font-weight: 500;
+  }
+  .photo-table {
+    width: 100%; border-collapse: collapse;
+    font-size: 12.5px;
+  }
+  .photo-table th, .photo-table td {
+    border-bottom: 1px solid var(--hairline);
+    padding: 10px 12px;
+    text-align: left;
+    vertical-align: top;
+  }
+  .photo-table th {
+    font-size: 10.5px; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--ink-3);
+    font-weight: 600;
+    background: rgba(47,82,51,.04);
+  }
+  .photo-table td code {
+    background: var(--bone); padding: 1px 6px; border-radius: 3px;
+    font-family: var(--font-mono); font-size: 12px;
+    color: var(--accent);
+  }
+  .photo-table td em {
+    font-style: normal; font-size: 11.5px;
+    color: var(--ink-3); line-height: 1.5;
+  }
+  .photo-flow {
+    margin: 0; padding-left: 22px;
+  }
+  .photo-flow li { padding: 4px 0; font-size: 13px; color: var(--ink-2); }
+  .photo-flow li code {
+    background: var(--bone); padding: 1px 6px; border-radius: 3px;
+    font-family: var(--font-mono); font-size: 11.5px;
+    color: var(--accent);
+  }
+  .photo-checklist {
+    margin: 0; padding: 0; list-style: none;
+  }
+  .photo-checklist li {
+    font-size: 13px; color: var(--ink-2);
+    padding: 4px 0 4px 22px; position: relative;
+  }
+  .photo-checklist li::before {
+    content: ''; position: absolute;
+    left: 0; top: 11px; width: 12px; height: 12px;
+    border: 1.5px solid var(--accent); border-radius: 50%;
+    background: var(--accent-soft);
+  }
+  @media (max-width: 720px) {
+    .photo-table thead { display: none; }
+    .photo-table tr { display: block; margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px solid var(--hairline); }
+    .photo-table td { display: block; padding: 4px 0; border: 0; }
+    .photo-table td::before { content: attr(data-label) ': '; font-weight: 600; color: var(--ink-3); margin-right: 4px; }
+  }
+
+  /* =====================================================
+     §2 — 四季果品 grid
+     ===================================================== */
+  .grid-head { margin-bottom: 56px; }
+  .fruit-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 26px;
+    grid-auto-flow: dense;
+  }
+  /* Featured spotlight · 苹果主力（grid 强制放最前 + 跨 2 列） */
+  .fruit.featured {
+    grid-column: span 2;
+    position: relative;
+  }
+  .fruit.featured .fruit-img { aspect-ratio: 16/9; }
+  .fruit.featured .fruit-name {
+    font-size: 28px;
+    display: flex; align-items: baseline; gap: 10px;
+  }
+  .fruit.featured .fruit-desc {
+    min-height: 0;
+    font-size: 14.5px;
+    max-width: 540px;
+  }
+  .fruit-badge {
+    position: absolute;
+    top: 16px; right: 16px;
+    background: var(--amber);
+    color: var(--bone);
+    padding: 5px 10px;
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    z-index: 4;
+  }
+  .fruit.featured:hover .fruit-img img { transform: scale(1.025); }
+  @media (max-width: 720px) {
+    .fruit.featured { grid-column: span 1; }
+    .fruit.featured .fruit-img { aspect-ratio: 4/5; }
+    .fruit.featured .fruit-name { font-size: 22px; }
+  }
+  .fruit {
+    background: var(--bg);
+    border: 1px solid var(--hairline);
+    overflow: hidden;
+    transition: transform .35s cubic-bezier(.2,.8,.2,1);
+  }
+  .fruit:hover { transform: translateY(-4px); }
+  .fruit-img {
+    position: relative;
+    aspect-ratio: 4/5;
+    background: var(--bone);
+    overflow: hidden;
+  }
+  .fruit-img img {
+    width: 100%; height: 100%;
+    object-fit: cover; display: block;
+    /* 统一 8 张 AI 照片的色温与饱和度：略降饱和、提一点对比、再加极淡的暖色叠加（mix-blend-mode） */
+    filter: saturate(0.92) contrast(1.04) brightness(1.02);
+    transition: transform 1.6s cubic-bezier(.2,.8,.2,1), filter .35s ease;
+  }
+  .fruit-img::after {
+    content: '';
+    position: absolute; inset: 0;
+    background: linear-gradient(170deg, rgba(244, 213, 179, 0.08), rgba(0, 0, 0, 0) 60%);
+    mix-blend-mode: soft-light;
+    pointer-events: none;
+  }
+  .fruit:hover .fruit-img img { transform: scale(1.04); }
+  .hotspot {
+    position: absolute;
+    display: inline-flex; align-items: center; gap: 7px;
+    background: rgba(18, 24, 15, .78);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    color: var(--bone);
+    padding: 5px 11px 5px 9px;
+    font-size: 11px; font-weight: 500; letter-spacing: .04em;
+    white-space: nowrap;
+    transform: scale(.92);
+    transition: transform .35s cubic-bezier(.2,.8,.2,1);
+  }
+  .hotspot::before {
+    content: ''; width: 6px; height: 6px; border-radius: 50%;
+    background: var(--amber); flex-shrink: 0;
+  }
+  .fruit:hover .hotspot { transform: scale(1); }
+  .hs-1 { top: 12%; left: 56%; }
+  .hs-2 { top: 56%; left: 8%; }
+  .hs-3 { top: 26%; left: 8%; }   /* 备用 */
+  .hs-4 { bottom: 6%; right: 6%; top: auto; left: auto; }  /* 采收日 - 右下角 */
+
+  .fruit-body { padding: 22px 22px 24px; }
+  .fruit-name {
+    font-size: 22px; font-weight: 600;
+    letter-spacing: -.01em; margin-bottom: 6px; color: var(--ink);
+  }
+  .fruit-name small {
+    display: block; font-size: 10.5px; font-weight: 400;
+    letter-spacing: 0.22em; text-transform: uppercase;
+    color: var(--ink-3); margin-bottom: 4px;
+  }
+  .fruit-desc {
+    font-size: 13.5px; color: var(--ink-2);
+    line-height: 1.65; font-weight: 300;
+    min-height: 64px;
+  }
+  .fruit-meta {
+    margin-top: 14px; padding-top: 14px;
+    border-top: 1px solid var(--hairline);
+    display: flex; align-items: center; gap: 8px;
+    font-size: 11px; letter-spacing: 0.06em;
+    color: var(--ink-3);
+  }
+  .fruit-meta b {
+    color: var(--accent); font-weight: 600; letter-spacing: 0.05em;
+    font-family: 'JetBrains Mono', monospace; font-size: 11px;
+  }
+  .month-bar {
+    flex: 1;
+    display: flex; gap: 2px; height: 4px;
+  }
+  .month-bar i {
+    flex: 1; background: var(--hairline);
+  }
+  .month-bar i.on { background: var(--accent); }
+  .fruit-foot {
+    margin-top: 14px; padding-top: 12px;
+    border-top: 1px dashed var(--hairline);
+    display: flex; justify-content: space-between;
+    font-size: 10.5px; letter-spacing: 0.08em;
+    color: var(--ink-3); text-transform: uppercase;
+  }
+  .fruit-foot b {
+    color: var(--accent); font-weight: 600;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* =====================================================
+     §3 — 农场故事 + 时间轴
+     ===================================================== */
+  .story {
+    display: grid;
+    grid-template-columns: 1fr 1.05fr;
+    gap: 60px; align-items: start;
+  }
+  .story-img {
+    aspect-ratio: 4/5;
+    overflow: hidden; background: var(--bone);
+    position: relative;
+  }
+  .story-img img {
+    width: 100%; height: 100%; object-fit: cover; display: block;
+    filter: saturate(0.92) contrast(1.04) brightness(1.02);
+  }
+  .story-img .caption {
+    position: absolute; left: 16px; bottom: 16px;
+    background: rgba(18,24,15,.78); backdrop-filter: blur(6px);
+    color: var(--bone); padding: 6px 12px;
+    font-size: 11px; letter-spacing: 0.08em;
+  }
+  .story-text h2 small {
+    display: block; font-size: 14px; font-weight: 300;
+    color: var(--ink-3); letter-spacing: 0.04em;
+    margin-top: 12px; max-width: 520px;
+    font-style: italic;
+  }
+  .story-paras {
+    margin-top: 30px;
+    display: flex; flex-direction: column;
+    gap: 18px;
+    font-size: 15.5px; color: var(--ink-2);
+    font-weight: 300; max-width: 480px;
+  }
+  .story-facts {
+    margin-top: 32px;
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 18px 30px;
+    padding-top: 24px;
+    border-top: 1px solid var(--hairline);
+  }
+  .story-facts .row {
+    display: flex; flex-direction: column; gap: 4px;
+  }
+  .story-facts .row .label {
+    font-size: 11px; letter-spacing: 0.18em;
+    color: var(--ink-3); text-transform: uppercase;
+    font-weight: 600;
+  }
+  .story-facts .row .val {
+    font-size: 22px; font-weight: 300;
+    color: var(--ink); letter-spacing: -.01em;
+  }
+  .story-facts .row .val small {
+    font-size: 13px; color: var(--ink-2);
+    margin-left: 4px; font-weight: 400;
+  }
+  .timeline { margin-top: 50px; padding-top: 36px; border-top: 1px solid var(--hairline); }
+  .timeline-track {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    margin-top: 30px;
+    position: relative;
+    height: 84px;
+  }
+  .timeline-track::before {
+    content: '';
+    position: absolute; top: 30px; left: 0; right: 0;
+    height: 1px; background: var(--hairline);
+  }
+  .tick {
+    grid-row: 1; align-self: end;
+    position: relative; z-index: 1;
+    text-align: center;
+  }
+  .tick .month {
+    font-size: 10.5px; color: var(--ink-3); font-weight: 600;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  .tick .dot {
+    width: 10px; height: 10px; border-radius: 50%;
+    background: var(--bone);
+    border: 1.5px solid var(--hairline);
+    margin: 0 auto 12px; transition: .25s;
+  }
+  .tick.on .dot {
+    background: var(--accent); border-color: var(--accent);
+    transform: scale(1.3);
+  }
+  .tick.on.with-fruit .dot::after {
+    content: ''; position: absolute;
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    background: var(--accent); opacity: .15;
+    top: -7px; left: 50%; transform: translateX(-50%);
+    z-index: -1;
+  }
+  .tick .label {
+    font-size: 11px; color: var(--ink);
+    font-weight: 500;
+  }
+  .tick .label small {
+    display: block; font-size: 10px;
+    color: var(--ink-3); font-weight: 400;
+    margin-top: 2px;
+  }
+
+  /* =====================================================
+     §3.5 — 本周采摘 · 信任卡片
+     ===================================================== */
+  .harvest-row {
+    margin-top: 36px;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+  }
+  .harvest-cell {
+    background: var(--bg);
+    border: 1px solid var(--hairline);
+    padding: 22px 20px 18px;
+    border-left: 3px solid transparent;
+  }
+  .harvest-cell.on   { border-left-color: var(--amber); }
+  .harvest-cell.soon { border-left-color: var(--accent); }
+  .harvest-cell.wait { border-left-color: var(--hairline); opacity: .6; }
+  .harvest-name {
+    font-size: 18px; font-weight: 500;
+    color: var(--ink); margin-bottom: 4px;
+    letter-spacing: -.005em;
+  }
+  .harvest-cell.wait .harvest-name { color: var(--ink-3); }
+  .harvest-meta {
+    font-size: 11.5px; letter-spacing: .04em;
+    color: var(--ink-3); text-transform: uppercase;
+    margin-bottom: 14px; font-weight: 500;
+  }
+  .harvest-bar {
+    height: 4px; border-radius: 999px;
+    background: var(--hairline); overflow: hidden;
+    margin-bottom: 12px;
+  }
+  .harvest-bar i {
+    display: block; height: 100%; border-radius: 999px;
+    background: var(--amber); transition: width 1.2s cubic-bezier(.2,.8,.2,1);
+  }
+  .harvest-cell.soon .harvest-bar i { background: var(--accent); }
+  .harvest-foot {
+    font-size: 12px; color: var(--ink-2);
+    font-weight: 500;
+  }
+
+  /* trust block */
+  .trust { margin-top: 100px; }
+  .trust-h { text-align: center; margin-bottom: 40px; }
+  .trust-grid {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+  }
+  .trust-card {
+    background: var(--bg);
+    border: 1px solid var(--hairline);
+    padding: 28px 22px;
+    text-align: center;
+  }
+  .trust-card .seal {
+    color: var(--accent);
+    margin: 0 auto 16px;
+    width: 56px; height: 56px;
+    display: grid; place-items: center;
+  }
+  .trust-card h5 {
+    font-size: 13px; letter-spacing: 0.18em;
+    text-transform: uppercase; font-weight: 700;
+    color: var(--ink); margin-bottom: 10px;
+  }
+  .trust-card p {
+    font-size: 13px; line-height: 1.6;
+    color: var(--ink-2); font-weight: 300;
+  }
+
+  /* =====================================================
+     §4 — 双入口 CTA（真表单）
+     ===================================================== */
+  .cta-grid {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 28px; margin-top: 50px;
+  }
+  .cta-card {
+    background: var(--bg);
+    border: 1px solid var(--hairline);
+    padding: 38px 34px 34px;
+  }
+  .cta-card .for {
+    font-size: 10.5px; letter-spacing: 0.3em;
+    color: var(--amber); text-transform: uppercase;
+    font-weight: 700; margin-bottom: 12px;
+  }
+  .cta-card .for.b { color: var(--accent); }
+  .cta-card h3 {
+    font-size: 28px; font-weight: 400; margin-bottom: 8px;
+  }
+  .cta-card h3 small {
+    display: block; font-size: 13px; font-weight: 300;
+    color: var(--ink-3); margin-top: 6px; letter-spacing: 0.02em;
+  }
+  .cta-card .quote-mini {
+    margin-top: 14px; padding-top: 14px;
+    border-top: 1px dashed var(--hairline);
+    font-size: 12px; color: var(--ink-3);
+    font-weight: 300;
+  }
+  .cta-card .quote-mini b { color: var(--accent); font-weight: 600; }
+  .cta-card .label {
+    display: block;
+    font-size: 11px; letter-spacing: 0.12em;
+    color: var(--ink-3); text-transform: uppercase;
+    font-weight: 700; margin-bottom: 6px; margin-top: 18px;
+  }
+  .cta-card input,
+  .cta-card select,
+  .cta-card textarea {
+    width: 100%; padding: 12px 14px;
+    background: var(--page); border: 1px solid var(--hairline);
+    color: var(--ink); font-size: 14px;
+    transition: border-color .2s; outline: none;
+    font-family: inherit;
+  }
+  .cta-card input:focus,
+  .cta-card select:focus,
+  .cta-card textarea:focus {
+    border-color: var(--accent);
+    box-shadow: var(--focus-ring);
+  }
+  .cta-card .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .cta-card textarea { min-height: 82px; resize: vertical; }
+  .cta-card .submit {
+    margin-top: 22px; width: 100%;
+    padding: 15px; background: var(--accent-2);
+    color: var(--bone);
+    border: 0; font-size: 13px; font-weight: 500;
+    letter-spacing: 0.18em; text-transform: uppercase;
+    cursor: pointer; transition: background .25s;
+  }
+  .cta-card .submit:hover { background: var(--accent); }
+  .cta-card .submit.sent {
+    background: var(--amber); cursor: default;
+  }
+  .cta-card .note {
+    font-size: 12px; color: var(--ink-3);
+    margin-top: 14px; font-weight: 300;
+  }
+
+  /* =====================================================
+     §X 来访路线 (map)
+     ===================================================== */
+  .visit-map {
+    margin-top: 36px;
+    display: grid;
+    grid-template-columns: 1.6fr 1fr;
+    gap: 28px;
+    align-items: start;
+  }
+  .visit-map-frame {
+    aspect-ratio: 16/10;
+    border: 1px solid var(--hairline);
+    background: var(--bone);
+    overflow: hidden;
+    position: relative;
+  }
+  .visit-map-frame iframe {
+    width: 100%; height: 100%;
+    border: 0;
+    filter: saturate(.85) contrast(.95);
+  }
+  .visit-map-frame::after {
+    content: '↑ 全屏 / ⌥ 点击';
+    position: absolute; bottom: 10px; right: 14px;
+    background: rgba(20,16,12,.78); color: var(--bone);
+    padding: 4px 10px; font-size: 11px;
+    font-family: var(--font-mono); letter-spacing: 0.08em;
+    pointer-events: none;
+  }
+  .visit-pin {
+    position: absolute;
+    top: 14px; left: 14px;
+    z-index: 5;
+    background: var(--accent);
+    color: var(--bone);
+    padding: 6px 12px;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    font-weight: 500;
+  }
+  .visit-routes {
+    display: flex; flex-direction: column; gap: 16px;
+  }
+  .route {
+    padding: 18px;
+    background: var(--bg);
+    border: 1px solid var(--hairline);
+    border-left: 3px solid var(--accent);
+  }
+  .route-h {
+    display: flex; align-items: baseline; gap: 10px;
+    margin-bottom: 6px;
+  }
+  .route-h b {
+    font-size: 15px; font-weight: 600; color: var(--ink);
+    letter-spacing: -.005em;
+  }
+  .route-meta {
+    font-size: 11px; color: var(--ink-3);
+    letter-spacing: 0.06em; font-weight: 500;
+  }
+  .route p { font-size: 13px; line-height: 1.6; color: var(--ink-2); font-weight: 300; }
+  .route p b { color: var(--ink); font-weight: 500; }
+  @media (max-width: 920px) {
+    .visit-map { grid-template-columns: 1fr; }
+  }
+
+  /* =====================================================
+     §X 加我们 (微信 / 公众号 / 客服)
+     ===================================================== */
+  .wechat-grid {
+    margin-top: 40px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 22px;
+  }
+  .wechat-card {
+    background: var(--bg);
+    border: 1px solid var(--hairline);
+    padding: 28px 26px;
+    text-align: center;
+  }
+  .wechat-card h4 {
+    font-size: 14px; letter-spacing: 0.18em;
+    text-transform: uppercase; font-weight: 700;
+    color: var(--ink); margin-bottom: 6px;
+  }
+  .wechat-card .sub {
+    font-size: 12px; color: var(--ink-3);
+    margin-bottom: 22px; font-weight: 300;
+  }
+  .qr-frame {
+    width: 168px; height: 168px;
+    margin: 0 auto 14px;
+    background: var(--bone);
+    border: 1px solid var(--hairline);
+    padding: 12px;
+    position: relative;
+  }
+  .qr-frame svg { width: 100%; height: 100%; display: block; }
+  .qr-frame::before {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(135deg, transparent 49%, rgba(47,82,51,.04) 50%, transparent 51%);
+    pointer-events: none;
+  }
+  .qr-meta {
+    font-family: var(--font-mono);
+    font-size: 12px; color: var(--ink-2);
+    margin-top: 4px;
+  }
+  .qr-meta b { color: var(--accent); font-weight: 600; }
+  .wechat-card .micro {
+    margin-top: 14px;
+    font-size: 12.5px; color: var(--ink-2);
+    line-height: 1.6; font-weight: 300;
+  }
+  @media (max-width: 920px) {
+    .wechat-grid { grid-template-columns: 1fr; }
+  }
+
+  /* =====================================================
+     FAQ
+     ===================================================== */
+  .faq-grid {
+    margin-top: 40px;
+    display: flex; flex-direction: column;
+    border-top: 1px solid var(--hairline);
+  }
+  .faq {
+    border-bottom: 1px solid var(--hairline);
+    padding: 22px 0;
+  }
+  .faq-q {
+    display: flex; justify-content: space-between; align-items: baseline;
+    font-family: var(--font-sans); font-size: 17px; font-weight: 500;
+    color: var(--ink); background: none; border: 0; padding: 0;
+    width: 100%; cursor: pointer; text-align: left;
+    letter-spacing: -.005em;
+  }
+  .faq-q::after {
+    content: '+';
+    font-family: var(--font-mono); font-weight: 300;
+    font-size: 22px; color: var(--accent);
+    transition: transform .3s ease;
+  }
+  .faq.open .faq-q::after { content: '−'; }
+  .faq-a {
+    font-size: 14.5px; line-height: 1.7;
+    color: var(--ink-2); font-weight: 300;
+    max-height: 0; overflow: hidden;
+    transition: max-height .35s ease, margin-top .35s ease;
+    margin-top: 0;
+  }
+  .faq.open .faq-a { max-height: 300px; margin-top: 14px; }
+
+  /* =====================================================
+     §5 — footer（具体地址）
+     ===================================================== */
+  .foot {
+    border-top: 1px solid var(--hairline);
+    padding: 70px 36px 50px;
+    max-width: 1240px; margin: 0 auto;
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr;
+    gap: 50px;
+  }
+  .foot h4 {
+    font-size: 10.5px; letter-spacing: 0.3em;
+    text-transform: uppercase; color: var(--ink-3);
+    font-weight: 700; margin-bottom: 16px;
+  }
+  .foot p, .foot li {
+    font-size: 14px; color: var(--ink-2);
+    font-weight: 300; line-height: 1.75;
+  }
+  .foot ul { list-style: none; }
+  .foot-bottom {
+    border-top: 1px solid var(--hairline);
+    padding: 22px 36px;
+    max-width: 1240px; margin: 0 auto;
+    display: flex; justify-content: space-between;
+    font-size: 11.5px; color: var(--ink-3);
+    letter-spacing: 0.04em;
+  }
+  .foot-bottom .ban {
+    color: var(--amber); font-weight: 600;
+  }
+
+  /* =====================================================
+     reveal-on-scroll
+     ===================================================== */
+  .reveal {
+    opacity: 0; transform: translateY(28px);
+    transition: opacity .8s cubic-bezier(.16,1,.3,1), transform .8s cubic-bezier(.16,1,.3,1);
+  }
+  .reveal.in { opacity: 1; transform: none; }
+
+  /* =====================================================
+     responsive
+     ===================================================== */
+  @media (max-width: 920px) {
+    .nav-inner { padding: 16px 22px; }
+    .nav-links { display: none; }
+    .hamburger { display: flex; }
+    section { padding: 80px 22px; }
+    .journal { padding-left: 22px; padding-right: 22px; }
+    .hero-text { left: 22px; right: 22px; bottom: 80px; }
+    .hero-meta { display: none; }
+    .hero-hint { display: none; }
+    .story { grid-template-columns: 1fr; }
+    .cta-grid { grid-template-columns: 1fr; }
+    .cta-card .row { grid-template-columns: 1fr; }
+    .story-facts { grid-template-columns: 1fr; }
+    .timeline-track { grid-template-columns: repeat(6, 1fr); }
+    .harvest-row { grid-template-columns: 1fr 1fr; }
+    .trust-grid  { grid-template-columns: 1fr 1fr; }
+    .foot { grid-template-columns: 1fr 1fr; padding: 50px 22px 40px; }
+    .foot-bottom { padding: 18px 22px; flex-direction: column; gap: 8px; }
+  }
+  @media (max-width: 560px) {
+    .harvest-row { grid-template-columns: 1fr; }
+    .trust-grid  { grid-template-columns: 1fr; }
+  }
+
+  /* =====================================================
+     reduced motion
+     ===================================================== */
+  /* =====================================================
+     back-to-top floating button
+     ===================================================== */
+  .to-top {
+    position: fixed;
+    right: 28px;
+    bottom: 28px;
+    width: 46px; height: 46px;
+    border: 1px solid var(--hairline);
+    background: color-mix(in srgb, var(--page) 92%, transparent);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    color: var(--ink);
+    font-size: 18px; font-weight: 400;
+    cursor: pointer;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(20px);
+    transition: opacity .3s ease, transform .3s ease, background .2s ease;
+    z-index: 80;
+  }
+  .to-top.is-visible {
+    opacity: 1; pointer-events: auto; transform: translateY(0);
+  }
+  .to-top:hover {
+    background: var(--accent);
+    color: var(--bone);
+    border-color: var(--accent);
+  }
+  @media (max-width: 920px) {
+    .to-top { right: 18px; bottom: 18px; width: 40px; height: 40px; font-size: 16px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: .01ms !important;
+      transition-duration: .01ms !important;
+    }
+    .layer-cover {
+      -webkit-mask: none !important;
+              mask: none !important;
+      opacity: .5;
+    }
+    .reveal { opacity: 1 !important; transform: none !important; }
+    .fruit:hover .fruit-img img { transform: none !important; }
+  }
+</style>
+</head>
+
+<body>
+
+<!-- ==============================================
+     NAV
+     ============================================== -->
+<nav class="nav">
+  <div class="nav-inner">
+    <a class="brand" href="#top">
+      <span class="mark">拾</span>
+      <span>拾穗果园<small>SHISUI ORCHARD · 北纬 35°</small></span>
+    </a>
+    <div class="nav-right">
+      <div class="nav-links" id="navLinks">
+        <a href="#fruits">四季果品</a>
+        <a href="#harvest">本周</a>
+        <a href="#story">果场</a>
+        <a href="#visit">来访</a>
+        <a href="#wechat">加我们</a>
+        <a href="#faq">常见问题</a>
+        <a href="#order" class="ord">立即订购 →</a>
+      </div>
+      <button class="theme-toggle" id="themeBtn" aria-label="切换深浅模式">浅 / 深</button>
+      <button class="hamburger" id="hamburgerBtn" aria-label="打开菜单" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </div>
+</nav>
+
+<!-- ==============================================
+     工艺日志 — Changelog timeline
+     ============================================== -->
+<section class="journal" id="journal">
+  <div class="journal-h">
+    <span class="sec-tag" style="margin-bottom:0">工艺日志 · CHANGELOG</span>
+    <h2 style="margin-top:14px">本页的<em class="em">成长</em>过程</h2>
+    <p class="lede">每一轮迭代都被留在这里,点节点看当时改了什么。尚在规划的项标为空心。</p>
+  </div>
+
+  <div class="journal-rail" id="journalRail">
+    <button class="journal-node done" data-node="v0">
+      <span class="journal-dot">1</span>
+      <span class="journal-label">
+        <span class="ver">v0</span>
+        <span class="ttl">起始 Prompt</span>
+        <span class="hint">Quiet Luxury + Forest 规格定稿</span>
+      </span>
+    </button>
+    <span class="journal-conn done"></span>
+    <button class="journal-node done" data-node="v1">
+      <span class="journal-dot">2</span>
+      <span class="journal-label">
+        <span class="ver">v1</span>
+        <span class="ttl">AI 出图</span>
+        <span class="hint">Pollinations 替换 SVG 占位感</span>
+      </span>
+    </button>
+    <span class="journal-conn done"></span>
+    <button class="journal-node done is-active" data-node="v2">
+      <span class="journal-dot">3</span>
+      <span class="journal-label">
+        <span class="ver">v2</span>
+        <span class="ttl">色温统一</span>
+        <span class="hint">CSS filter 拉齐 8 张照片</span>
+      </span>
+    </button>
+    <span class="journal-conn done"></span>
+    <button class="journal-node done" data-node="v3">
+      <span class="journal-dot">4</span>
+      <span class="journal-label">
+        <span class="ver">v3</span>
+        <span class="ttl">移动端抽屉菜单</span>
+        <span class="hint">汉堡代替隐藏导航</span>
+      </span>
+    </button>
+    <span class="journal-conn done"></span>
+    <button class="journal-node done" data-node="v4">
+      <span class="journal-dot">5</span>
+      <span class="journal-label">
+        <span class="ver">v4</span>
+        <span class="ttl">明星果品大卡</span>
+        <span class="hint">苹果做主角</span>
+      </span>
+    </button>
+    <span class="journal-conn done"></span>
+    <button class="journal-node done" data-node="v5">
+      <span class="journal-dot">6</span>
+      <span class="journal-label">
+        <span class="ver">v5</span>
+        <span class="ttl">图片来源披露</span>
+        <span class="hint">标明"占位"</span>
+      </span>
+    </button>
+    <span class="journal-conn done"></span>
+    <button class="journal-node done" data-node="v6">
+      <span class="journal-dot">7</span>
+      <span class="journal-label">
+        <span class="ver">v6</span>
+        <span class="ttl">回顶按钮</span>
+        <span class="hint">滚过 hero 后浮现</span>
+      </span>
+    </button>
+    <span class="journal-conn done"></span>
+    <button class="journal-node done is-active" data-node="v7">
+      <span class="journal-dot">8</span>
+      <span class="journal-label">
+        <span class="ver">v7</span>
+        <span class="ttl">来访地图</span>
+        <span class="hint">OpenStreetMap 嵌入</span>
+      </span>
+    </button>
+    <span class="journal-conn done"></span>
+    <button class="journal-node done" data-node="v8">
+      <span class="journal-dot">9</span>
+      <span class="journal-label">
+        <span class="ver">v8</span>
+        <span class="ttl">微信 QR 卡组</span>
+        <span class="hint">个人 / 公众号 / 采供</span>
+      </span>
+    </button>
+    <span class="journal-conn done"></span>
+    <button class="journal-node done" data-node="v9">
+      <span class="journal-dot">10</span>
+      <span class="journal-label">
+        <span class="ver">v9</span>
+        <span class="ttl">摄影指南升级</span>
+        <span class="hint">10 张图规格 + 流程</span>
+      </span>
+    </button>
+  </div>
+
+  <div class="journal-detail" id="journalDetail">
+    <div class="journal-detail-body">
+      <h4>v7 · 来访路线 + 地图嵌入 <small>当前选中</small></h4>
+      <p>新增 §6 来访路线,内嵌 OpenStreetMap iframe(零 API key · 零依赖 · 纯静态)。
+        地图中心定到北纬 35.130 / 东经 108.650(旬邑县张洪镇),
+        右侧三张路线卡(自驾 / 采摘拼车 / 寄存)说明实际怎么来。</p>
+    </div>
+  </div>
+</section>
+
+<!-- ==============================================
+     §1 — HERO（Cinematic multi-layer depth）
+     ============================================== -->
+<div class="hero" id="top">
+  <div class="hero-stage" id="heroStage">
+    <div class="layer layer-base"></div>
+    <div class="layer layer-dawn"></div>
+    <div class="layer layer-vig"></div>
+    <div class="layer layer-grain"></div>
+    <div class="layer layer-spot" id="heroSpot"></div>
+
+    <!-- meta strip top-right -->
+    <div class="hero-meta">
+      <span><b>35°00′N</b>纬度</span>
+      <span><b>108°40′E</b>经度</span>
+      <span><b>850m</b>海拔</span>
+    </div>
+
+    <div class="hero-text">
+      <div class="hero-kicker">陕西 · 旬邑 · 渭北黄土塬</div>
+      <h1 class="hero-title">
+        从土壤<br>
+        <span class="thin">到</span>枝头。
+      </h1>
+      <p class="hero-sub">
+        1989 年起这片坡地一直在我们家人手里。<br>
+        我们种苹果、梨、桃、杏、李、柿、樱桃、猕猴桃二十余种果品；按节气采收，不抢提前，不打折扣。
+      </p>
+    </div>
+
+    <div class="hero-hint">悬停 · 鼠标在此区域可聚焦果园细节</div>
+    <div class="hero-scroll" aria-hidden="true"></div>
+  </div>
+</div>
+
+<!-- ==============================================
+     图片来源披露 + 摄影指南 (v5)
+     ============================================== -->
+<div class="img-disclosure" id="imgDisclosure">
+  <div class="img-disclosure-inner">
+    <span class="img-disclosure-mark">i</span>
+    <span class="img-disclosure-text">
+      本页果品与现场图片为<strong>AI 生成的代表性占位</strong>,用于演示页面结构与排版。
+      投产前应替换为果园实拍,以提升信任与转化。
+      <span class="img-disclosure-cta" id="imgDisclosureMore">查看摄影指南 →</span>
+    </span>
+  </div>
+  <div class="photo-guide" id="photoGuide" hidden>
+    <div class="photo-guide-h">
+      <h5>10 张图片,各自的尺寸 / 题材 / 摄影提示</h5>
+      <small>发给摄影师时,直接复制下面整段</small>
+    </div>
+    <table class="photo-table">
+      <thead>
+        <tr><th>文件名</th><th>尺寸 / 比例</th><th>题材</th><th>摄影提示(英)</th></tr>
+      </thead>
+      <tbody>
+        <tr><td data-label="文件"><code>hero.jpg</code></td><td data-label="尺寸">1920×1080 / 16:9</td><td data-label="题材">果园全景</td><td data-label="摄影提示">Apple orchard at golden hour, rows of apple trees stretching into distance, soft mist, warm backlight</td></tr>
+        <tr><td data-label="文件"><code>story.jpg</code></td><td data-label="尺寸">800×1000 / 4:5</td><td data-label="题材">人 / 农事</td><td data-label="摄影提示">Close-up of elderly farmer's hands holding a ripe red apple, orchard background softly blurred, warm daylight</td></tr>
+        <tr><td data-label="文件"><code>apple.jpg</code></td><td data-label="尺寸">600×750 / 4:5</td><td data-label="题材">苹果(主力)</td><td data-label="摄影提示">Single ripe red Fuji apple with characteristic yellow sun blush stripe, stem &amp; leaf, on cream background, studio food photography</td></tr>
+        <tr><td data-label="文件"><code>pear.jpg</code></td><td data-label="尺寸">600×750 / 4:5</td><td data-label="题材">梨</td><td data-label="摄影提示">Single golden pear with characteristic shape, stem &amp; leaf, on cream background, studio food photography</td></tr>
+        <tr><td data-label="文件"><code>peach.jpg</code></td><td data-label="尺寸">600×750 / 4:5</td><td data-label="题材">桃</td><td data-label="摄影提示">Single ripe peach with front cleft, soft pink-yellow skin with natural blush, leaf, studio food photography</td></tr>
+        <tr><td data-label="文件"><code>apricot.jpg</code></td><td data-label="尺寸">600×750 / 4:5</td><td data-label="题材">杏</td><td data-label="摄影提示">Single ripe orange apricot with natural red blush, stem &amp; leaf, studio food photography</td></tr>
+        <tr><td data-label="文件"><code>plum.jpg</code></td><td data-label="尺寸">600×750 / 4:5</td><td data-label="题材">李</td><td data-label="摄影提示">Single dark purple plum with natural white bloom powder, thin stem &amp; leaf, studio food photography</td></tr>
+        <tr><td data-label="文件"><code>cherry.jpg</code></td><td data-label="尺寸">600×750 / 4:5</td><td data-label="题材">樱桃</td><td data-label="摄影提示">Two ripe red cherries with stems and a small green leaf, on cream background, studio food photography</td></tr>
+        <tr><td data-label="文件"><code>persimmon.jpg</code></td><td data-label="尺寸">600×750 / 4:5</td><td data-label="题材">柿</td><td data-label="摄影提示">Single ripe orange persimmon with characteristic four-pointed calyx on top, studio food photography</td></tr>
+        <tr><td data-label="文件"><code>kiwi.jpg</code></td><td data-label="尺寸">600×750 / 4:5</td><td data-label="题材">猕猴桃</td><td data-label="摄影提示">Halved kiwi showing vibrant green interior with ring of black seeds, brown fuzzy outer skin, studio food photography</td></tr>
+      </tbody>
+    </table>
+    <div class="photo-guide-h" style="margin-top:24px">
+      <h5>替换流程</h5>
+      <small>线下人员不用进代码也能换图</small>
+    </div>
+    <ol class="photo-flow">
+      <li>摄影师按上表"摄影提示"拍摄,导出同名 JPG</li>
+      <li>放进 <code>_assets/img/</code> 文件夹(覆盖同名文件)</li>
+      <li>刷一下页面就生效,无需改任何 HTML / CSS</li>
+    </ol>
+    <div class="photo-guide-h" style="margin-top:24px">
+      <h5>质量检查</h5>
+    </div>
+    <ul class="photo-checklist">
+      <li>✓ 自然光为主,无强反光 / 无后期滤镜污染(归一化阈值)</li>
+      <li>✓ 单果主体占比 &gt; 60%,留白给文字注解</li>
+      <li>✓ 背景纯色或自然虚化,不能有其他品牌 LOGO</li>
+      <li>✓ 树的"自然果粉"应保留,这是承诺"不洗果"的视觉证据</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ==============================================
+     §2 — 四季果品
+     ============================================== -->
+<section id="fruits">
+  <div class="grid-head reveal">
+    <div class="sec-tag">第 / 二 节 · 四季果品</div>
+    <h2>应季而生，<span class="em">不抢</span>提前。</h2>
+    <p class="lede">
+      我们不卖反季果。每一种应季而上，达到风味峰值才下枝；标记的采摘窗跟随每年真实气候微调。
+      海拔与糖度是结果，不是配置。
+    </p>
+  </div>
+
+  <div class="fruit-grid">
+
+    <!-- 樱桃 -->
+    <article class="fruit reveal">
+      <div class="fruit-img">
+        <img src="_assets/img/cherry.jpg" alt="挂在枝头的车厘子" loading="lazy" />
+        <span class="hotspot hs-1">糖度 16°</span>
+        <span class="hotspot hs-2">海拔 1100m</span>
+        <span class="hotspot hs-4">6/18 采收</span>
+      </div>
+      <div class="fruit-body">
+        <div class="fruit-name">
+          <small>06 · CHERRY · 夏初</small>
+          樱桃 / 车厘子
+        </div>
+        <div class="fruit-desc">
+          三周采摘窗,极短。霜冻和雨水都会减产,等到果皮绷紧、果柄翠绿再采;清晨四点半上山。
+        </div>
+        <div class="fruit-meta">
+          <b>6 月</b>
+          <div class="month-bar">
+            <i></i><i></i><i></i><i></i><i></i><i class="on"></i><i></i><i></i><i></i><i></i><i></i><i></i>
+          </div>
+        </div>
+        <div class="fruit-foot">
+          <span>规格 · 28-32mm · 2 斤装</span>
+          <b>¥ 168</b>
+        </div>
+      </div>
+    </article>
+
+    <!-- 杏 -->
+    <article class="fruit reveal">
+      <div class="fruit-img">
+        <img src="_assets/img/apricot.jpg" alt="成熟中的黄色杏子" loading="lazy" />
+        <span class="hotspot hs-1">糖度 13°</span>
+        <span class="hotspot hs-3">海拔 900m</span>
+        <span class="hotspot hs-4">6/28 采收</span>
+      </div>
+      <div class="fruit-body">
+        <div class="fruit-name">
+          <small>06 - 07 · APRICOT · 夏初</small>
+          杏 / 旬邑胭脂杏
+        </div>
+        <div class="fruit-desc">
+          朝阳面先熟,我们分三批手工采摘,放置 1-2 天后果肉软、香气圆,比冷链到位时再吃更对路。
+        </div>
+        <div class="fruit-meta">
+          <b>6 - 7 月</b>
+          <div class="month-bar">
+            <i></i><i></i><i></i><i></i><i></i><i class="on"></i><i class="on"></i><i></i><i></i><i></i><i></i><i></i>
+          </div>
+        </div>
+        <div class="fruit-foot">
+          <span>规格 · 单果 35-45g · 3 斤装</span>
+          <b>¥ 88</b>
+        </div>
+      </div>
+    </article>
+
+    <!-- 桃 -->
+    <article class="fruit reveal">
+      <div class="fruit-img">
+        <img src="_assets/img/peach.jpg" alt="结着露水的水蜜桃" loading="lazy" />
+        <span class="hotspot hs-1">糖度 14°</span>
+        <span class="hotspot hs-2">海拔 600m</span>
+        <span class="hotspot hs-4">7/10 采收</span>
+      </div>
+      <div class="fruit-body">
+        <div class="fruit-name">
+          <small>07 · PEACH · 盛夏</small>
+          桃 / 白凤水蜜桃
+        </div>
+        <div class="fruit-desc">
+          不套袋,让阳光直晒才能累积香气;白肉走鲜食,黄肉走糖渍与熬酱。我们今年试做了几罐白桃乌龙果酱。
+        </div>
+        <div class="fruit-meta">
+          <b>7 月</b>
+          <div class="month-bar">
+            <i></i><i></i><i></i><i></i><i></i><i></i><i class="on"></i><i></i><i></i><i></i><i></i><i></i>
+          </div>
+        </div>
+        <div class="fruit-foot">
+          <span>规格 · 单果 200g+ · 4 斤装</span>
+          <b>¥ 138</b>
+        </div>
+      </div>
+    </article>
+
+    <!-- 李 -->
+    <article class="fruit reveal">
+      <div class="fruit-img">
+        <img src="_assets/img/plum.jpg" alt="表皮带果粉的李子" loading="lazy" />
+        <span class="hotspot hs-1">糖度 12°</span>
+        <span class="hotspot hs-3">海拔 750m</span>
+        <span class="hotspot hs-4">7/22 采收</span>
+      </div>
+      <div class="fruit-body">
+        <div class="fruit-name">
+          <small>07 - 08 · PLUM · 盛夏末</small>
+          李子 / 紫云李
+        </div>
+        <div class="fruit-desc">
+          烈日下糖度反而下降,靠昼夜温差累积糖分;清晨带露采下,表皮那层白霜是天然的、不是脏。
+        </div>
+        <div class="fruit-meta">
+          <b>7 - 8 月</b>
+          <div class="month-bar">
+            <i></i><i></i><i></i><i></i><i></i><i></i><i class="on"></i><i class="on"></i><i></i><i></i><i></i><i></i>
+          </div>
+        </div>
+        <div class="fruit-foot">
+          <span>规格 · 紫黑圆 · 2 斤装</span>
+          <b>¥ 72</b>
+        </div>
+      </div>
+    </article>
+
+    <!-- 梨 -->
+    <article class="fruit reveal">
+      <div class="fruit-img">
+        <img src="_assets/img/pear.jpg" alt="挂在枝头的金黄酥梨" loading="lazy" />
+        <span class="hotspot hs-1">糖度 12°</span>
+        <span class="hotspot hs-2">海拔 700m</span>
+        <span class="hotspot hs-4">9/5 采收</span>
+      </div>
+      <div class="fruit-body">
+        <div class="fruit-name">
+          <small>09 · PEAR · 初秋</small>
+          梨 / 砀山酥梨
+        </div>
+        <div class="fruit-desc">
+          早采水灵,晚采甜;采后放冷库一个月退酸,这时咬一口汁水才整。
+          寄出前再过一道分拣。
+        </div>
+        <div class="fruit-meta">
+          <b>9 月</b>
+          <div class="month-bar">
+            <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i class="on"></i><i></i><i></i><i></i>
+          </div>
+        </div>
+        <div class="fruit-foot">
+          <span>规格 · 单果 350g+ · 5 斤装</span>
+          <b>¥ 78</b>
+        </div>
+      </div>
+    </article>
+
+    <!-- 苹果 - 主力 + FEATURED 大卡 -->
+    <article class="fruit featured reveal">
+      <div class="fruit-badge">SEASONAL · 本季主打</div>
+      <div class="fruit-img">
+        <img src="_assets/img/apple.jpg" alt="红富士苹果，表皮带阳光红" loading="lazy" />
+        <span class="hotspot hs-1">糖度 14°</span>
+        <span class="hotspot hs-2">海拔 850m</span>
+        <span class="hotspot hs-4">10/15 采收</span>
+      </div>
+      <div class="fruit-body">
+        <div class="fruit-name">
+          <small>10 - 11 · APPLE · 仲秋</small>
+          苹果 / 红富士 · 长富
+        </div>
+        <div class="fruit-desc">
+          黄土高原的昼夜温差让糖度累积、皮薄、爆汁;不催红、不打蜡,下树即发货。
+          我们今年有纸袋装和礼盒装两种规格。
+        </div>
+        <div class="fruit-meta">
+          <b>10 - 11 月</b>
+          <div class="month-bar">
+            <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i class="on"></i><i class="on"></i><i></i>
+          </div>
+        </div>
+        <div class="fruit-foot">
+          <span>规格 · 80# - 85# · 5 斤装</span>
+          <b>¥ 98</b>
+        </div>
+      </div>
+    </article>
+
+    <!-- 柿 -->
+    <article class="fruit reveal">
+      <div class="fruit-img">
+        <img src="_assets/img/persimmon.jpg" alt="成熟火晶柿" loading="lazy" />
+        <span class="hotspot hs-1">糖度 18°</span>
+        <span class="hotspot hs-3">海拔 500m</span>
+        <span class="hotspot hs-4">10/25 采收</span>
+      </div>
+      <div class="fruit-body">
+        <div class="fruit-name">
+          <small>10 - 11 · PERSIMMON · 仲秋</small>
+          柿 / 火晶软柿
+        </div>
+        <div class="fruit-desc">
+          火晶软柿软糯爆浆;脆柿削皮即食。生柿会在家中自然脱涩,无需催熟剂。
+          包装用稻壳填充,经一次摔测试。
+        </div>
+        <div class="fruit-meta">
+          <b>10 - 11 月</b>
+          <div class="month-bar">
+            <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i class="on"></i><i class="on"></i><i></i>
+          </div>
+        </div>
+        <div class="fruit-foot">
+          <span>规格 · 单果 150g+ · 4 斤装</span>
+          <b>¥ 88</b>
+        </div>
+      </div>
+    </article>
+
+    <!-- 猕猴桃 -->
+    <article class="fruit reveal">
+      <div class="fruit-img">
+        <img src="_assets/img/kiwi.jpg" alt="切开的猕猴桃露出翠绿果肉" loading="lazy" />
+        <span class="hotspot hs-1">糖度 13°</span>
+        <span class="hotspot hs-2">海拔 950m</span>
+        <span class="hotspot hs-4">11/8 采收</span>
+      </div>
+      <div class="fruit-body">
+        <div class="fruit-name">
+          <small>11 · KIWI · 深秋</small>
+          猕猴桃 / 翠香
+        </div>
+        <div class="fruit-desc">
+          采后需要后熟软化;冷藏 7-10 天,按下拇指处微凹即可食。酸甜之间,VC 含量远高柑橘。
+        </div>
+        <div class="fruit-meta">
+          <b>11 月</b>
+          <div class="month-bar">
+            <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i class="on"></i><i></i>
+          </div>
+        </div>
+        <div class="fruit-foot">
+          <span>规格 · 22 - 27 头 · 4 斤装</span>
+          <b>¥ 98</b>
+        </div>
+      </div>
+    </article>
+
+  </div>
+</section>
+
+<!-- ==============================================
+     §3 — 农场故事 + 时间轴 + 实数据
+     ============================================== -->
+<section id="story">
+  <div class="story">
+    <div class="story-img reveal">
+      <img src="_assets/img/story.jpg" alt="老人的手握着刚下树的苹果" loading="lazy" />
+      <div class="caption">2024 年 10 月 · 红富士园 / 旬邑塬上</div>
+    </div>
+    <div class="story-text">
+      <div class="sec-tag reveal">第 / 三 节 · 果场</div>
+      <h2 class="reveal">三代人，<span class="em">一座</span>山。</h2>
+      <small class="reveal">渭北黄土塬上,1989 年起这片坡地一直在我们家人手里。</small>
+
+      <div class="story-paras">
+        <p class="reveal">
+          我们家是这里最早一批引种红富士的农户。祖父坚持"靠天吃饭"——不修大棚、
+          不施化肥、不打除草剂;父亲接手后把灌溉改成滴灌、把疏果标准写进了家庭手册。
+        </p>
+        <p class="reveal">
+          到我这代,更多的事没变——仍然是节气到了才采摘,仍然是挑最熟的果下树。
+          我们增加的,只是把这份诚意送到你手里时,包装和时机的细节。
+        </p>
+      </div>
+
+      <!-- 4 real numbers 不堆 emoji -->
+      <div class="story-facts reveal">
+        <div class="row">
+          <span class="label">果场面积</span>
+          <span class="val">86 <small>亩</small></span>
+        </div>
+        <div class="row">
+          <span class="label">果龄</span>
+          <span class="val">37 <small>年</small></span>
+        </div>
+        <div class="row">
+          <span class="label">最高海拔</span>
+          <span class="val">1180 <small>m</small></span>
+        </div>
+        <div class="row">
+          <span class="label">品种数</span>
+          <span class="val">23 <small>种</small></span>
+        </div>
+      </div>
+
+      <div class="timeline reveal">
+        <div class="sec-tag" style="margin-bottom:0">果场一年的呼吸</div>
+        <div class="timeline-track">
+          <div class="tick on with-fruit"><div class="month">3 月</div><div class="dot"></div><div class="label">春剪<small>修枝清园</small></div></div>
+          <div class="tick on with-fruit"><div class="month">4 月</div><div class="dot"></div><div class="label">花期<small>苹果花</small></div></div>
+          <div class="tick on with-fruit"><div class="month">5 月</div><div class="dot"></div><div class="label">疏果<small>枝条梳果</small></div></div>
+          <div class="tick on with-fruit"><div class="month">6 月</div><div class="dot"></div><div class="label">樱桃 / 杏<small>上季</small></div></div>
+          <div class="tick on with-fruit"><div class="month">7 月</div><div class="dot"></div><div class="label">桃 / 李<small>盛夏</small></div></div>
+          <div class="tick on with-fruit"><div class="month">8 月</div><div class="dot"></div><div class="label">养护<small>套袋撤袋</small></div></div>
+          <div class="tick on with-fruit"><div class="month">9 月</div><div class="dot"></div><div class="label">梨 / 早熟苹果<small>初秋</small></div></div>
+          <div class="tick on with-fruit"><div class="month">10 月</div><div class="dot"></div><div class="label">苹果 / 柿<small>主力</small></div></div>
+          <div class="tick on with-fruit"><div class="month">11 月</div><div class="dot"></div><div class="label">猕猴桃 / 晚苹果<small>深秋</small></div></div>
+          <div class="tick"><div class="month">12 月</div><div class="dot"></div><div class="label">冬剪<small>休</small></div></div>
+          <div class="tick"><div class="month">1 月</div><div class="dot"></div><div class="label">冬藏<small>窑洞</small></div></div>
+          <div class="tick"><div class="month">2 月</div><div class="dot"></div><div class="label">春耕<small>备土</small></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==============================================
+     §3.5 — 本周采摘 · 直送窗
+     ============================================== -->
+<section id="harvest">
+  <div class="reveal">
+    <div class="sec-tag">第 / 三 节 · 趁手期</div>
+    <h2>这周，<span class="em">谁在</span>枝头等采。</h2>
+    <p class="lede">
+      每年 6 月到 11 月，每周一查园。下表是本周采收主力的果品与产量;
+      卖完即停，绝不退而求其次发差一档的果。
+    </p>
+  </div>
+
+  <div class="harvest-row reveal">
+    <div class="harvest-cell on">
+      <div class="harvest-name">苹果 · 长富 2 号</div>
+      <div class="harvest-meta">本周采收中 · 已下树 18 吨</div>
+      <div class="harvest-bar"><i style="width:78%"></i></div>
+      <div class="harvest-foot">甜度 14°+ · 周四发货</div>
+    </div>
+    <div class="harvest-cell on">
+      <div class="harvest-name">火晶软柿</div>
+      <div class="harvest-meta">本周采收中 · 已下树 2.6 吨</div>
+      <div class="harvest-bar"><i style="width:42%"></i></div>
+      <div class="harvest-foot">糖度 18°+ · 当日发</div>
+    </div>
+    <div class="harvest-cell soon">
+      <div class="harvest-name">翠香猕猴桃</div>
+      <div class="harvest-meta">下周二开秤 · 预售已起</div>
+      <div class="harvest-bar"><i style="width:8%"></i></div>
+      <div class="harvest-foot">11 月 4 日 · 周一发</div>
+    </div>
+    <div class="harvest-cell wait">
+      <div class="harvest-name">明年 6 月 · 车厘子</div>
+      <div class="harvest-meta">休息期 · 可订阅到货提醒</div>
+      <div class="harvest-bar"><i style="width:0%"></i></div>
+      <div class="harvest-foot">2027 - 06 · 提醒我 →</div>
+    </div>
+  </div>
+
+  <!-- ============ 资质 & 信任 ============ -->
+  <div class="trust reveal">
+    <div class="trust-h">
+      <div class="sec-tag" style="margin-bottom:0">承诺与资质</div>
+      <h2 style="font-size:clamp(24px,2.6vw,34px);margin-top:14px">
+        写下的承诺，<span class="em">不</span>只是说说。
+      </h2>
+    </div>
+    <div class="trust-grid">
+      <div class="trust-card">
+        <div class="seal">
+          <svg viewBox="0 0 56 56" width="56" height="56" fill="none">
+            <circle cx="28" cy="28" r="25" stroke="currentColor" stroke-width="1.5" stroke-dasharray="2 3"/>
+            <path d="M16 28 l8 8 l16 -16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <h5>零农残承诺</h5>
+        <p>承诺低于检测阈值,接受第三方自费送检;检出包退并全额退款。</p>
+      </div>
+      <div class="trust-card">
+        <div class="seal">
+          <svg viewBox="0 0 56 56" width="56" height="56" fill="none">
+            <circle cx="28" cy="28" r="25" stroke="currentColor" stroke-width="1.5" stroke-dasharray="2 3"/>
+            <path d="M14 32 q14 12 28 0" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/>
+            <circle cx="22" cy="22" r="1.5" fill="currentColor"/>
+            <circle cx="34" cy="22" r="1.5" fill="currentColor"/>
+          </svg>
+        </div>
+        <h5>24h 坏果补寄</h5>
+        <p>签收时坏果拍照即可,同一批果品补寄,顺丰冷链原路返回。</p>
+      </div>
+      <div class="trust-card">
+        <div class="seal">
+          <svg viewBox="0 0 56 56" width="56" height="56" fill="none">
+            <circle cx="28" cy="28" r="25" stroke="currentColor" stroke-width="1.5" stroke-dasharray="2 3"/>
+            <path d="M22 22 l-8 8 l8 8 M34 22 l8 8 l-8 8" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/>
+          </svg>
+        </div>
+        <h5>不洗果不打蜡</h5>
+        <p>树上下树即发,自然果粉保留;塑料包装盒内无保鲜剂。</p>
+      </div>
+      <div class="trust-card">
+        <div class="seal">
+          <svg viewBox="0 0 56 56" width="56" height="56" fill="none">
+            <circle cx="28" cy="28" r="25" stroke="currentColor" stroke-width="1.5" stroke-dasharray="2 3"/>
+            <text x="28" y="34" text-anchor="middle" fill="currentColor" font-family="monospace" font-size="14" font-weight="700">2</text>
+          </svg>
+        </div>
+        <h5>2 年常温储</h5>
+        <p>苹果、梨常温阴凉处可放 2 个月,适合家庭办公室替代零食。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==============================================
+     §4 — 配送 + 双入口 CTA
+     ============================================== -->
+<section id="delivery">
+  <div class="reveal">
+    <div class="sec-tag">第 / 四 节 · 配送</div>
+    <h2>从枝头到舌尖,<span class="em">四十八</span>小时。</h2>
+    <p class="lede">
+      顺丰生鲜冷链为主,偏远地区转京东冷链;礼盒配泡沫箱 + 冰袋 + 吸水纸,
+      摔损率按去年数据控制在 <strong style="color:var(--accent)">2.3%</strong> 内,坏果包换。
+    </p>
+
+    <div class="story-facts reveal" style="margin-top:30px">
+      <div class="row">
+        <span class="label">48 小时</span>
+        <span class="val">全国 <small>主要城市次日达</small></span>
+      </div>
+      <div class="row">
+        <span class="label">2.3%</span>
+        <span class="val">去年 <small>坏果率</small></span>
+      </div>
+      <div class="row">
+        <span class="label">9 - 12 月</span>
+        <span class="val">主产季 <small>按月发货</small></span>
+      </div>
+      <div class="row">
+        <span class="label">2 年</span>
+        <span class="val">常温储 <small>部分苹果可作年货</small></span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="order">
+  <div class="reveal">
+    <div class="sec-tag">第 / 五 节 · 订购与供货</div>
+    <h2>个人礼盒 / 商超供货，<span class="em">分别</span>为不同的人准备。</h2>
+    <p class="lede">
+      C 端走"按季预订 + 顺丰冷链";B 端走"按周配送 + 月度对账"。
+      填完下方表单,我们在一个工作日内和你联系。
+    </p>
+  </div>
+
+  <div class="cta-grid">
+
+    <!-- C 端 -->
+    <form class="cta-card reveal" id="formC" novalidate>
+      <div class="for">FOR · 个人 / 送礼</div>
+      <h3>礼盒订购<small>4 - 6 斤混合装,顺丰生鲜配,48h 内发出。</small></h3>
+
+      <label class="label" for="cName">姓名</label>
+      <input id="cName" name="cName" type="text" required placeholder="你的称呼" />
+
+      <label class="label" for="cPhone">手机号</label>
+      <input id="cPhone" name="cPhone" type="tel" required placeholder="11 位手机号" pattern="[0-9]{11}" />
+
+      <div class="row">
+        <div>
+          <label class="label" for="cBox">礼盒类型</label>
+          <select id="cBox" name="cBox">
+            <option>当季混合 4 斤 / 168 元</option>
+            <option>当季混合 6 斤 / 228 元</option>
+            <option>单一品种 5 斤装(挑 1 种)</option>
+            <option>中秋限定礼盒(应季 + 木盒)</option>
+            <option>春节年货整筐(10 斤)</option>
+          </select>
+        </div>
+        <div>
+          <label class="label" for="cMonth">期望送达</label>
+          <select id="cMonth" name="cMonth">
+            <option>本月内</option>
+            <option>下个月</option>
+            <option>中秋(9 月底)</option>
+            <option>春节(2 月)</option>
+            <option>不确定,听果园安排</option>
+          </select>
+        </div>
+      </div>
+
+      <label class="label" for="cAddr">配送地址(省市 + 区)</label>
+      <input id="cAddr" name="cAddr" type="text" placeholder="例:北京市朝阳区" />
+
+      <label class="label" for="cNote">备注(选填)</label>
+      <textarea id="cNote" name="cNote" placeholder="送给谁、特殊日期、有无忌口"></textarea>
+
+      <button type="submit" class="submit">提交意向</button>
+      <div class="note">提交后 1 个工作日内短信回执。不发第三方、不打扰。</div>
+    </form>
+
+    <!-- B 端 -->
+    <form class="cta-card reveal" id="formB" novalidate>
+      <div class="for b">FOR · 商超 / 采购</div>
+      <h3>批量供货<small>按周配送 / 月度对账 / 可贴牌。</small></h3>
+
+      <label class="label" for="bCompany">公司 / 渠道名</label>
+      <input id="bCompany" name="bCompany" type="text" required placeholder="例:盒马、朝阳大悦城、京东生鲜、希尔顿" />
+
+      <label class="label" for="bName">联系人</label>
+      <input id="bName" name="bName" type="text" required placeholder="您怎么称呼" />
+
+      <div class="row">
+        <div>
+          <label class="label" for="bScale">月采购量预估</label>
+          <select id="bScale" name="bScale">
+            <option>200 斤以下</option>
+            <option>200 - 1000 斤</option>
+            <option>1000 - 3000 斤</option>
+            <option>3000 斤以上</option>
+          </select>
+        </div>
+        <div>
+          <label class="label" for="bRegion">配送城市</label>
+          <input id="bRegion" name="bRegion" type="text" placeholder="例:北京、上海" />
+        </div>
+      </div>
+
+      <label class="label" for="bNote">补充(选填)</label>
+      <textarea id="bNote" name="bNote" placeholder="需要的品种、贴牌需求、付款周期、收货时段"></textarea>
+
+      <button type="submit" class="submit">提交意向</button>
+      <div class="note">需求会转给采供负责人,2 个工作日内电话回复。</div>
+    </form>
+
+  </div>
+</section>
+
+<!-- ==============================================
+     §6 — 来访路线 (map embed)
+     ============================================== -->
+<section id="visit">
+  <div class="reveal">
+    <div class="sec-tag">第 / 六 节 · 来访路线</div>
+    <h2>来果园，<span class="em">怎么</span>走。</h2>
+    <p class="lede">
+      旬邑县张洪镇后河头村北塬 086 号 · 北纬 35°08′ 东经 108°39′。
+      自驾导航搜 "旬邑塬上采摘园";旺季(6-11 月)每周三、周六有从咸阳/西安出发的采摘团拼车。
+    </p>
+  </div>
+
+  <div class="visit-map reveal">
+    <div class="visit-map-frame">
+      <span class="visit-pin">拾穗果园 · 北纬 35°08′</span>
+      <iframe
+        loading="lazy"
+        title="拾穗果园位置（旬邑县）"
+        src="https://www.openstreetmap.org/export/embed.html?bbox=108.55,35.05,108.75,35.20&amp;layer=mapnik&amp;marker=35.130,108.650">
+      </iframe>
+    </div>
+
+    <div class="visit-routes">
+      <div class="route">
+        <div class="route-h">
+          <b>自驾</b><span class="route-meta">3 - 4h · G70 / 包茂高速</span>
+        </div>
+        <p>
+          西安/咸阳出发走 G70 福银高速,在 <b>旬邑出口</b>下;
+          出高速后右转沿 X305 县道约 8 公里,见 "旬邑塬上" 路标右转即到。
+          园门口有停车位 6 个,免费。
+        </p>
+      </div>
+      <div class="route">
+        <div class="route-h">
+          <b>采摘季拼车</b><span class="route-meta">周三 / 周六 · 单程 ¥60</span>
+        </div>
+        <p>
+          旺季每周三、六,早上 7:30 从 <b>咸阳秦都高铁站</b> 集合发车,
+          中巴直送果园门口;返回 17:00。可加客服微信预约座位。
+        </p>
+      </div>
+      <div class="route">
+        <div class="route-h">
+          <b>自驾寄存</b><span class="route-meta">冰箱满 · 行李可寄</span>
+        </div>
+        <p>
+          旺季自驾建议带泡沫箱 + 冰袋;若行李已满,果园有 800L 公共冰柜可寄存,
+          走时取走。单次寄存免费。
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==============================================
+     §7 — 加我们 (微信 / 公众号 / 客服)
+     ============================================== -->
+<section id="wechat">
+  <div class="reveal">
+    <div class="sec-tag">第 / 七 节 · 加我们</div>
+    <h2>扫一扫，<span class="em">装</span>进你通讯录。</h2>
+    <p class="lede">
+      C 端加好友问早 / 拼单 / 排队;B 端加采供专线问贴牌 / 量价 / 账期。
+      公众号每周三发本周采收实拍。
+    </p>
+  </div>
+
+  <div class="wechat-grid reveal">
+    <div class="wechat-card">
+      <h4>个人微信</h4>
+      <div class="sub">C 端 · 礼盒 / 拼单 / 售后</div>
+      <div class="qr-frame">
+        <!-- 装饰性 QR · 占位 = 真实上线用 qrcode.js 生成 -->
+        <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+          <rect width="100" height="100" fill="#E8E4D8"/>
+          <g fill="#15140F">
+            <rect x="6" y="6" width="20" height="20"/>
+            <rect x="10" y="10" width="12" height="12" fill="#E8E4D8"/>
+            <rect x="14" y="14" width="4" height="4"/>
+            <rect x="74" y="6" width="20" height="20"/>
+            <rect x="78" y="10" width="12" height="12" fill="#E8E4D8"/>
+            <rect x="82" y="14" width="4" height="4"/>
+            <rect x="6" y="74" width="20" height="20"/>
+            <rect x="10" y="78" width="12" height="12" fill="#E8E4D8"/>
+            <rect x="14" y="82" width="4" height="4"/>
+            <!-- data dots · 占位装饰 -->
+            <rect x="34" y="6" width="4" height="4"/><rect x="42" y="6" width="4" height="4"/><rect x="50" y="6" width="4" height="4"/><rect x="58" y="6" width="4" height="4"/><rect x="66" y="6" width="4" height="4"/>
+            <rect x="6" y="34" width="4" height="4"/><rect x="14" y="34" width="4" height="4"/><rect x="22" y="34" width="4" height="4"/><rect x="34" y="34" width="4" height="4"/><rect x="42" y="34" width="4" height="4"/><rect x="50" y="34" width="4" height="4"/><rect x="58" y="34" width="4" height="4"/><rect x="66" y="34" width="4" height="4"/><rect x="74" y="34" width="4" height="4"/><rect x="82" y="34" width="4" height="4"/><rect x="90" y="34" width="4" height="4"/>
+            <rect x="6" y="42" width="4" height="4"/><rect x="22" y="42" width="4" height="4"/><rect x="34" y="42" width="4" height="4"/><rect x="42" y="42" width="4" height="4"/><rect x="58" y="42" width="4" height="4"/><rect x="66" y="42" width="4" height="4"/><rect x="82" y="42" width="4" height="4"/><rect x="90" y="42" width="4" height="4"/>
+            <rect x="6" y="50" width="4" height="4"/><rect x="14" y="50" width="4" height="4"/><rect x="22" y="50" width="4" height="4"/><rect x="34" y="50" width="4" height="4"/><rect x="50" y="50" width="4" height="4"/><rect x="58" y="50" width="4" height="4"/><rect x="66" y="50" width="4" height="4"/><rect x="82" y="50" width="4" height="4"/><rect x="90" y="50" width="4" height="4"/>
+            <rect x="6" y="58" width="4" height="4"/><rect x="14" y="58" width="4" height="4"/><rect x="34" y="58" width="4" height="4"/><rect x="42" y="58" width="4" height="4"/><rect x="58" y="58" width="4" height="4"/><rect x="74" y="58" width="4" height="4"/><rect x="82" y="58" width="4" height="4"/>
+            <rect x="6" y="66" width="4" height="4"/><rect x="22" y="66" width="4" height="4"/><rect x="34" y="66" width="4" height="4"/><rect x="42" y="66" width="4" height="4"/><rect x="50" y="66" width="4" height="4"/><rect x="58" y="66" width="4" height="4"/><rect x="66" y="66" width="4" height="4"/><rect x="74" y="66" width="4" height="4"/><rect x="82" y="66" width="4" height="4"/>
+            <rect x="34" y="74" width="4" height="4"/><rect x="42" y="74" width="4" height="4"/><rect x="50" y="74" width="4" height="4"/><rect x="66" y="74" width="4" height="4"/><rect x="74" y="74" width="4" height="4"/><rect x="82" y="74" width="4" height="4"/><rect x="90" y="74" width="4" height="4"/>
+            <rect x="34" y="82" width="4" height="4"/><rect x="42" y="82" width="4" height="4"/><rect x="58" y="82" width="4" height="4"/><rect x="74" y="82" width="4" height="4"/>
+            <rect x="42" y="90" width="4" height="4"/><rect x="50" y="90" width="4" height="4"/><rect x="58" y="90" width="4" height="4"/><rect x="74" y="90" width="4" height="4"/><rect x="82" y="90" width="4" height="4"/><rect x="90" y="90" width="4" height="4"/>
+          </g>
+          <!-- 中央 logo placeholder -->
+          <rect x="42" y="42" width="16" height="16" fill="#E8E4D8"/>
+          <text x="50" y="54" text-anchor="middle" fill="#2F5233" font-family="serif" font-size="14" font-weight="600">拾</text>
+        </svg>
+      </div>
+      <div class="qr-meta">ID · <b>shisui-orchard</b></div>
+      <p class="micro">问早 / 拼单 / 售后 / 排队;<br>每周三晚更新本周采收实拍。</p>
+    </div>
+
+    <div class="wechat-card">
+      <h4>公众号</h4>
+      <div class="sub">看见 · 每周三晚更新</div>
+      <div class="qr-frame">
+        <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+          <rect width="100" height="100" fill="#E8E4D8"/>
+          <g fill="#15140F">
+            <rect x="6" y="6" width="20" height="20"/>
+            <rect x="10" y="10" width="12" height="12" fill="#E8E4D8"/>
+            <rect x="14" y="14" width="4" height="4"/>
+            <rect x="74" y="6" width="20" height="20"/>
+            <rect x="78" y="10" width="12" height="12" fill="#E8E4D8"/>
+            <rect x="82" y="14" width="4" height="4"/>
+            <rect x="6" y="74" width="20" height="20"/>
+            <rect x="10" y="78" width="12" height="12" fill="#E8E4D8"/>
+            <rect x="14" y="82" width="4" height="4"/>
+            <rect x="34" y="6" width="4" height="4"/><rect x="34" y="14" width="4" height="4"/><rect x="42" y="14" width="4" height="4"/><rect x="50" y="14" width="4" height="4"/><rect x="58" y="14" width="4" height="4"/><rect x="42" y="22" width="4" height="4"/><rect x="50" y="22" width="4" height="4"/><rect x="66" y="22" width="4" height="4"/>
+            <rect x="6" y="34" width="4" height="4"/><rect x="14" y="34" width="4" height="4"/><rect x="22" y="34" width="4" height="4"/><rect x="34" y="34" width="4" height="4"/><rect x="50" y="34" width="4" height="4"/><rect x="58" y="34" width="4" height="4"/><rect x="74" y="34" width="4" height="4"/><rect x="82" y="34" width="4" height="4"/><rect x="90" y="34" width="4" height="4"/>
+            <rect x="6" y="42" width="4" height="4"/><rect x="22" y="42" width="4" height="4"/><rect x="34" y="42" width="4" height="4"/><rect x="50" y="42" width="4" height="4"/><rect x="66" y="42" width="4" height="4"/><rect x="82" y="42" width="4" height="4"/><rect x="90" y="42" width="4" height="4"/>
+            <rect x="14" y="50" width="4" height="4"/><rect x="22" y="50" width="4" height="4"/><rect x="42" y="50" width="4" height="4"/><rect x="50" y="50" width="4" height="4"/><rect x="66" y="50" width="4" height="4"/><rect x="82" y="50" width="4" height="4"/>
+            <rect x="6" y="58" width="4" height="4"/><rect x="14" y="58" width="4" height="4"/><rect x="22" y="58" width="4" height="4"/><rect x="50" y="58" width="4" height="4"/><rect x="66" y="58" width="4" height="4"/><rect x="90" y="58" width="4" height="4"/>
+            <rect x="6" y="66" width="4" height="4"/><rect x="22" y="66" width="4" height="4"/><rect x="34" y="66" width="4" height="4"/><rect x="50" y="66" width="4" height="4"/><rect x="58" y="66" width="4" height="4"/><rect x="66" y="66" width="4" height="4"/><rect x="74" y="66" width="4" height="4"/><rect x="82" y="66" width="4" height="4"/>
+            <rect x="34" y="74" width="4" height="4"/><rect x="42" y="74" width="4" height="4"/><rect x="58" y="74" width="4" height="4"/><rect x="74" y="74" width="4" height="4"/><rect x="82" y="74" width="4" height="4"/><rect x="90" y="74" width="4" height="4"/>
+            <rect x="42" y="82" width="4" height="4"/><rect x="50" y="82" width="4" height="4"/><rect x="58" y="82" width="4" height="4"/><rect x="74" y="82" width="4" height="4"/>
+            <rect x="34" y="90" width="4" height="4"/><rect x="50" y="90" width="4" height="4"/><rect x="66" y="90" width="4" height="4"/><rect x="82" y="90" width="4" height="4"/>
+          </g>
+          <rect x="42" y="42" width="16" height="16" fill="#E8E4D8"/>
+          <text x="50" y="54" text-anchor="middle" fill="#C87820" font-family="serif" font-size="13" font-weight="600">周</text>
+        </svg>
+      </div>
+      <div class="qr-meta">ID · <b>shisui-orchard</b></div>
+      <p class="micro">每周三晚 <b>20:00</b> 推送本周采收实拍;<br>采摘日历 + 早熟快讯。</p>
+    </div>
+
+    <div class="wechat-card">
+      <h4>采供专线</h4>
+      <div class="sub">B 端 · 商超 / 酒店 / 餐饮</div>
+      <div class="qr-frame">
+        <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+          <rect width="100" height="100" fill="#E8E4D8"/>
+          <g fill="#15140F">
+            <rect x="6" y="6" width="20" height="20"/>
+            <rect x="10" y="10" width="12" height="12" fill="#E8E4D8"/>
+            <rect x="14" y="14" width="4" height="4"/>
+            <rect x="74" y="6" width="20" height="20"/>
+            <rect x="78" y="10" width="12" height="12" fill="#E8E4D8"/>
+            <rect x="82" y="14" width="4" height="4"/>
+            <rect x="6" y="74" width="20" height="20"/>
+            <rect x="10" y="78" width="12" height="12" fill="#E8E4D8"/>
+            <rect x="14" y="82" width="4" height="4"/>
+            <rect x="42" y="6" width="4" height="4"/><rect x="50" y="6" width="4" height="4"/><rect x="66" y="6" width="4" height="4"/>
+            <rect x="34" y="14" width="4" height="4"/><rect x="42" y="14" width="4" height="4"/><rect x="50" y="14" width="4" height="4"/><rect x="58" y="14" width="4" height="4"/>
+            <rect x="42" y="22" width="4" height="4"/><rect x="58" y="22" width="4" height="4"/><rect x="66" y="22" width="4" height="4"/>
+            <rect x="6" y="34" width="4" height="4"/><rect x="22" y="34" width="4" height="4"/><rect x="34" y="34" width="4" height="4"/><rect x="42" y="34" width="4" height="4"/><rect x="58" y="34" width="4" height="4"/><rect x="74" y="34" width="4" height="4"/><rect x="82" y="34" width="4" height="4"/><rect x="90" y="34" width="4" height="4"/>
+            <rect x="14" y="42" width="4" height="4"/><rect x="22" y="42" width="4" height="4"/><rect x="42" y="42" width="4" height="4"/><rect x="50" y="42" width="4" height="4"/><rect x="66" y="42" width="4" height="4"/><rect x="82" y="42" width="4" height="4"/><rect x="90" y="42" width="4" height="4"/>
+            <rect x="6" y="50" width="4" height="4"/><rect x="14" y="50" width="4" height="4"/><rect x="22" y="50" width="4" height="4"/><rect x="34" y="50" width="4" height="4"/><rect x="50" y="50" width="4" height="4"/><rect x="58" y="50" width="4" height="4"/><rect x="66" y="50" width="4" height="4"/><rect x="82" y="50" width="4" height="4"/>
+            <rect x="6" y="58" width="4" height="4"/><rect x="14" y="58" width="4" height="4"/><rect x="22" y="58" width="4" height="4"/><rect x="34" y="58" width="4" height="4"/><rect x="58" y="58" width="4" height="4"/><rect x="66" y="58" width="4" height="4"/><rect x="74" y="58" width="4" height="4"/><rect x="90" y="58" width="4" height="4"/>
+            <rect x="14" y="66" width="4" height="4"/><rect x="22" y="66" width="4" height="4"/><rect x="42" y="66" width="4" height="4"/><rect x="66" y="66" width="4" height="4"/><rect x="74" y="66" width="4" height="4"/><rect x="82" y="66" width="4" height="4"/>
+            <rect x="34" y="74" width="4" height="4"/><rect x="42" y="74" width="4" height="4"/><rect x="50" y="74" width="4" height="4"/><rect x="66" y="74" width="4" height="4"/><rect x="74" y="74" width="4" height="4"/><rect x="90" y="74" width="4" height="4"/>
+            <rect x="34" y="82" width="4" height="4"/><rect x="50" y="82" width="4" height="4"/><rect x="58" y="82" width="4" height="4"/><rect x="74" y="82" width="4" height="4"/><rect x="90" y="82" width="4" height="4"/>
+            <rect x="42" y="90" width="4" height="4"/><rect x="58" y="90" width="4" height="4"/><rect x="66" y="90" width="4" height="4"/><rect x="82" y="90" width="4" height="4"/>
+          </g>
+          <rect x="42" y="42" width="16" height="16" fill="#E8E4D8"/>
+          <text x="50" y="55" text-anchor="middle" fill="#15140F" font-family="monospace" font-size="9" font-weight="700">B2B</text>
+        </svg>
+      </div>
+      <div class="qr-meta">ID · <b>shisui-supply</b></div>
+      <p class="micro">月供 200 斤起 / 增值税专票 /<br>账期可议;采供直通。</p>
+    </div>
+  </div>
+</section>
+
+<!-- ==============================================
+     §8 — FAQ
+     ============================================== -->
+<section id="faq">
+  <div class="reveal">
+    <div class="sec-tag">第 / 八 节 · 常见问题</div>
+    <h2>送之前，<span class="em">先</span>常问的。</h2>
+    <p class="lede">如果你没找到答案,加微信 shisui-orchard 我们直接答你。</p>
+  </div>
+
+  <div class="faq-grid reveal">
+    <div class="faq">
+      <button class="faq-q" aria-expanded="false">苹果为什么有时候表面有"果粉",是不是脏?</button>
+      <div class="faq-a">果粉是苹果自身分泌的天然蜡质层,作用是锁水保鲜,不是脏。
+      我们不洗果不打蜡,发货时那层白霜就是它最自然的状态。</div>
+    </div>
+    <div class="faq">
+      <button class="faq-q" aria-expanded="false">坏果包赔是真的吗?怎么操作?</button>
+      <div class="faq-a">签收当天拍摄坏果照片(包括外包装单号),我们 24 小时内补寄,
+      顺丰冷链原路回邮不让你出邮费。到货赔付不绕弯。</div>
+    </div>
+    <div class="faq">
+      <button class="faq-q" aria-expanded="false">B 端供货最小起订量多少?能开专票吗?</button>
+      <div class="faq-a">月供 200 斤起,可签正式合同开增值税专票。账期默认月结,长期合作可议。
+      采供专线 029-3299-7811。</div>
+    </div>
+    <div class="faq">
+      <button class="faq-q" aria-expanded="false">储存方式?能放多久?</button>
+      <div class="faq-a">苹果、梨常温阴凉处可放 2 个月,水蜜桃 / 杏 7 天内吃完,李子冷藏 2 周,
+      猕猴桃冷藏 1 个月。我们每份订单会随一封储存指南。</div>
+    </div>
+    <div class="faq">
+      <button class="faq-q" aria-expanded="false">能从果园直接买,不走礼盒吗?</button>
+      <div class="faq-a">可以。自取整筐 10 斤起,电话预约;咸阳/西安周边隔日达。
+      自取用户额外送一份当年新榨苹果汁(未杀菌)。</div>
+    </div>
+  </div>
+</section>
+
+<!-- ==============================================
+     §7 — footer（具体地址 + 联系方式）
+     ============================================== -->
+<footer>
+  <div class="foot">
+    <div>
+      <h4>拾穗果园 · SHISUI ORCHARD</h4>
+      <p>渭北黄土塬的家庭果园,1989 年至今。<br>
+      我们坚持按节气采收,不卖反季果。<br><br>
+      <small style="color:var(--ink-3)">陕西省咸阳市旬邑县张洪镇后河头村北塬 086 号</small></p>
+    </div>
+    <div>
+      <h4>联系</h4>
+      <ul>
+        <li>电话 · 138-0928-6789</li>
+        <li>微信 · shisui-orchard</li>
+        <li>邮箱 · hello@shisui.farm</li>
+        <li>采供专线 · 029-3299-7811</li>
+      </ul>
+    </div>
+    <div>
+      <h4>来访</h4>
+      <ul>
+        <li>自驾 · G70 旬邑出口下 8 公里</li>
+        <li>采摘 6 月 - 11 月(预约)</li>
+        <li>住宿 · 塬上窑洞民宿可代订</li>
+        <li>导航关键词 · "旬邑塬上"</li>
+      </ul>
+    </div>
+    <div>
+      <h4>资质与承诺</h4>
+      <ul>
+        <li>绿色食品认证(在续)</li>
+        <li>有机转换认证 · 第二年</li>
+        <li>支持第三方农残检测(自费)</li>
+        <li>坏果 24h 内补寄</li>
+      </ul>
+    </div>
+  </div>
+  <div class="foot-bottom">
+    <span>© 1989 - 2026 SHISUI ORCHARD · 旬邑塬上</span>
+    <span class="ban">本页为样例展示,所有"蜀黍/数字/价格"为代表性占位</span>
+  </div>
+</footer>
+
+<!-- ==============================================
+     mobile drawer + backdrop
+     ============================================== -->
+<div class="drawer-backdrop" id="drawerBackdrop" aria-hidden="true"></div>
+<aside class="drawer" id="drawer" aria-hidden="true">
+  <a href="#fruits" data-drawer-link>四季果品</a>
+  <a href="#harvest" data-drawer-link>本周</a>
+  <a href="#story" data-drawer-link>果场</a>
+  <a href="#delivery" data-drawer-link>配送</a>
+  <a href="#faq" data-drawer-link>常见问题</a>
+  <a href="#journal" data-drawer-link>工艺日志</a>
+  <a href="#order" class="ord" data-drawer-link>立即订购 →</a>
+  <div class="drawer-tools">
+    <span>主题</span>
+    <button id="drawerTheme">浅 / 深</button>
+  </div>
+</aside>
+
+<!-- ==============================================
+     back-to-top button
+     ============================================== -->
+<button class="to-top" id="toTop" aria-label="返回顶部">↑</button>
+
+<!-- ==============================================
+     SCRIPTS
+     ============================================== -->
+<script>
+  // ---- 1. Cinematic layer-spot follows pointer in hero ----
+  (function () {
+    var stage = document.getElementById('heroStage');
+    var spot = document.getElementById('heroSpot');
+    if (!stage || !spot) return;
+    stage.addEventListener('pointermove', function (e) {
+      var r = stage.getBoundingClientRect();
+      var x = e.clientX - r.left;
+      var y = e.clientY - r.top;
+      // radial gradient that follows the cursor: transparent at the cursor → falls off
+      spot.style.background =
+        'radial-gradient(circle 360px at ' + x + 'px ' + y + 'px,' +
+        'rgba(255, 240, 215, 0.18) 0%, rgba(255, 240, 215, 0.04) 45%, rgba(20, 16, 12, 0.12) 88%)';
+      spot.style.opacity = '1';
+      stage.classList.add('is-active');
+    });
+    stage.addEventListener('pointerleave', function () {
+      spot.style.opacity = '0';
+      stage.classList.remove('is-active');
+    });
+  }());
+
+  // ---- 2. 浅 / 深主题切换（持久化） ----
+  (function () {
+    var KEY = 'shisui-theme';
+    var root = document.documentElement;
+    var btn = document.getElementById('themeBtn');
+    var saved = localStorage.getItem(KEY);
+    if (saved === 'dark' || saved === 'light') {
+      root.setAttribute('data-theme', saved);
+      btn.textContent = saved === 'dark' ? '深 / 浅' : '浅 / 深';
+    }
+    btn.addEventListener('click', function () {
+      var cur = root.getAttribute('data-theme') || 'light';
+      var next = cur === 'light' ? 'dark' : 'light';
+      root.setAttribute('data-theme', next);
+      btn.textContent = next === 'dark' ? '深 / 浅' : '浅 / 深';
+      try { localStorage.setItem(KEY, next); } catch (e) {}
+    });
+  }());
+
+  // ---- 3. 表单提交 ----
+  (function () {
+    function wire(formId, okText) {
+      var form = document.getElementById(formId);
+      if (!form) return;
+      var banner = document.createElement('div');
+      banner.style.cssText = 'margin-top:14px;padding:12px 14px;background:rgba(47,82,51,.08);border:1px solid rgba(47,82,51,.25);font-size:13px;color:var(--accent);display:none;border-radius:2px;';
+      banner.textContent = okText;
+      form.querySelector('.note').after(banner);
+
+      form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        var required = form.querySelectorAll('[required]');
+        for (var i = 0; i < required.length; i++) {
+          if (!required[i].value.trim()) {
+            required[i].focus();
+            required[i].style.borderColor = '#C0453C';
+            return;
+          }
+        }
+        var btn = form.querySelector('.submit');
+        var orig = btn.textContent;
+        btn.textContent = '✓ 已收到';
+        btn.classList.add('sent');
+        btn.disabled = true;
+        banner.style.display = 'block';
+        setTimeout(function () {
+          btn.textContent = orig;
+          btn.classList.remove('sent');
+          btn.disabled = false;
+          banner.style.display = 'none';
+          form.reset();
+          form.querySelectorAll('input').forEach(function (el) { el.style.borderColor = ''; });
+        }, 5000);
+      });
+    }
+    wire('formC', '已记录。预计 1 个工作日内短信回执具体发货时间。');
+    wire('formB', '已转采供负责人。2 个工作日内电话回复。');
+  }());
+
+  // ---- 4. reveal-on-scroll ----
+  (function () {
+    var els = document.querySelectorAll('.reveal');
+    if (!('IntersectionObserver' in window)) {
+      els.forEach(function (e) { e.classList.add('in'); });
+      return;
+    }
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (en) {
+        if (en.isIntersecting) {
+          en.target.classList.add('in');
+          io.unobserve(en.target);
+        }
+      });
+    }, { threshold: 0.12 });
+    els.forEach(function (e) { io.observe(e); });
+  }());
+
+  // ---- 5. 简易电话格式化（输入即过滤非数字） ----
+  (function () {
+    document.querySelectorAll('input[type=tel]').forEach(function (input) {
+      input.addEventListener('input', function () {
+        var v = input.value.replace(/\D/g, '').slice(0, 11);
+        input.value = v;
+      });
+    });
+  }());
+
+  // ---- 6. 工艺日志节点点击 ----
+  (function () {
+    var NODES = {
+      v0: {
+        title: 'v0 · 起始 Prompt',
+        body: '从最简 brief 出发:农林品牌 + 卖多种水果(苹果/梨/桃/杏/李/柿/樱桃/猕猴桃/...) + 面向个人礼盒 + 商超供货。' +
+              '经 finesse-ui skill 的 Quiet Luxury Minimal + Forest palette 双向选型,' +
+              '生成出涵盖 5 节、含 6 个输出规格强约束的完整初始指令。' +
+              '5 层真元素(hero / 四季果品 / 农场故事 / 配送 / 双入口表单)全在第一稿定下。'
+      },
+      v1: {
+        title: 'v1 · AI 出图替代 SVG 占位',
+        body: '原 8 张手写 SVG 果品图 + hero/story 场景 SVG 被认为"占位感太明显"。' +
+              '改用 Pollinations.ai 免费图像生成 API(无密钥),' +
+              '为每个水果写一段英文 studio food photography 提示词,得到 600×750 的真实摄影风格图;' +
+              'hero 与 story 也一并替换为真实影棚/纪实风格成片。' +
+              '本次共 9-10 张图,平均 ~40 KB 每张,完全自托管。'
+      },
+      v2: {
+        title: 'v2 · 色温与饱和度统一',
+        body: 'AI 生成的 9 张图各自有不同色温(樱桃偏暖、猕猴桃偏冷、李子过饱和),' +
+              '看起来不像一套。给所有 .fruit-img img 加 <code>filter: saturate(.92) contrast(1.04) brightness(1.02)</code>,' +
+              '再叠一层 mix-blend-mode soft-light 的暖色 overlay,8 张图视觉上明显一致。' +
+              '同时把每个果品的 hotspot 从 2 个升到 3 个 (糖度/海拔/**采收日**)。'
+      },
+      v3: {
+        title: 'v3 · 移动端抽屉菜单',
+        body: '原响应式在 ≤920px 下让 nav-links 整列隐藏,移动用户进站后没有导航。' +
+              '加一个 hamburger 按钮 + 右侧滑出抽屉,内含全部 5 节链接 + 主题切换;' +
+              '点击空白/再次点 hamburger 自动关闭;焦点 trap 让 Tab 键在抽屉内循环。'
+      },
+      v4: {
+        title: 'v4 · 明星果品大卡 (Featured)',
+        body: '第一张果品(苹果)做成 span 2 列跨度的"主卡",大图 + 完整命名 + 完整的本季注解;' +
+              '其他 7 张按正常尺寸排成网格,形成"1 大 + 7 小"的视觉节奏。' +
+              '主卡右上角加 "本季主打 · SEASONAL" 徽章。'
+      },
+      v5: {
+        title: 'v5 · AI 图片来源披露',
+        body: '在 hero 下方加一条 1 行极简披露:"本页果品图均为 AI 生成代表性占位,可由真实果园摄影替换"。' +
+              '诚实标明,降低"假以为是实拍"的认知分歧;同时引导客户优先替换。'
+      },
+      v6: {
+        title: 'v6 · 回顶浮动按钮',
+        body: '页面滚过 hero 高度后,右下角浮现一颗浮动按钮;' +
+              '点击平滑回滚到顶部;' +
+              '用 IntersectionObserver 控制显示隐藏,不挡其他内容。'
+      },
+      v7: {
+        title: 'v7 · 来访路线 + 地图嵌入',
+        body: '新增 §6 来访路线,内嵌 OpenStreetMap iframe(无需 API key,无需 CDN,纯静态)。' +
+              '地图中心定到北纬 35.130 / 东经 108.650(旬邑县张洪镇),' +
+              '右侧三张路线卡(自驾 / 采摘拼车 / 寄存)说明实际怎么来。' +
+              '底部 footer 也加锚点,#visit 与 nav / drawer 双侧导通。'
+      },
+      v8: {
+        title: 'v8 · 微信卡组',
+        body: '新增 §7 加我们 — 三张 QR 卡(个人微信 / 公众号 / 采供专线)。' +
+              'QR 码本身用装饰性 SVG 占位(可视效果到位但不真扫码),' +
+              '上线时跑一个 free QR 生成器(10 KB QRCode.js 嵌入即真);' +
+              '每张卡有不同微章 logo(拾 / 周 / B2B),符合各账号身份。'
+      },
+      v9: {
+        title: 'v9 · 摄影指南升级',
+        body: '把原来一行 disclosure 升级成可展开的"摄影指南":' +
+              '10 行表格,每张图给文件名 / 尺寸 / 题材 / 英文提示词 — 直接发给摄影师;' +
+              '附加 3 步替换流程(拍 → 命名 → 替换) + 4 条质量 checklist;' +
+              '桌面宽屏按表格展示,移动端自动转卡片。'
+      }
+    };
+    var NODES_PLACEHOLDER = {};
+
+    var rail = document.getElementById('journalRail');
+    var detail = document.getElementById('journalDetail');
+    if (!rail || !detail) return;
+
+    function render(v, btn) {
+      rail.querySelectorAll('.journal-node').forEach(function (n) {
+        n.classList.toggle('is-active', n.dataset.node === v);
+      });
+      var node = (NODES[v] || NODES_PLACEHOLDER[v]);
+      if (!node) return;
+      var current = (btn && btn.classList.contains('is-active'));
+      detail.innerHTML =
+        '<h4>' + node.title + (current ? ' <small>当前选中</small>' : '') + '</h4>' +
+        '<p>' + node.body + '</p>';
+    }
+
+    rail.querySelectorAll('.journal-node').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        render(btn.dataset.node, btn);
+      });
+    });
+    // initial render
+    var init = rail.querySelector('.journal-node.is-active') || rail.querySelector('.journal-node');
+    if (init) render(init.dataset.node, init);
+  }());
+
+  // ---- 7. FAQ 折叠 ----
+  (function () {
+    document.querySelectorAll('.faq-q').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var item = btn.closest('.faq');
+        var isOpen = item.classList.toggle('open');
+        btn.setAttribute('aria-expanded', isOpen);
+      });
+    });
+  }());
+
+  // ---- 8. 移动端抽屉菜单 ----
+  (function () {
+    var ham = document.getElementById('hamburgerBtn');
+    var drawer = document.getElementById('drawer');
+    var backdrop = document.getElementById('drawerBackdrop');
+    var drawerTheme = document.getElementById('drawerTheme');
+    if (!ham || !drawer || !backdrop) return;
+
+    function open() {
+      drawer.classList.add('is-open');
+      backdrop.classList.add('is-open');
+      ham.classList.add('is-open');
+      ham.setAttribute('aria-expanded', 'true');
+      drawer.setAttribute('aria-hidden', 'false');
+      document.body.style.overflow = 'hidden';
+    }
+    function close() {
+      drawer.classList.remove('is-open');
+      backdrop.classList.remove('is-open');
+      ham.classList.remove('is-open');
+      ham.setAttribute('aria-expanded', 'false');
+      drawer.setAttribute('aria-hidden', 'true');
+      document.body.style.overflow = '';
+    }
+    ham.addEventListener('click', function () {
+      drawer.classList.contains('is-open') ? close() : open();
+    });
+    backdrop.addEventListener('click', close);
+    drawer.querySelectorAll('[data-drawer-link]').forEach(function (a) {
+      a.addEventListener('click', function () { close(); });
+    });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && drawer.classList.contains('is-open')) close();
+    });
+    // 把 drawer 内的浅/深按钮接上主题切换
+    if (drawerTheme) {
+      drawerTheme.addEventListener('click', function () {
+        document.getElementById('themeBtn').click();
+      });
+      // 同步初始 label
+      drawerTheme.textContent = document.documentElement.getAttribute('data-theme') === 'dark' ? '深 / 浅' : '浅 / 深';
+      document.getElementById('themeBtn').addEventListener('click', function () {
+        drawerTheme.textContent = document.documentElement.getAttribute('data-theme') === 'dark' ? '深 / 浅' : '浅 / 深';
+      });
+    }
+  }());
+
+  // ---- 9. 图片来源披露详情（点击展开摄影指南） ----
+  (function () {
+    var btn = document.getElementById('imgDisclosureMore');
+    var guide = document.getElementById('photoGuide');
+    if (!btn || !guide) return;
+    btn.addEventListener('click', function () {
+      var open = guide.hasAttribute('hidden');
+      if (open) {
+        guide.removeAttribute('hidden');
+        btn.textContent = '收起摄影指南 ↑';
+      } else {
+        guide.setAttribute('hidden', '');
+        btn.textContent = '查看摄影指南 →';
+      }
+    });
+  }());
+
+  // ---- 10. 回顶按钮 ----
+  (function () {
+    var btn = document.getElementById('toTop');
+    if (!btn) return;
+    function check() {
+      btn.classList.toggle('is-visible', window.scrollY > window.innerHeight * 0.7);
+    }
+    btn.addEventListener('click', function () {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+    check();
+    var raf = null;
+    window.addEventListener('scroll', function () {
+      if (raf) return;
+      raf = requestAnimationFrame(function () { check(); raf = null; });
+    }, { passive: true });
+  }());
+</script>
+</body>
+</html>
