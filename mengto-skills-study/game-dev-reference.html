@@ -1,0 +1,1049 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Game Dev Skill 参考手册 · MengTo/Skills</title>
+  <style>
+    :root {
+      --bg: #0a0a0f;
+      --surface: #13131a;
+      --surface2: #1c1c26;
+      --border: #2a2a38;
+      --text: #e8e8f0;
+      --text-dim: #8888a0;
+      --accent: #7c6fff;
+      --accent2: #ff6f9c;
+      --tag-design: #f472b6;
+      --tag-char: #82d9c8;
+      --tag-asset: #f0c07a;
+      --tag-sys: #60a5fa;
+      --tag-perf: #c084fc;
+      --font: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      --font-mono: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+      --radius: 12px;
+      --transition: 0.2s ease;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: var(--font); background: var(--bg); color: var(--text); line-height: 1.6; min-height: 100vh; }
+
+    nav {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(10,10,15,0.92); backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+      padding: 0 2rem; height: 58px; display: flex; align-items: center; gap: 2rem;
+    }
+    nav .brand { font-weight: 700; font-size: 0.95rem; color: var(--accent); text-decoration: none; }
+    nav .brand span { color: var(--text-dim); font-weight: 400; }
+    nav .links { display: flex; gap: 1.5rem; margin-left: auto; }
+    nav .links a { font-size: 0.82rem; color: var(--text-dim); text-decoration: none; transition: color var(--transition); }
+    nav .links a:hover { color: var(--text); }
+    nav .links a.active { color: var(--accent); }
+
+    .hero { padding: 4rem 2rem 3rem; max-width: 860px; margin: 0 auto; }
+    .hero .eyebrow {
+      display: inline-block; font-size: 0.72rem; font-weight: 600;
+      letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent);
+      background: rgba(124,111,255,0.12); border: 1px solid rgba(124,111,255,0.3);
+      padding: 0.25rem 0.75rem; border-radius: 100px; margin-bottom: 1rem;
+    }
+    .hero h1 { font-size: 2rem; font-weight: 800; letter-spacing: -0.04em; margin-bottom: 1rem; line-height: 1.1; }
+    .hero p { color: var(--text-dim); font-size: 1rem; max-width: 640px; line-height: 1.7; }
+    .hero .summary-bar { margin-top: 2rem; display: flex; gap: 2rem; flex-wrap: wrap; }
+    .hero .summary-item { display: flex; flex-direction: column; gap: 0.2rem; }
+    .hero .summary-item .num { font-size: 1.6rem; font-weight: 800; color: var(--accent); letter-spacing: -0.04em; }
+    .hero .summary-item .label { font-size: 0.75rem; color: var(--text-dim); }
+
+    .filter-bar {
+      max-width: 1100px; margin: 0 auto; padding: 1rem 2rem;
+      display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center;
+      border-bottom: 1px solid var(--border);
+    }
+    .filter-label { font-size: 0.72rem; color: var(--text-dim); font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; margin-right: 0.5rem; }
+    .filter-btn {
+      padding: 0.3rem 0.85rem; border-radius: 100px; border: 1px solid var(--border);
+      background: var(--surface); color: var(--text-dim); font-size: 0.78rem;
+      cursor: pointer; transition: all var(--transition);
+    }
+    .filter-btn:hover { border-color: var(--text-dim); color: var(--text); }
+    .filter-btn.active { background: var(--accent); border-color: var(--accent); color: white; }
+    .filter-btn .count { font-size: 0.68rem; opacity: 0.7; margin-left: 0.2rem; }
+
+    .main { max-width: 1100px; margin: 0 auto; padding: 2rem 2rem 5rem; }
+    .skill-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 1rem; }
+
+    .skill-card {
+      background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+      overflow: hidden; transition: border-color var(--transition), transform var(--transition); cursor: pointer;
+    }
+    .skill-card:hover { border-color: var(--accent); transform: translateY(-2px); }
+    .skill-card.hidden { display: none; }
+
+    .skill-card .card-header {
+      padding: 1.1rem 1.25rem 0.75rem; border-bottom: 1px solid var(--border);
+      display: flex; align-items: flex-start; justify-content: space-between; gap: 0.75rem;
+    }
+    .skill-card .skill-name { font-family: var(--font-mono); font-size: 0.82rem; font-weight: 600; color: var(--accent); line-height: 1.3; }
+    .skill-card .tag { font-size: 0.68rem; padding: 0.15rem 0.5rem; border-radius: 4px; white-space: nowrap; flex-shrink: 0; }
+    .tag-design  { background: rgba(244,114,182,0.15); color: var(--tag-design);  border: 1px solid rgba(244,114,182,0.3); }
+    .tag-char    { background: rgba(130,217,200,0.15); color: var(--tag-char);    border: 1px solid rgba(130,217,200,0.3); }
+    .tag-asset   { background: rgba(240,192,122,0.15); color: var(--tag-asset);   border: 1px solid rgba(240,192,122,0.3); }
+    .tag-sys     { background: rgba( 96,165,250,0.15); color: var(--tag-sys);    border: 1px solid rgba( 96,165,250,0.3); }
+    .tag-perf    { background: rgba(192,132,252,0.15); color: var(--tag-perf);   border: 1px solid rgba(192,132,252,0.3); }
+
+    .skill-card .card-body { padding: 0.9rem 1.25rem; }
+    .skill-card .description { font-size: 0.8rem; color: var(--text-dim); line-height: 1.55; margin-bottom: 0.85rem; }
+    .skill-card .scenario { font-size: 0.75rem; color: var(--text-dim); background: var(--surface2); border-radius: 6px; padding: 0.5rem 0.75rem; margin-bottom: 0.85rem; }
+    .skill-card .scenario strong { color: var(--accent); font-weight: 600; }
+    .skill-card .prompt-frag {
+      font-family: var(--font-mono); font-size: 0.68rem; color: #82d9c8;
+      background: rgba(130,217,200,0.07); border: 1px solid rgba(130,217,200,0.15);
+      border-radius: 6px; padding: 0.5rem 0.75rem; white-space: pre-wrap;
+      word-break: break-all; line-height: 1.5;
+    }
+    .skill-card .expand-hint { font-size: 0.7rem; color: var(--text-dim); text-align: center; padding: 0.5rem; border-top: 1px solid var(--border); opacity: 0; transition: opacity var(--transition); }
+    .skill-card:hover .expand-hint { opacity: 1; }
+
+    .detail-overlay { display: none; position: fixed; inset: 0; z-index: 200; background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); align-items: center; justify-content: center; padding: 2rem; }
+    .detail-overlay.open { display: flex; }
+    .detail-panel { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; width: 100%; max-width: 800px; max-height: 85vh; overflow-y: auto; position: relative; }
+    .detail-panel .close-btn {
+      position: sticky; top: 0; float: right; margin: 1rem 1rem 0 0;
+      background: var(--surface2); border: 1px solid var(--border); color: var(--text-dim);
+      border-radius: 8px; padding: 0.4rem 0.9rem; font-size: 0.8rem; cursor: pointer; z-index: 10;
+    }
+    .detail-panel .close-btn:hover { color: var(--text); border-color: var(--text-dim); }
+    .detail-content { padding: 1.5rem 2rem 2rem; clear: both; }
+    .detail-name { font-family: var(--font-mono); font-size: 1.1rem; font-weight: 700; color: var(--accent); margin-bottom: 0.75rem; }
+    .detail-desc { font-size: 0.88rem; color: var(--text-dim); line-height: 1.7; margin-bottom: 1rem; }
+    .detail-section-title { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-dim); margin-bottom: 0.75rem; margin-top: 1.25rem; }
+    .detail-scenario-box { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 0.85rem 1rem; font-size: 0.82rem; color: var(--text-dim); margin-bottom: 0.5rem; }
+    .detail-scenario-box strong { color: var(--accent); }
+    .workflow-steps { display: flex; flex-direction: column; gap: 0.5rem; }
+    .workflow-step { display: flex; gap: 0.75rem; align-items: flex-start; font-size: 0.82rem; }
+    .workflow-step .step-num {
+      width: 22px; height: 22px; border-radius: 50%; background: rgba(124,111,255,0.2);
+      color: var(--accent); font-size: 0.68rem; font-weight: 700;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 0.1rem;
+    }
+    .workflow-step .step-text { color: var(--text-dim); line-height: 1.5; }
+    .workflow-step .step-text strong { color: var(--text); }
+    .detail-prompt {
+      font-family: var(--font-mono); font-size: 0.7rem; color: #82d9c8;
+      background: rgba(130,217,200,0.06); border: 1px solid rgba(130,217,200,0.15);
+      border-radius: 8px; padding: 0.85rem 1rem; white-space: pre-wrap;
+      word-break: break-all; line-height: 1.65; max-height: 300px; overflow-y: auto;
+    }
+    .detail-copy-btn {
+      display: inline-block; margin: 0.5rem 0 0.4rem; font-size: 0.72rem;
+      color: var(--accent); background: rgba(124,111,255,0.1);
+      border: 1px solid rgba(124,111,255,0.3); border-radius: 6px;
+      padding: 0.3rem 0.75rem; cursor: pointer;
+    }
+    .detail-copy-btn:hover { background: rgba(124,111,255,0.2); }
+    .detail-note {
+      font-size: 0.78rem; color: var(--text-dim);
+      background: rgba(240,192,122,0.07); border: 1px solid rgba(240,192,122,0.15);
+      border-radius: 8px; padding: 0.75rem 1rem; margin-top: 1rem;
+    }
+    .detail-note strong { color: var(--tag-asset); }
+
+    .usage-legend { max-width: 1100px; margin: 0 auto; padding: 0 2rem 2rem; display: flex; flex-wrap: wrap; gap: 1.5rem; }
+    .legend-item { display: flex; align-items: center; gap: 0.5rem; font-size: 0.75rem; color: var(--text-dim); }
+    .legend-dot { width: 8px; height: 8px; border-radius: 50%; }
+
+    @media (max-width: 768px) {
+      nav .links { display: none; }
+      .hero { padding: 3rem 1.5rem 2rem; }
+      .hero h1 { font-size: 1.5rem; }
+      .filter-bar { padding: 1rem 1.5rem; overflow-x: auto; flex-wrap: nowrap; }
+      .main { padding: 1.5rem 1.5rem 4rem; }
+      .skill-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a href="index.html" class="brand">MengTo/Skills <span>· 研究</span></a>
+  <div class="links">
+    <a href="index.html">总览</a>
+    <a href="demo-gallery.html">Demo 展示</a>
+    <a href="capability-map.html">能力地图</a>
+    <a href="scene-testing.html">场景测试</a>
+    <a href="workflow-demo.html">工作流</a>
+    <a href="skill-reference.html">参考手册</a>
+    <a href="web-design-reference.html">Web Design</a>
+    <a href="game-dev-reference.html" class="active">Game Dev</a>
+  </div>
+</nav>
+
+<section class="hero">
+  <div class="eyebrow">Project 2 · 研究产出</div>
+  <h1>Game Dev Skill 参考手册</h1>
+  <p>19 个 Game Development 技能的速查手册。含设计方法论、系统架构、角色 AI、渲染特效、测试部署全链路。为我们做自己的游戏类 Skill 库提供参考模板。</p>
+  <div class="summary-bar">
+    <div class="summary-item"><div class="num">19</div><div class="label">精选技能</div></div>
+    <div class="summary-item"><div class="num">5</div><div class="label">类型</div></div>
+    <div class="summary-item"><div class="num">6</div><div class="label">直接可用 Prompt</div></div>
+  </div>
+</section>
+
+<div class="filter-bar">
+  <span class="filter-label">类型</span>
+  <button class="filter-btn active" data-filter="all">全部 <span class="count">19</span></button>
+  <button class="filter-btn" data-filter="design">🎮 设计架构 <span class="count">4</span></button>
+  <button class="filter-btn" data-filter="char">🧙 角色/AI <span class="count">5</span></button>
+  <button class="filter-btn" data-filter="asset">🎨 资源/特效 <span class="count">4</span></button>
+  <button class="filter-btn" data-filter="sys">⚙️ 系统工具 <span class="count">4</span></button>
+  <button class="filter-btn" data-filter="perf">🚀 测试/部署 <span class="count">2</span></button>
+</div>
+
+<div class="usage-legend">
+  <div class="legend-item"><div class="legend-dot" style="background:var(--tag-design)"></div>🎮 设计架构 — 战斗/关卡/遭遇设计</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--tag-char)"></div>🧙 角色/AI — 怪物/AI/寻路/动画</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--tag-asset)"></div>🎨 资源/特效 — VFX/音频/混合资产</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--tag-sys)"></div>⚙️ 系统工具 — 背包/地图编辑器/摄像机</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--tag-perf)"></div>🚀 测试/部署 — 性能优化/发布/验证</div>
+</div>
+
+<div class="main">
+  <div class="skill-grid" id="skillGrid">
+
+    <!-- 设计架构 -->
+    <div class="skill-card" data-type="design" data-name="design-action-combat">
+      <div class="card-header">
+        <span class="skill-name">design-action-combat</span>
+        <span class="tag tag-design">🎮 设计</span>
+      </div>
+      <div class="card-body">
+        <p class="description">可读性战术动作战斗设计：攻击timing、格挡/闪避窗口、命中判定、姿态、锁敌、武器、Boss阶段、战斗反馈、确定性测试。</p>
+        <p class="scenario"><strong>使用场景：</strong>需要设计一个战斗系统，让玩家的每次决策都有清晰可读的反馈</p>
+        <p class="prompt-frag">Define: startup / active window / recovery / cancel rules / contact shape / damage · posture outcome / cooldown</p>
+      </div>
+      <div class="expand-hint">点击展开详情 →</div>
+    </div>
+
+    <div class="skill-card" data-type="design" data-name="design-game-encounters">
+      <div class="card-header">
+        <span class="skill-name">design-game-encounters</span>
+        <span class="tag tag-design">🎮 设计</span>
+      </div>
+      <div class="card-body">
+        <p class="description">遭遇战设计：竞技场布局、敌人组成、生成节奏、目标、Boss阶段、奖励节奏、遭遇战 fixture、难度验证。</p>
+        <p class="scenario"><strong>使用场景：</strong>需要设计一个副本或遭遇战，让每波敌人都有不同的决策压力</p>
+        <p class="prompt-frag">Define: objective / space / enemy roles / spawn timing / hazards / player resources / exits / failure recovery / reward</p>
+      </div>
+      <div class="expand-hint">点击展开详情 →</div>
+    </div>
+
+    <div class="skill-card" data-type="design" data-name="author-game-levels">
+      <div class="card-header">
+        <span class="skill-name">author-game-levels</span>
+        <span class="tag tag-design">🎮 设计</span>
+      </div>
+      <div class="card-body">
+        <p class="description">可读性关卡设计：路线/相机布局、碰撞和导航、遭遇区域、地标、目标、拾取品、动机化灯光、可见性、确定性关卡数据。</p>
+        <p class="scenario"><strong>使用场景：</strong>需要设计一个箱庭式关卡，让玩家从走到打都能清晰读懂空间意图</p>
+        <p class="prompt-frag">Define architectural purpose per space: traversal / orientation / combat / recovery / reward / transition / objective</p>
+      </div>
+      <div class="expand-hint">点击展开详情 →</div>
+    </div>
+
+    <div class="skill-card" data-type="design" data-name="build-isometric-arpg">
+      <div class="card-header">
+        <span class="skill-name">build-isometric-arpg</span>
+        <span class="tag tag-design">🎮 设计</span>
+      </div>
+      <div class="card-body">
+        <p class="description">可玩的等距 ARPG 构建：游戏循环架构、摄像机移动、区域、战斗集成、内容数据、进度、保存、交付就绪的垂直切片。</p>
+        <p class="scenario"><strong>使用场景：</strong>需要从零构建一个等距 ARPG，先把一个完整可玩循环跑通</p>
+        <p class="prompt-frag">Deliver one playable slice with a deterministic test state before expanding scope</p>
+      </div>
+      <div class="expand-hint">点击展开详情 →</div>
+    </div>
+
+    <!-- 角色/AI -->
+    <div class="skill-card" data-type="char" data-name="build-game-monster-system">
+      <div class="card-header">
+        <span class="skill-name">build-game-monster-system</span>
+        <span class="tag tag-char">🧙 角色</span>
+      </div>
+      <div class="card-body">
+        <p class="description">怪物资产系统：MonsterDefinition（可序列化）/MonsterRig（语义骨骼）/MonsterRuntime（状态）/MonsterViewAdapter（渲染），四层分离架构。</p>
+        <p class="scenario"><strong>使用场景：</strong>需要为游戏构建一个可复用的怪物系统，让所有怪物共享同一套运行时框架</p>
+        <p class="prompt-frag">Separate: MonsterDefinition / MonsterRig / MonsterRuntime / MonsterViewAdapter</p>
+      </div>
+      <div class="expand-hint">点击展开详情 →</div>
+    </div>
+
+    <div class="skill-card" data-type="char" data-name="build-threejs-enemy-systems">
+      <div class="card-header">
+        <span class="skill-name">build-threejs-enemy-systems</span>
+        <span class="tag tag-char">🧙 角色</span>
+      </div>
+      <div class="card-body">
+        <p class="description">数据驱动的敌人原型和招式系统：敌人内容schema、模型规范、招式timing和接触合约、运行时状态边界、占位符回退、确定性 fixture。</p>
+        <p class="scenario"><strong>使用场景：</strong>需要构建一套能在多个敌人间复用的 AI 和招式系统，而不是每个敌人写死逻辑</p>
+        <p class="prompt-frag">Define moves as data: startup / telegraph / active / recovery / cooldown / contact shape / damage / posture / cancel policy</p>
+      </div>
+      <div class="expand-hint">点击展开详情 →</div>
+    </div>
+
+    <div class="skill-card" data-type="char" data-name="tune-enemy-ai">
+      <div class="card-header">
+        <span class="skill-name">tune-enemy-ai</span>
+        <span class="tag tag-char">🧙 角色</span>
+      </div>
+      <div class="card-body">
+        <p class="description">战斗敌人 AI 调优：感知/意图/运动分离、有限状态机（idle/investigate/pursue/attack/recover/defeated）、确定性回归测试。</p>
+        <p class="scenario"><strong>使用场景：</strong>敌人行为不公平或太傻，需要系统性调整感知、决策和运动逻辑</p>
+        <p class="prompt-frag">Model decisions explicitly: idle / investigate / pursue / windup / attack / recover / stagger / retreat / defeated</p>
+      </div>
+      <div class="expand-hint">点击展开详情 →</div>
+    </div>
+
+    <div class="skill-card" data-type="char" data-name="implement-fog-of-war">
+      <div class="card-header">
+        <span class="skill-name">implement-fog-of-war</span>
+        <span class="tag tag-char">🧙 角色</span>
+      </div>
+      <div class="card-body">
+        <p class="description">Three.js 战争迷雾：正交/等距可见性遮罩、障碍物感知视线、敌人感知范围、敌人感知系统集成、生命周期和菜单状态集成。</p>
+        <p class="scenario"><strong>使用场景：</strong>需要给游戏加战争迷雾效果（如果要做游戏类项目）</p>
+        <p class="prompt-frag">CPU perception → lookup texture → soft overlay shader: separate deterministic perception from presentation</p>
+      </div>
+      <div class="expand-hint">点击展开详情 →</div>
+    </div>
+
+    <div class="skill-card" data-type="char" data-name="build-game-audio-feedback">
+      <div class="card-header">
+        <span class="skill-name">build-game-audio-feedback</span>
+        <span class="tag tag-char">🧙 角色</span>
+      </div>
+      <div class="card-body">
+        <p class="description">响应式音频反馈：动作音效层叠、音乐状态切换、空间音频、混音优先级、静音控制、无障碍、移动端音频解锁。</p>
+        <p class="scenario"><strong>使用场景：</strong>需要给战斗动作加音效反馈，让玩家从声音就知道命中/格挡/闪避</p>
+        <p class="prompt-frag">Map distinct cues for: input accepted / windup / contact / block / miss / damage / interrupt / pickup / warning / death / objective completion</p>
+      </div>
+      <div class="expand-hint">点击展开详情 →</div>
+    </div>
+
+    <!-- 资源/特效 -->
+    <div class="skill-card" data-type="asset" data-name="create-game-vfx">
+      <div class="card-header">
+        <span class="skill-name">create-game-vfx</span>
+        <span class="tag tag-asset">🎨 特效</span>
+      </div>
+      <div class="card-body">
+        <p class="description">游戏视觉特效：攻击命中、冲击、伤害反馈、状态效果、spell尾迹、粒子、shader、 telegraph、质量层级、reduced-motion替代方案。</p>
+        <p class="scenario"><strong>使用场景：</strong>需要给技能加粒子/发光/冲击特效，让 gameplay 意图在视觉上一目了然</p>
+        <p class="prompt-frag">Define per effect: trigger / owner / duration / gameplay meaning / camera-distance silhouette / color hierarchy / spawn cap / cleanup rule</p>
+      </div>
+      <div class="expand-hint">点击展开详情 →</div>
+    </div>
+
+    <div class="skill-card" data-type="asset" data-name="build-hybrid-game-assets">
+      <div class="card-header">
+        <span class="skill-name">build-hybrid-game-assets</span>
+        <span class="tag tag-asset">🎨 特效</span>
+      </div>
+      <div class="card-body">
+        <p class="description">混合资产管线：选择导入网格/程序化几何/AI生成图/2D UI媒体/精灵/VFX 的时机和方式，追踪 provenance 和 runtime 预算。</p>
+        <p class="scenario"><strong>使用场景：</strong>需要管理复杂游戏资产，知道什么时候用程序化、什么时候用导入模型</p>
+        <p class="prompt-frag">Classify before making: Hero character → imported rigged mesh / Weapon/prop → procedural / UI media → generated 2D image</p>
+      </div>
+      <div class="expand-hint">点击展开详情 →</div>
+    </div>
+
+    <div class="skill-card" data-type="asset" data-name="build-vesperfall-review-assets">
+      <div class="card-header">
+        <span class="skill-name">build-vesperfall-review-assets</span>
+        <span class="tag tag-asset">🎨 特效</span>
+      </div>
+      <div class="card-body">
+        <p class="description">Vesperfall 资产库审查对：从透明 PNG 参考和 live Three.js/FBX 模型生成可审查资产对，含 catalog PNG + live model canvas + isolated preview route。</p>
+        <p class="scenario"><strong>使用场景：</strong>需要为角色/敌人/道具资产生成一套可交付的审查媒体（目录图+实时模型+独立预览页）</p>
+        <p class="prompt-frag">Run: scripts/validate_pair.py [png] [model-source] → report PNG path/dimensions/alpha / model source / preview route / commit SHA</p>
+      </div>
+      <div class="expand-hint">点击展开详情 →</div>
+    </div>
+
+    <div class="skill-card" data-type="asset" data-name="build-game-camera-controls">
+      <div class="card-header">
+        <span class="skill-name">build-game-camera-controls</span>
+        <span class="tag tag-asset">🎨 特效</span>
+      </div>
+      <div class="card-body">
+        <p class="description">游戏摄像机控制：等距构图/跟随行为/ orbit-zoom 限制/遮挡处理/锁敌/摄像机抖动/触摸摄像机控制/摄像机回归测试。</p>
+        <p class="scenario"><strong>使用场景：</strong>摄像机跟角色但总把敌人挡住，或需要实现等距跟随/锁敌相机</p>
+        <p class="prompt-frag">Define one authoritative target, camera bounds, zoom range, collision/occlusion policy, and reduced-motion behavior</p>
+      </div>
+      <div class="expand-hint">点击展开详情 →</div>
+    </div>
+
+    <!-- 系统工具 -->
+    <div class="skill-card" data-type="sys" data-name="build-game-inventory">
+      <div class="card-header">
+        <span class="skill-name">build-game-inventory</span>
+        <span class="tag tag-sys">⚙️ 系统</span>
+      </div>
+      <div class="card-body">
+        <p class="description">游戏背包/战利品/装备系统：道具 schema、拾取流、堆叠规则、装备栏位、原子交换、保存迁移、无损回归测试。</p>
+        <p class="scenario"><strong>使用场景：</strong>需要实现一个不会因 bug 丢失道具的背包系统</p>
+        <p class="prompt-frag">Validate source ownership → Compute next state → Commit once or reject → Persist after committed state</p>
+      </div>
+      <div class="expand-hint">点击展开详情 →</div>
+    </div>
+
+    <div class="skill-card" data-type="sys" data-name="build-game-changelog">
+      <div class="card-header">
+        <span class="skill-name">build-game-changelog</span>
+        <span class="tag tag-sys">⚙️ 系统</span>
+      </div>
+      <div class="card-body">
+        <p class="description">游戏更新日志系统：关联版本部署溯源、菜单状态导航、无障碍开关、Escape 行为、响应式发布账本 UI。</p>
+        <p class="scenario"><strong>使用场景：</strong>需要在游戏里加一个版本更新日志界面，且和真实部署记录保持一致</p>
+        <p class="prompt-frag">One successful player-visible production deployment = one changelog version (not one commit)</p>
+      </div>
+      <div class="expand-hint">点击展开详情 →</div>
+    </div>
+
+    <div class="skill-card" data-type="sys" data-name="build-game-map-editor">
+      <div class="card-header">
+        <span class="skill-name">build-game-map-editor</span>
+        <span class="tag tag-sys">⚙️ 系统</span>
+      </div>
+      <div class="card-body">
+        <p class="description">游戏地图编辑器：导演视角 paused 场景、outliner/layer/selection/drag/snap/inspector 控制、敌人 aggro/leash/patrol 叠加层、私有路由 IP+密码保护。</p>
+        <p class="scenario"><strong>使用场景：</strong>需要为游戏做一个地图编辑器，让设计师可以直接在游戏世界上放置敌人/触发器</p>
+        <p class="prompt-frag">production source → editor document → isolated draft → validated export → reviewed source integration</p>
+      </div>
+      <div class="expand-hint">点击展开详情 →</div>
+    </div>
+
+    <div class="skill-card" data-type="sys" data-name="build-mobile-threejs-games">
+      <div class="card-header">
+        <span class="skill-name">build-mobile-threejs-games</span>
+        <span class="tag tag-sys">⚙️ 系统</span>
+      </div>
+      <div class="card-body">
+        <p class="description">移动端 Three.js 游戏：触摸移动、动作控制、目标选择、触摸背包、安全区域、portrait/landscape 布局、响应式 HUD、电量/性能预算。</p>
+        <p class="scenario"><strong>使用场景：</strong>需要把一个 Three.js 游戏移植到移动端，处理好触控和性能</p>
+        <p class="prompt-frag">Treat mobile as primary control and performance surface: touch movement / reachable actions / target selection / cancel paths</p>
+      </div>
+      <div class="expand-hint">点击展开详情 →</div>
+    </div>
+
+    <!-- 测试/部署 -->
+    <div class="skill-card" data-type="perf" data-name="optimize-threejs-games">
+      <div class="card-header">
+        <span class="skill-name">optimize-threejs-games</span>
+        <span class="tag tag-perf">🚀 性能</span>
+      </div>
+      <div class="card-body">
+        <p class="description">Three.js 游戏性能分析和优化：帧时间下降、CPU/GPU 压力、draw calls、纹理/几何预算、动画循环、自适应质量、移动端性能、浏览器性能验证。</p>
+        <p class="scenario"><strong>使用场景：</strong>游戏在移动端卡顿，需要系统性诊断是 CPU 还是 GPU 瓶颈</p>
+        <p class="prompt-frag">Suspect CPU: simulation / allocations / pathfinding. Suspect GPU: resolution / overdraw / shadows / transparent particles / post-processing</p>
+      </div>
+      <div class="expand-hint">点击展开详情 →</div>
+    </div>
+
+    <div class="skill-card" data-type="perf" data-name="ship-web-games">
+      <div class="card-header">
+        <span class="skill-name">ship-web-games</span>
+        <span class="tag tag-perf">🚀 部署</span>
+      </div>
+      <div class="card-body">
+        <p class="description">网页游戏发布：验证提交 → 生产冒烟测试 → 浏览器 proof → 回滚准备 → 临时 QA 资源清理。</p>
+        <p class="scenario"><strong>使用场景：</strong>游戏开发完成，需要把它安全发布到线上并验证</p>
+        <p class="prompt-frag">Release only a verified commit and prove the deployed game, not merely the local build</p>
+      </div>
+      <div class="expand-hint">点击展开详情 →</div>
+    </div>
+
+    <div class="skill-card" data-type="perf" data-name="test-playable-web-games">
+      <div class="card-header">
+        <span class="skill-name">test-playable-web-games</span>
+        <span class="tag tag-perf">🚀 测试</span>
+      </div>
+      <div class="card-body">
+        <p class="description">网页游戏端到端测试：确定性 fixture + 真实浏览器证据。覆盖：玩法 QA、回归测试、控制、无障碍、响应式/移动端、保存流、控制台检查、性能冒烟测试。</p>
+        <p class="scenario"><strong>使用场景：</strong>需要系统性地测试游戏每个功能，不是随便玩两下就发布</p>
+        <p class="prompt-frag">Map the player journey: launch / new game / controls / core action / enemy encounter / reward / save-continue / loss-retry / pause / settings / completion</p>
+      </div>
+      <div class="expand-hint">点击展开详情 →</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- DETAIL OVERLAY -->
+<div class="detail-overlay" id="detailOverlay">
+  <div class="detail-panel">
+    <button class="close-btn" id="closeBtn">关闭 ✕</button>
+    <div class="detail-content">
+      <div class="detail-name" id="detailName"></div>
+      <div class="detail-desc" id="detailDesc"></div>
+      <div class="detail-section-title">使用场景</div>
+      <div class="detail-scenario-box" id="detailScenario"></div>
+      <div class="detail-section-title" id="detailStepsTitle">核心工作流</div>
+      <div class="workflow-steps" id="detailSteps"></div>
+      <div class="detail-section-title">可直接使用的 Prompt</div>
+      <button class="detail-copy-btn" onclick="copyPrompt(this)">复制 Prompt</button>
+      <pre class="detail-prompt" id="detailPrompt"></pre>
+      <div class="detail-note" id="detailNote"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const DETAIL_DATA = {
+  'design-action-combat': {
+    desc: '可读性战术动作战斗设计。把战斗做成显式状态机：每个动作有清晰的 startup/active/recovery timing，玩家能从视觉和音效读懂每个阶段。',
+    scenario: '需要设计一个战斗系统，让玩家的每次决策（攻击/格挡/闪避）都有清晰可读的反馈，而不是靠猜。',
+    steps: [
+      {num:1, text:'<strong>Specify every combat verb.</strong> 每个玩家/敌人动作定义：startup / active window / recovery / cancel rules / contact shape / damage-posture outcome / cooldown'},
+      {num:2, text:'<strong>Use authoritative outcomes.</strong> 命中/格挡/打断从 authoritative collision/contact events 驱动，不要从动画状态推断'},
+      {num:3, text:'<strong>Tune for decisions.</strong> 每种防御有独特用途：spacing / dodge / timed guard / interrupt / resource trade；避免无法惩罚的攻击和 dominant spam'},
+      {num:4, text:'<strong>Test combat deterministically.</strong> 覆盖 early/late timing / wrong direction / out-of-range / multiple targets / interrupted actions / phase changes；用 seeded fixture 替代完整战役通关'},
+      {num:5, text:'<strong>Verify in play.</strong> 在真实帧率和相机距离测试；确认玩家意图/命中反馈/生命值变化/声效/VFX/目标状态一致'},
+    ],
+    prompt: `Use $design-action-combat to design the combat system for [game name].
+
+For each player and enemy action, define:
+- startup / active window / recovery / cancellation rules
+- contact shape, damage/posture outcome, cooldown
+- telegraph (readable danger signal before active window)
+- feedback: audio cue + VFX hook
+
+Verify: each defense has a distinct purpose. No unpunishable attacks. Boss phases alter decision pressure without invalidating learned timing.`,
+    note: '<strong>核心价值：</strong>「可读性」是战斗设计的核心——玩家不需要靠猜就知道当前在哪个阶段，这是设计方法论中最值得借鉴的原则。'
+  },
+  'design-game-encounters': {
+    desc: '遭遇战设计：把每个遭遇当成「决策集合」来设计，而不是敌人数量堆砌。定义目标/空间/敌人组成/生成时机/压力源/奖励。',
+    scenario: '需要设计一个副本或遭遇战，让每波敌人都有不同的决策压力，而不是无脑堆怪。',
+    steps: [
+      {num:1, text:'<strong>Define encounter contract.</strong> 目标 / 可用空间 / 敌人角色 / 生成时机 / 压力源 / 玩家资源 / 出口 / 失败恢复 / 奖励'},
+      {num:2, text:'<strong>Add one pressure source at a time.</strong> 每个 archetype 须创造独特的应对反应，不与已存在的压力源重叠'},
+      {num:3, text:'<strong>Keep it fair.</strong> 保护可读路径/ telegraph/ 相机视线/ 恢复窗口；上限同时 committed attackers 数量'},
+      {num:4, text:'<strong>Create deterministic starts.</strong> 低资源/每波/Boss phase/胜利/死亡重试 的确定性开始状态'},
+      {num:5, text:'<strong>Validate from observed decisions.</strong> 从实际决策而非通关时间来调整组合'},
+    ],
+    prompt: `Use $design-game-encounters to design [encounter name] for [game].
+
+Define: objective / available space / enemy composition / spawn pacing / hazards /
+player resources / exits / failure recovery / reward cadence.
+
+Add one pressure source at a time. Each archetype must create a distinct response.
+Protect readable paths, telegraphs, and recovery windows.
+Cap simultaneous committed attackers.`,
+    note: '<strong>核心价值：</strong>「遭遇战是决策集合而非敌人计数」——这个设计哲学可以迁移到任何需要挑战设计的系统。'
+  },
+  'author-game-levels': {
+    desc: '可读性关卡设计：所有碰撞/导航/遭遇路线/目标/拾取保持在同一 gameplay 平面。灯光作为空间意图的沟通工具，不做无解释的漂浮光源。',
+    scenario: '需要设计一个箱庭式关卡，让玩家从走到打都能清晰读懂空间意图——而不需要文字说明。',
+    steps: [
+      {num:1, text:'<strong>Enforce one gameplay plane.</strong> 所有碰撞/导航/遭遇路线/玩家移动保持在同一可达平面；不做楼梯/坡道/高架平台'},
+      {num:2, text:'<strong>Separate level systems.</strong> 维护独立可测层：authored level data / visual geometry / simplified collision / navigation data / encounter zones'},
+      {num:3, text:'<strong>Lay out readable play.</strong> 每块空间有明确建筑意图：traversal / orientation / combat / recovery / reward / transition / objective'},
+      {num:4, text:'<strong>Motivate every local light.</strong> 每个局部光源附属于可见发射体；维护 source-to-light inventory'},
+      {num:5, text:'<strong>Validate data and geometry.</strong> 断言所有可走碰撞/导航顶点/遭遇锚点保持在 gameplay 平面上'},
+      {num:6, text:'<strong>Prove traversal in browser.</strong> 在 desktop 和 mobile 上验证： uninterrupted 移动 / dodge clearance / camera framing / threat 可见性'},
+    ],
+    prompt: `Use $author-game-levels to design [level name] for [game].
+
+Rules:
+- All collision, navigation, encounter routes, and player movement on one flat gameplay plane.
+- No stairs, ramps, raised platforms, or vertical traversal.
+- Separate: authored level data / visual geometry / collision / navigation / encounter zones.
+- Each space has one architectural purpose: traversal / orientation / combat / recovery / reward / transition / objective.
+- Every local light attached to a visible emitter with source-to-light inventory.
+- Validate all walkable collision on the gameplay plane.`,
+    note: '<strong>核心价值：</strong>「可读性先于美学」——先让玩家能读懂空间，再考虑视觉效果。这是游戏关卡设计的底层方法论。'
+  },
+  'build-isometric-arpg': {
+    desc: '可玩的等距 ARPG 构建：先交付一个完整可玩循环（title/menu/移动/遭遇/奖励/进度），再扩展范围。垂直切片开发模式。',
+    scenario: '需要从零构建一个等距 ARPG，先把一个完整可玩循环跑通，然后再加第二个系统。',
+    steps: [
+      {num:1, text:'<strong>Establish production contract.</strong> 记录当前游戏入口/场景循环/内容模型/控制/保存模型/测试的权威基线'},
+      {num:2, text:'<strong>Build in vertical slices.</strong> 每 slice 含一个可玩路线 + 确定性测试状态。顺序：移动→摄像机→碰撞→目标选择→暂停/重开 → 一个战斗动词 → 一个敌人 → 一个奖励 → 一个区域切换'},
+      {num:3, text:'<strong>Maintain runtime boundaries.</strong> 保持模拟状态确定性+可序列化；消耗 authoritative contact events；不推断物理结果'},
+      {num:4, text:'<strong>Atomic equipment and saves.</strong> 装备/拾取/保存迁移/重置流是原子性的且幂等'},
+      {num:5, text:'<strong>Validate before release.</strong> 聚焦单元测试 / 类型检查 / 生产构建 / 真实通关 (repository-approved browser)'},
+    ],
+    prompt: `Use $build-isometric-arpg to build a playable isometric ARPG for [framework: Three.js / React / other].
+
+Deliver one coherent playable loop before expanding scope:
+1. Movement, camera, collision, target selection, pause/restart.
+2. One combat verb with contact, damage, posture, recovery, death.
+3. One enemy with telegraph, decision loop, counterplay.
+4. One reward and atomic inventory/progression update.
+5. One zone transition or objective completion.
+
+Rules: Keep simulation deterministic and serializable. Make equipment, saves, and reset flows atomic and idempotent.`,
+    note: '<strong>核心价值：</strong>「垂直切片 + 完整可玩循环」——每个切片交付一个有意义的可玩产物，这是游戏开发进度管理的最佳实践。'
+  },
+  'build-game-monster-system': {
+    desc: '四层分离怪物架构：MonsterDefinition（数据）/MonsterRig（骨骼）/MonsterRuntime（运行时状态）/MonsterViewAdapter（渲染）。所有怪物共享同一套系统。',
+    scenario: '需要构建一个可复用的怪物系统，让所有怪物遵循同一套合约，而不是每个怪物写死逻辑。',
+    steps: [
+      {num:1, text:'<strong>Establish the contract.</strong> 读取 monster-contract.md；了解游戏内容模型/战斗事件/敌人状态机/碰撞API/相机距离/资产加载器'},
+      {num:2, text:'<strong>Separate four layers.</strong> MonsterDefinition (authored facts) / MonsterRig (semantic hierarchy) / MonsterRuntime (state) / MonsterViewAdapter (renders from runtime)'},
+      {num:3, text:'<strong>Build the rig.</strong> +Y up / +Z forward / meters / root at ground contact；提供 sockets 给 attack origins / VFX / audio / targeting'},
+      {num:4, text:'<strong>Connect behavior and combat.</strong> 支持：idle/investigate/pursue/windup/attack/recover/stagger/defeated；接触从 authoritative action IDs 驱动'},
+      {num:5, text:'<strong>Compose testable movesets.</strong> Author movesets as serializable sequences；提供 (movesetId, elapsed) → state/attack/phase/active/interruptible 的 sampler'},
+      {num:6, text:'<strong>Verify conformance.</strong> 确定性 fixture 测试所有状态/攻击阶段/interrupt/stagger/death/LOD/reset'},
+    ],
+    prompt: `Use $build-game-monster-system to build a monster system for [game].
+
+Layers:
+- MonsterDefinition: stable IDs, stats, attacks, locomotion, asset provenance.
+- MonsterRig: semantic transform hierarchy, joints, sockets, LOD visuals.
+- MonsterRuntime: current state, timers, target, health/posture, cooldowns.
+- MonsterViewAdapter: drives rig poses, VFX, audio, visibility from runtime state.
+
+Rules: Never duplicate authored combat values in rig or UI. Drive contacts from authoritative action IDs. Animation exposes normalized phase but does not create damage by itself.`,
+    note: '<strong>核心价值：</strong>「四层分离」让同一个系统同时支持 N 个怪物，而不是每个怪物单独写逻辑——这是可扩展游戏架构的典范。'
+  },
+  'build-threejs-enemy-systems': {
+    desc: '数据驱动的敌人原型和招式系统。招式作为数据而非代码：startup/telegraph/active/recovery/cooldown/contact/damage/posture 全可配置。',
+    scenario: '需要构建一套能在多个敌人间复用的 AI 和招式系统，而不是每个敌人写死逻辑——或者需要为一个新敌人编写内容。',
+    steps: [
+      {num:1, text:'<strong>Separate content from runtime.</strong> Stable IDs/role/tags/stats/move IDs 在 authored definitions；instance state 在 runtime'},
+      {num:2, text:'<strong>Normalize presentation contracts.</strong> 定义 source/coordinate system/forward axis/meters-per-unit/root pivot/scale/facing/collider/sockets/LOD tiers'},
+      {num:3, text:'<strong>Define moves as data.</strong> 每个招式定义：ID / eligibility range-angle-line-of-sight / startup / active / recovery / cooldown / movement / cancel / armor / interrupt / stagger / contact shape / damage / posture / hit limits'},
+      {num:4, text:'<strong>AI selects legal move IDs only.</strong> 战斗系统 own timing and outcomes；用 stable action 和 target identifiers 解析伤害'},
+      {num:5, text:'<strong>Add new enemy checklist.</strong> 现有 archetype 适合? → 配置新定义；新行为必要? → 加最小可复用 move/hook/tag；模型就绪? → 规范化到 shared contract'},
+      {num:6, text:'<strong>Prove the system.</strong> 确定性 fixture：spawn/每招式阶段/wrong range/obstruction/interrupt/death/LOD/多个实例'},
+    ],
+    prompt: `Use $build-threejs-enemy-systems to build a data-driven enemy system for [game].
+
+Content separation:
+- Authored definitions: stable IDs, role/tags, stats, moves, AI hints.
+- Runtime instances: instance ID, transform, health/posture, target, current move, cooldowns.
+
+Define every move as data: ID / startup / telegraph / active / recovery / cooldown / contact shape / damage / posture / cancel policy.
+
+AI selects only legal move IDs. Combat system owns timing and outcomes. Resolve damage from authoritative collision events using stable identifiers.`,
+    note: '<strong>核心价值：</strong>「招式即数据」——把游戏平衡参数从代码里抽出来，让策划可以直接调数值而不用改代码。'
+  },
+  'tune-enemy-ai': {
+    desc: '战斗敌人 AI 调优：感知/意图/运动分离，有限状态机（idle/investigate/pursue/windup/attack/recover/defeated），确定性回归测试fixture。',
+    scenario: '敌人行为不公平（瞬移/无预警攻击）或太傻（站着不动），需要系统性调整感知、决策和运动逻辑。',
+    steps: [
+      {num:1, text:'<strong>Model decisions explicitly.</strong> 小型状态机或 utility 层：idle/investigate/pursue/reposition/windup/attack/recover/stagger/retreat/defeated；每个转换声明前提条件/退出条件/ dwell time / cooldown'},
+      {num:2, text:'<strong>Separate perception, intent, motion.</strong> 1) Gather observable inputs: distance/LOS/target state/occupancy/threat/health/timers；2) Select one intention from constrained legal actions；3) Move without rewriting decision mid-action'},
+      {num:3, text:'<strong>Preserve fair combat.</strong> Telegraph attacks before active window；防止 instant turn-and-hit / perpetual chase / clipped attacks / recovery spam'},
+      {num:4, text:'<strong>Create deterministic fixtures.</strong> target acquisition / obstruction / path failure / close-range pressure / multiple enemies / retaliation / interrupt / stagger / boss phase / reset'},
+      {num:5, text:'<strong>Test in real browser encounter.</strong> 运行真实遭遇战后验证行为是否符合预期'},
+    ],
+    prompt: `Use $tune-enemy-ai to tune enemy AI for [game].
+
+1. Model decisions with explicit state machine: idle / investigate / pursue / reposition / windup / attack / recover / stagger / retreat / defeated.
+   Each transition: prerequisites / exit conditions / minimum dwell time / cooldown effects.
+
+2. Separate perception (gather inputs) / intent (select action) / motion (execute without rewriting decision).
+
+3. Telegraph attacks before active window. Prevent: instant turn-and-hit, perpetual chase, clipped attacks through blockers, recovery spam.
+
+4. Create deterministic test fixtures: target acquisition / obstruction / path failure / close-range / multi-enemy / boss phase / reset.
+
+5. Run a real browser encounter to verify behavior.`,
+    note: '<strong>核心价值：</strong>「感知/意图/运动三层分离」让 AI 行为可预测可调试——当敌人行为异常时，你知道去哪一层排查问题。'
+  },
+  'implement-fog-of-war': {
+    desc: 'Three.js 战争迷雾：确定性 CPU 感知 + 查找纹理（ray casting → LUT）+ 软边着色器overlay，三层分离架构。',
+    scenario: '需要给 Three.js 游戏加战争迷雾效果——如果我们要做一个游戏类项目，这套方法论可以直接用。',
+    steps: [
+      {num:1, text:'<strong>Define perception truth.</strong> 3D 视线段与水平 footprint 和垂直跨度相交；暴露：敌人感知/确定性角距离填充'},
+      {num:2, text:'<strong>Build visibility lookup.</strong> 在玩家周围投射固定数量均匀分布的水平光线；量化命中距离到红通道纹理'},
+      {num:3, text:'<strong>Render one soft overlay.</strong> 一个裁剪空间平面 + 透明着色器；组合：内清半径+外径向衰减+羽化墙壁边界'},
+      {num:4, text:'<strong>Integrate gameplay.</strong> 通过层隐藏未揭示敌人；排除于目标锁定/HUD/命中资格之外'},
+      {num:5, text:'<strong>Integrate state and lifecycle.</strong> 仅在 active gameplay 期间启用雾；menus/inventory/paused 禁用；teardown 时 dispose'},
+    ],
+    prompt: `Use $implement-fog-of-war to add fog-of-war to [Three.js game scene].
+
+Architecture (3 layers):
+1. CPU perception: cast fixed rays around player → angular distance LUT.
+2. Visibility lookup texture: one-row red-channel texture, linear filtering.
+3. Soft overlay shader: clip-space plane with transparent shader, radial falloff + wall-aware boundary.
+
+Rules: Separate deterministic CPU perception from presentation. Never infer combat truth from fog pixels. Enable only during active gameplay. Dispose geometry/material/texture on teardown.`,
+    note: '<strong>核心价值：</strong>三层分离架构（感知/LUT/着色）让战争迷雾既高效又可维护——每层独立调优，出问题时容易定位。'
+  },
+  'build-game-audio-feedback': {
+    desc: '响应式音频反馈：动作音效层叠（input accepted/windup/contact/block/miss/damage/interrupt）、音乐状态切换、空间音频、混音优先级、静音控制、移动端解锁。',
+    scenario: '需要给战斗动作加音效反馈，让玩家从声音就知道命中/格挡/闪避——而不是每次都看屏幕。',
+    steps: [
+      {num:1, text:'<strong>Map feedback.</strong> 为 input accepted / windup / contact / block / miss / damage / interrupt / pickup / warning / death / objective completion 分配独特音效'},
+      {num:2, text:'<strong>Define priority.</strong> 定义优先级，使关键反馈在密集遭遇时仍可听见'},
+      {num:3, text:'<strong>Build for browsers.</strong> 从用户手势解锁音频；尊重 mute/volume 设置；释放完成的 nodes；上限同时 voices 数；为有意义音效提供字幕或视觉替代'},
+      {num:4, text:'<strong>Change music by state.</strong> 用受控切换而非重启'},
+      {num:5, text:'<strong>Verify.</strong> 测试：首次交互/快速动作/暂停/tab-背景返回/mobile/mute/reduced motion'},
+    ],
+    prompt: `Use $build-game-audio-feedback to add audio feedback to [game].
+
+Map distinct cues for:
+- input accepted / windup / contact / block / miss / damage / interrupt / pickup / warning / death / objective completion
+
+Define priority so critical feedback remains audible during crowded encounters.
+
+Browser rules:
+- Unlock audio from a user gesture.
+- Respect mute/volume settings.
+- Release completed nodes; cap simultaneous voices.
+- Provide subtitles or visual equivalents for meaningful cues.
+- Change music by state with controlled transitions, not restarts.
+
+Verify: first interaction, rapid actions, pause, tab/background return, mobile, muted state, reduced motion.`,
+    note: '<strong>核心价值：</strong>「音效即反馈」——好的音频设计让玩家闭着眼睛也能玩，这是游戏沉浸感的重要来源。'
+  },
+  'create-game-vfx': {
+    desc: '游戏视觉特效：定义 trigger/owner/duration/gameplay-meaning/camera-distance-silhouette/color-hierarchy/spawn-cap/cleanup-rule/reduced-motion等价物。',
+    scenario: '需要给技能加粒子/发光/冲击特效，让 gameplay 意图在视觉上一目了然——而不是只追求好看。',
+    steps: [
+      {num:1, text:'<strong>Specify.</strong> 每个特效定义：trigger / owner / duration / gameplay meaning / camera-distance silhouette / color hierarchy / spawn cap / cleanup rule / reduced-motion equivalent'},
+      {num:2, text:'<strong>Separate telegraph / contact / success / failure / lingering status visuals.</strong>'},
+      {num:3, text:'<strong>Implement safely.</strong> Pool 短生命周期对象；复用 materials/geometry；上限 particles；避免 per-frame allocation；cleanup 是幂等的'},
+      {num:4, text:'<strong>Verify.</strong> 测试 overlaps / multiple targets / rapid repetition / pause-resume / lowest quality / reduced motion / touch viewports'},
+    ],
+    prompt: `Use $create-game-vfx to design VFX for [skill or attack name] in [game].
+
+For each effect define:
+- trigger / owner / duration / gameplay meaning
+- camera-distance silhouette (readable at gameplay distance)
+- color hierarchy
+- spawn cap
+- cleanup rule
+- reduced-motion equivalent
+
+Rules:
+- Pool short-lived objects; reuse materials/geometry; cap particles.
+- Avoid per-frame allocation.
+- Make cleanup idempotent (reset/death/pause cannot leak effects).
+- Test: overlaps, rapid repetition, pause-resume, lowest quality, reduced motion, touch.`,
+    note: '<strong>核心价值：</strong>「gameplay meaning 先于 spectacle」——特效首先是沟通工具其次才是好看，这是 VFX 设计的底层原则。'
+  },
+  'build-hybrid-game-assets': {
+    desc: '混合资产管线：根据 gameplay/可读性/迭代速度/runtime预算选择：导入网格 / 程序化几何 / AI生成参考图 / 2D UI媒体 / 精灵 / VFX。',
+    scenario: '需要管理复杂游戏资产，知道什么时候用程序化、什么时候用导入模型——而不是所有东西都用同一种方式处理。',
+    steps: [
+      {num:1, text:'<strong>Classify before making.</strong> Hero character → imported rigged mesh / Weapon/prop → procedural / UI media → generated 2D image / level mood → authored playable level separately'},
+      {num:2, text:'<strong>Create image-first work accurately.</strong> 生成紧凑参考集：hero view / silhouette / palette-close-up / usage context；定义 camera distance / scale / pivot / collision / sockets / budget'},
+      {num:3, text:'<strong>Build the runtime asset.</strong> 导入网格规范化坐标系统/scale/pivot/materials/animation；程序化几何暴露 factory with named parts / stable sockets / deterministic variation'},
+      {num:4, text:'<strong>Verify in game.</strong> 检查真实 camera distance / lighting / readability / collision-contact / animation / mobile viewport / performance'},
+      {num:5, text:'<strong>Record provenance.</strong> 追踪每个运行时资产是 imported / procedural / generated 2D / reference-only'},
+    ],
+    prompt: `Use $build-hybrid-game-assets to plan the asset pipeline for [game].
+
+Classify each asset before making it:
+| Need | Preferred representation |
+| Hero character or complex authored animation | Imported rigged mesh (verified license + scale) |
+| Weapon / relic / pickup / creature variant / architecture | Procedural Three.js geometry |
+| Concept / class portrait / inventory icon / cursor | Generated or authored 2D image |
+| Level mood / composition / spacing reference | Concept image as visual guidance; author playable level separately |
+
+Rules:
+- Normalize imported meshes: coordinate system / scale / pivot / materials / animation / ownership.
+- Procedural geometry: expose factory with named parts, stable sockets, deterministic variation.
+- Verify in the game, not the asset viewer: real camera distance / lighting / readability / mobile viewport / performance.`,
+    note: '<strong>核心价值：</strong>「资产选择先行」——在动手之前先想清楚这个资产用什么方式表达最合适，避免做到一半换方案。'
+  },
+  'build-vesperfall-review-assets': {
+    desc: 'Vesperfall 资产库审查对：透明 PNG catalog 图 + live Three.js model canvas + isolated preview route + validate_pair.py 验证。',
+    scenario: '需要为角色/敌人/道具资产生成一套可交付的审查媒体：目录图 + 实时模型预览 + 独立预览页。',
+    steps: [
+      {num:1, text:'<strong>Inspect repository truth.</strong> 找 shipped PNG / FBX / GLB / textures / runtime factories / declared-but-missing paths'},
+      {num:2, text:'<strong>Produce transparent catalog reference.</strong> 归一化到 512×512 RGBA；保持透明角；避免 baked floor / halo / shadow'},
+      {num:3, text:'<strong>Build live model preview.</strong> 放入 userData provenance；equipment to named sockets； dispose materials/renderers/mixers on teardown'},
+      {num:4, text:'<strong>Pair catalog surfaces.</strong> Card/grid: transparent PNG only；Selected inspector: one live model canvas + truthful format label'},
+      {num:5, text:'<strong>Build isolated review route.</strong> 暴露真实 action library / restart / pause-play / action selection / drag rotation / source paths'},
+      {num:6, text:'<strong>Validate before committing.</strong> scripts/validate_pair.py [png] [model-source]；run build / lint / full tests / git diff --check'},
+    ],
+    prompt: `Use $build-vesperfall-review-assets to build review assets for [asset name] in [game].
+
+Workflow:
+1. Inspect repository: shipped PNG / FBX / GLB / textures / runtime factories.
+2. Produce transparent catalog PNG: 512×512 RGBA, transparent corners, no baked floor/halo/shadow.
+3. Build live model preview: preserve provenance in userData, equipment to named sockets, dispose on teardown.
+4. Pair surfaces: card = PNG only; inspector = live model canvas + format label.
+5. Build isolated preview route with action library / restart / pause-play / drag rotation.
+6. Validate: python scripts/validate_pair.py [png] [model-source]
+   Report: PNG path/dimensions/alpha / model source / preview route / commit SHA.`,
+    note: '<strong>核心价值：</strong>「审查媒体即交付物」——资产必须配套可验证的媒体对，而不是只有代码。'
+  },
+  'build-game-camera-controls': {
+    desc: '游戏摄像机控制：等距构图/跟随行为/orbit-zoom限制/遮挡处理/锁敌/摄像机抖动/触摸摄像机控制/摄像机回归测试。',
+    scenario: '摄像机跟角色但总把敌人挡住，或需要实现等距跟随/锁敌相机——以及移动端触控摄像机。',
+    steps: [
+      {num:1, text:'<strong>Define one authoritative target.</strong> 摄像机永远有一个明确的跟随目标，而不是绑定到抖动渲染状态'},
+      {num:2, text:'<strong>Preserve gameplay readability.</strong> 玩家/威胁/目标/交互提示在intended distance始终可见'},
+      {num:3, text:'<strong>Clamp orbit / pitch / zoom.</strong> 防止墙壁或 props 全局隐藏玩家而不做全局几何不可见'},
+      {num:4, text:'<strong>Layer lock-on / scripted / shake over base camera.</strong> 这些是临时修饰器，不是新基础'},
+      {num:5, text:'<strong>Touch: separate camera gesture zones from movement/action.</strong> 提供 reset framing'},
+      {num:6, text:'<strong>Verify.</strong> 测试 corners / tall props / tunnels / multiple enemies / lock-on switching / pause / reduced motion / portrait / landscape'},
+    ],
+    prompt: `Use $build-game-camera-controls to implement camera for [game].
+
+Define:
+- One authoritative target (never bind directly to jittery render state).
+- Camera bounds, zoom range, collision/occlusion policy.
+- Reduced-motion behavior.
+
+Rules:
+- Smooth position and look-at targets independently.
+- Preserve player, immediate threat, objective, and interaction cues in frame at intended distance.
+- Clamp orbit/pitch/zoom; prevent walls/props from hiding player without making geometry globally invisible.
+- Layer lock-on, scripted moments, and shake as temporary modifiers over the base camera.
+- On touch: separate camera gesture zones from movement/action controls; provide reset framing.
+
+Verify: corners / tall props / tunnels / multiple enemies / lock-on switching / pause / reduced motion / portrait / landscape.`,
+    note: '<strong>核心价值：</strong>「摄像机是游戏系统而非电影系统」——先保证可读性，再考虑 cinematics。'
+  },
+  'build-game-inventory': {
+    desc: '游戏背包/战利品/装备系统：原子转移 transaction（验证→计算→提交/拒绝→持久化）、无道具丢失、堆叠规则、save 迁移、回归测试。',
+    scenario: '需要实现一个不会因 bug 丢失道具的背包系统——道具丢失是游戏最严重的 bug 之一。',
+    steps: [
+      {num:1, text:'<strong>Define the item contract.</strong> Stable IDs / item definitions / ownership / stack limits / equipment compatibility / effects / rarity / migration version 分离'},
+      {num:2, text:'<strong>Implement transfers as transactions.</strong> For pickup/equip/unequip/swap/drag-drop/consume/sell：1) Validate source+destination；2) Compute next state；3) Commit once or reject；4) Persist after committed state'},
+      {num:3, text:'<strong>Never remove an item before confirming a legal destination.</strong> Preserve item identity across swap；防止 duplicate effect registration'},
+      {num:4, text:'<strong>Build usable UI.</strong> 暴露 slot compatibility / equipped state / quantity / tooltip facts / failure feedback；支持 keyboard 和 touch 替代 drag-only'},
+      {num:5, text:'<strong>Test loss boundaries.</strong> Cover: invalid destinations / full inventory / duplicate pickup / equip swap / mid-action swap / save-load / schema migration / reset-new-game'},
+    ],
+    prompt: `Use $build-game-inventory to build an inventory system for [game].
+
+Core rule: Use one typed, serializable item source of truth.
+
+Item contract: stable IDs / item definitions / ownership / stack limits / equipment compatibility / effects / rarity / migration version (separately).
+
+Transfer as transaction:
+1. Validate source ownership and destination legality.
+2. Compute the entire next inventory/equipment state.
+3. Commit once or reject without changing either side.
+4. Persist only after the committed state is valid.
+
+Rules: Never remove an item before confirming a legal destination. Preserve item identity across swap. Prevent duplicate effect registration.
+
+UI: Expose slot compatibility / equipped state / quantity / tooltip facts / failure feedback. Support keyboard and touch alternatives to drag-only.
+
+Test loss boundaries: invalid destinations / full inventory / duplicate pickup / equip swap / mid-action swap / save-load / schema migration / reset-new-game.`,
+    note: '<strong>核心价值：</strong>「原子事务」原则——道具系统里任何非原子的操作都可能导致道具凭空消失。这是系统设计最重要的原则之一。'
+  },
+  'build-game-changelog': {
+    desc: '游戏更新日志系统：关联版本部署溯源、菜单状态导航、无障碍开关、Escape行为、响应式发布账本UI。一次成功的生产部署 = 一个 changelog 版本。',
+    scenario: '需要在游戏里加一个版本更新日志界面，且和真实部署记录保持一致——而不是维护两套版本号。',
+    steps: [
+      {num:1, text:'<strong>Start from truth.</strong> 从成功部署的 revision 开始，而不是 commit messages 或聊天摘要'},
+      {num:2, text:'<strong>Define one release.</strong> 一次成功的玩家可见生产部署 = 一个 changelog version（不是一次 commit）；多个 commit 一起发布则合并为一个版本'},
+      {num:3, text:'<strong>Build or backfill the ledger.</strong> 从最旧到最新重建历史，存储时 newest-first'},
+      {num:4, text:'<strong>Use one data source.</strong> 保持 changelog 内容在 typed/JSON schema-validated 结构化数据中；当前版本从 newest ledger entry 派生，不要维护第二个手写版本常量'},
+      {num:5, text:'<strong>Integrate with game navigation.</strong> changelog 是显式菜单路由或屏幕状态；所有 close affordance 通过同一个 back function 解析'},
+      {num:6, text:'<strong>Release safely.</strong> Verify live → Determine next version → Implement changes → Run checks → Commit → Build → Publish → Confirm deployment → Verify in game'},
+    ],
+    prompt: `Use $build-game-changelog to add a changelog system to [game].
+
+Mental model:
+- One successful player-visible production deployment = one changelog version (not one commit).
+- Opening the changelog is a reversible menu-state transition.
+- Every close affordance resolves through the same back action.
+
+Rules:
+- Start from production deployment truth, not commit messages.
+- Describe player-visible outcomes, not implementation chores.
+- Keep changelog content in typed/validated structured data.
+- Derive displayed current version from the newest ledger entry.
+- Make changelog an explicit menu route: record previous screen, toggle returns to it.
+- Route header toggle / X / Back action / Escape through one close function.
+
+Release sequence: verify live → determine next version → implement → run checks → commit → build → publish → confirm deployment → verify in game.`,
+    note: '<strong>核心价值：</strong>「Ledger is the public record」——把 changelog 当成数据系统而非装饰性 modal，维护成本最低、一致性最高。'
+  },
+  'build-game-map-editor': {
+    desc: '游戏地图编辑器：导演视角 paused 场景、outliner/layer/selection/drag/snap/inspector 控制、敌人 aggro/leash/patrol 叠加层、undo/redo/import/export、IP+密码私有路由保护。',
+    scenario: '需要为游戏做一个地图编辑器，让设计师可以直接在游戏世界上放置敌人/触发器/检查点，而不用改代码。',
+    steps: [
+      {num:1, text:'<strong>Establish authority boundary.</strong> 不创建独立的 map source of truth；从 production definitions 通过 adapters 派生初始 editor document'},
+      {num:2, text:'<strong>Define versioned editor document.</strong> schema identifier + document version + world version + timestamp + entity list with stable IDs'},
+      {num:3, text:'<strong>Render paused director scene.</strong> 在 production world builder 基础上做 paused director mode；不做 combat / progression / live save mutations'},
+      {num:4, text:'<strong>Expose gameplay meaning in inspector.</strong> 显示 identity / source ID / zone / position / facing / source settings；敌人显示 aggro/leash/patrol 设置'},
+      {num:5, text:'<strong>Keep drafts reversible.</strong> Immutable document snapshots + bounded history；每 drag结束时创建一个 undo entry（不是每个 pointer move）'},
+      {num:6, text:'<strong>Gate private production tools.</strong> 动态渲染路由 + noindex/nofollow + IP allowlist + HMAC-signed session cookies'},
+    ],
+    prompt: `Use $build-game-map-editor to build a map editor for [game].
+
+Authority boundary:
+- Never create an independent map source of truth.
+- Derive initial editor document from production definitions through adapters.
+- Treat export as a proposal: not effective until reviewed source integration.
+
+Document schema:
+- Fixed schema identifier and document version.
+- World/level version, save timestamp.
+- Stable entity id / sourceId / kind / label / zone / position / facing / typed settings.
+
+Editor rules:
+- Render paused director scene; do not run combat/progression/persistence inside editor.
+- Orthographic top-down camera for isometric/flat-world placement.
+- Expose aggro/leash/patrol overlays in world space for enemies.
+- Immutable snapshots + bounded history; one undo entry per drag end, not per pointer move.
+- Validate before export and import.
+
+Security: Render route dynamically / noindex,nofollow / exact IP allowlist / HMAC-signed session cookies / fail-closed when config absent.`,
+    note: '<strong>核心价值：</strong>「导演视角 paused 场景」——编辑器就是在看游戏，而不是在玩游戏。这个心智模型让编辑器实现简单很多。'
+  },
+  'build-mobile-threejs-games': {
+    desc: '移动端 Three.js 游戏：触摸移动/动作控制/目标选择/触摸背包/安全区域/portrait-landscape布局/响应式HUD/电量-性能预算/移动浏览器QA。',
+    scenario: '需要把一个 Three.js 游戏移植到移动端，处理好触控和性能——不是把桌面版直接缩小就完事了。',
+    steps: [
+      {num:1, text:'<strong>Controls.</strong> 提供清晰移动控制/可达主要动作/目标选择/取消-重置路径/non-drag alternative for inventory；控制在 unsafe area 外；避免 action zones 重叠'},
+      {num:2, text:'<strong>Responsive HUD.</strong> 设计 representative portrait 和 landscape viewports；保持 vital status / target data / inventory / tooltips / dialogs 可读且不覆盖游戏区域'},
+      {num:3, text:'<strong>Support orientation changes.</strong> 方向变化时不 reset 游戏状态'},
+      {num:4, text:'<strong>Performance and QA.</strong> 使用设备适当的 quality defaults 和 adaptive decorative effects'},
+      {num:5, text:'<strong>Test.</strong> touch targets / multi-touch / long sessions / audio unlock / pause-background return / reduced motion / low-end quality / actual mobile-size viewports'},
+    ],
+    prompt: `Use $build-mobile-threejs-games to adapt [game] for mobile web.
+
+Controls:
+- Clear movement control, reachable primary actions, target selection, cancel/reset paths.
+- Non-drag alternatives for inventory.
+- Keep controls out of unsafe areas; avoid overlapping action zones.
+- Show feedback for held / unavailable / queued actions.
+
+Responsive HUD:
+- Design for representative portrait and landscape viewports.
+- Keep vital status / target data / inventory / tooltips / dialogs legible without covering playfield.
+- Support orientation changes without resetting gameplay state.
+
+Performance:
+- Use device-appropriate quality defaults and adaptive decorative effects.
+- Test: touch targets / multi-touch / long sessions / audio unlock / pause-background return / reduced motion / low-end quality / actual mobile-size viewports.`,
+    note: '<strong>核心价值：</strong>「移动端是第一公民」——不是桌面游戏的缩减版，而是从触控优先重新设计的游戏体验。'
+  },
+  'optimize-threejs-games': {
+    desc: 'Three.js 游戏性能分析和优化：建立可重复的场景 → 诊断 CPU vs GPU 瓶颈 → 先做低风险修复 → 验证结果。',
+    scenario: '游戏在移动端卡顿，需要系统性诊断是 CPU 还是 GPU 瓶颈——而不是盲目降画质。',
+    steps: [
+      {num:1, text:'<strong>Establish a repeatable scene.</strong> 选择确定性代表性遭遇；记录 device / viewport / quality level / frame-time sample / draw calls / triangles / texture count / warnings'},
+      {num:2, text:'<strong>Diagnose the limiting side.</strong> CPU: simulation / allocations / pathfinding / per-frame scans；GPU: resolution / overdraw / shadows / transparent particles / post-processing / draw calls'},
+      {num:3, text:'<strong>Apply low-risk fixes first.</strong> 复用 geometry/materials / pool transient effects / cull inactive-offscreen work / throttle noncritical UI / cap particles / avoid per-frame allocation'},
+      {num:4, text:'<strong>Guard the result.</strong> 重新运行原始遭遇并验证 frame time / visual correctness / collision-contact behavior / memory stability / mobile controls / reduced motion / console health'},
+    ],
+    prompt: `Use $optimize-threejs-games to diagnose and fix performance issues in [game].
+
+Step 1 — Establish baseline:
+Choose a deterministic representative encounter. Record: device / viewport / quality level / frame-time sample / draw calls / triangles / texture count / warnings.
+
+Step 2 — Diagnose limiting side:
+- CPU: simulation / allocations / pathfinding / per-frame scans growing with actors.
+- GPU: resolution / overdraw / shadows / transparent particles / post-processing / draw calls / geometry / texture bandwidth.
+
+Step 3 — Apply fixes:
+- Reuse geometry/materials; pool transient effects; cull inactive/offscreen work.
+- Throttle noncritical UI updates; cap particle counts; avoid per-frame allocation.
+- Update only changed transforms.
+
+Step 4 — Guard the result:
+Re-run original encounter. Verify: frame time / visual correctness / collision-contact / memory stability / mobile controls / reduced motion / console health.`,
+    note: '<strong>核心价值：</strong>「先诊断再优化」——性能问题的根源往往和直觉相反，盲目降画质可能解决不了真正问题。'
+  },
+  'ship-web-games': {
+    desc: '网页游戏发布：验证提交 → 生产冒烟测试 → 浏览器 proof → 回滚准备 → 临时 QA 资源清理。发布前验证已部署游戏，而非本地构建。',
+    scenario: '游戏开发完成，需要把它安全发布到线上并验证——不是 git push 就完事了。',
+    steps: [
+      {num:1, text:'<strong>Confirm exact integration commit.</strong> 保留无关工作'},
+      {num:2, text:'<strong>Run focused tests / lint-type / production build / diff checks.</strong>'},
+      {num:3, text:'<strong>Package and deploy the exact validated commit.</strong>'},
+      {num:4, text:'<strong>Poll deployment status.</strong> 在 repository-approved browser 中打开生产游戏'},
+      {num:5, text:'<strong>Production proof.</strong> 验证 load / first input / one combat or core interaction / assets / save-settings / responsive view / console health / representative performance'},
+      {num:6, text:'<strong>Finish cleanly.</strong> 关闭临时 dev servers / benchmarks / QA tabs；记录 release evidence 和 rollback target'},
+    ],
+    prompt: `Use $ship-web-games to release [game] to production.
+
+Release sequence:
+1. Confirm exact integration commit. Preserve unrelated work.
+2. Run: focused tests / lint-type checks / production build / diff checks.
+3. Package and deploy the exact validated commit.
+4. Poll deployment status. Open production game in repository-approved browser.
+5. Production proof: load / first input / one combat or core interaction / assets / save-settings / responsive view / console health / representative performance.
+6. Finish cleanly: record release evidence and rollback target. Close temporary dev servers / benchmarks / QA tabs. Do not terminate resources owned by another active task.`,
+    note: '<strong>核心价值：</strong>「发布前验证已部署游戏，而非本地构建」——本地绿不代表线上没问题，这是最基本的发布原则。'
+  },
+  'test-playable-web-games': {
+    desc: '网页游戏端到端测试：确定性 fixture + 真实浏览器证据。测试矩阵覆盖 launch/controls/combat/reward/save/progression/pause/completion + mobile/reduced-motion 变体。',
+    scenario: '需要系统性地测试游戏每个功能，而不是随便玩两下确认能跑就发布——特别是要覆盖移动端和 reduced motion。',
+    steps: [
+      {num:1, text:'<strong>Map the player journey.</strong> launch / new game / controls / core action / enemy encounter / reward / inventory-progression / save-continue / loss-retry / pause / settings / completion；加 device 变体：desktop keyboard-mouse / touch portrait / touch landscape / reduced motion'},
+      {num:2, text:'<strong>Prefer deterministic review states.</strong> 创建 seedable fixtures / debug routes / query parameters for combat phase / inventory loadout / boss phase / tutorial step / save migration / low health / error states'},
+      {num:3, text:'<strong>Verify the player experience.</strong> 在 repository-approved browser surface 验证；确认每次有意义 action 后屏幕有可见反馈：control response / target state / damage-resource state / UI update / navigation'},
+      {num:4, text:'<strong>Report actionable evidence.</strong> 记录 reproduction steps / expected vs actual / severity / device-viewport / shortest useful proof；区分新回归和已有 baseline 问题'},
+    ],
+    prompt: `Use $test-playable-web-games to test [game] end-to-end.
+
+Test matrix (player journey):
+launch / new game / controls / core action / enemy encounter / reward /
+inventory-progression / save-continue / loss-retry / pause / settings / completion
+
+Device variants: desktop keyboard-mouse / touch portrait / touch landscape / reduced motion
+
+Prefer deterministic review states: create seedable fixtures or query parameters for:
+combat phase / inventory loadout / boss phase / tutorial step / save migration / low health / error states
+
+Verify in repository-approved browser: confirm screen-visible feedback after each meaningful action: control response / target state / damage-resource state / UI update / navigation.
+
+Report: reproduction steps / expected vs actual result / severity / device-viewport / shortest useful proof. Separate new regressions from pre-existing baseline issues.`,
+    note: '<strong>核心价值：</strong>「绿色构建不等于游戏可玩」——每个发布前都必须有真实的可玩性验证，这是 QA 的核心原则。'
+  }
+};
+
+const overlay = document.getElementById('detailOverlay');
+const closeBtn = document.getElementById('closeBtn');
+
+document.querySelectorAll('.filter-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const filter = btn.dataset.filter;
+    document.querySelectorAll('.skill-card').forEach(card => {
+      card.classList.toggle('hidden', filter !== 'all' && card.dataset.type !== filter);
+    });
+  });
+});
+
+document.querySelectorAll('.skill-card').forEach(card => {
+  card.addEventListener('click', () => {
+    const name = card.dataset.name;
+    const data = DETAIL_DATA[name];
+    if (!data) return;
+
+    const stepsHtml = data.steps.map(s =>
+      `<div class="workflow-step"><div class="step-num">${s.num}</div><div class="step-text">${s.text}</div></div>`
+    ).join('');
+
+    document.getElementById('detailName').textContent = name;
+    document.getElementById('detailDesc').textContent = data.desc;
+    document.getElementById('detailScenario').textContent = data.scenario;
+    document.getElementById('detailStepsTitle').textContent = `核心工作流（${data.steps.length} 步）`;
+    document.getElementById('detailSteps').innerHTML = stepsHtml;
+    document.getElementById('detailPrompt').textContent = data.prompt.trim();
+    document.getElementById('detailNote').innerHTML = data.note;
+
+    overlay.classList.add('open');
+  });
+});
+
+function copyPrompt(btn) {
+  const text = document.getElementById('detailPrompt').textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = '已复制!';
+    setTimeout(() => btn.textContent = '复制 Prompt', 1500);
+  });
+}
+
+closeBtn.addEventListener('click', () => overlay.classList.remove('open'));
+overlay.addEventListener('click', e => { if (e.target === overlay) overlay.classList.remove('open'); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') overlay.classList.remove('open'); });
+</script>
+</body>
+</html>
