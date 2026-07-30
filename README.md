@@ -88,10 +88,13 @@ python -m http.server 8000
 | # | 项目 | 一句话 | 状态 |
 |---|---|---|---|
 | 1 | [finesse-skill-study](./finesse-skill-study/) | 学习 UI 设计 Skill 并实战一个家庭果园品牌页 | 已完成 v0 → v9 |
+| 2 | [mengto-skills-study](./mengto-skills-study/) | 深度研究 MengTo/Skills 库（118 个 AI 设计技能） | 研究中 |
 | - | [项目 1 · examples-index](./finesse-skill-study/examples-index.html) | 13 个范例索引浏览器 | ✓ |
 | - | [项目 1 · capabilities](./finesse-skill-study/capabilities.html) | 能力全景 + 决策树 | ✓ |
 | - | [项目 1 · prompt-builder](./finesse-skill-study/prompt-builder.html) | Prompt 自动拼装器 | ✓ |
 | - | [项目 1 · 子交付物 · 拾穗果园](./finesse-skill-study/family-orchard/) | 家庭果园品牌官网（已模块化为 15 CSS + 9 JS） | ✓ |
+| 2 | [项目 2 · MengTo/Skills 研究](./mengto-skills-study/) | 118 个 AI Agent 设计技能深度研究 | 研究中 |
+| - | [项目 2 · 技能矩阵](./mengto-skills-study/SKILL-MATRIX.md) | 全部 118 个技能的分类索引 | 建设中 |
 
 (更多项目待加入。)
 
