@@ -1,0 +1,911 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Skill 参考手册 · MengTo/Skills Codex</title>
+  <style>
+    :root {
+      --bg: #0a0a0f;
+      --surface: #13131a;
+      --surface2: #1c1c26;
+      --border: #2a2a38;
+      --text: #e8e8f0;
+      --text-dim: #8888a0;
+      --accent: #7c6fff;
+      --accent2: #ff6f9c;
+      --accent-glow: rgba(124, 111, 255, 0.2);
+      --tag-codex: #82d9c8;
+      --tag-workflow: #f0c07a;
+      --tag-audit: #f472b6;
+      --tag-media: #60a5fa;
+      --tag-ai: #c084fc;
+      --font: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      --font-mono: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+      --radius: 12px;
+      --transition: 0.2s ease;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    /* NAV */
+    nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(10, 10, 15, 0.92);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+      padding: 0 2rem;
+      height: 58px;
+      display: flex;
+      align-items: center;
+      gap: 2rem;
+    }
+    nav .brand {
+      font-weight: 700;
+      font-size: 0.95rem;
+      color: var(--accent);
+      text-decoration: none;
+    }
+    nav .brand span { color: var(--text-dim); font-weight: 400; }
+    nav .links { display: flex; gap: 1.5rem; margin-left: auto; }
+    nav .links a {
+      font-size: 0.82rem;
+      color: var(--text-dim);
+      text-decoration: none;
+      transition: color var(--transition);
+    }
+    nav .links a:hover { color: var(--text); }
+    nav .links a.active { color: var(--accent); }
+
+    /* HERO */
+    .hero {
+      padding: 4rem 2rem 3rem;
+      max-width: 860px;
+      margin: 0 auto;
+    }
+    .hero .eyebrow {
+      display: inline-block;
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--accent);
+      background: rgba(124, 111, 255, 0.12);
+      border: 1px solid rgba(124, 111, 255, 0.3);
+      padding: 0.25rem 0.75rem;
+      border-radius: 100px;
+      margin-bottom: 1rem;
+    }
+    .hero h1 {
+      font-size: 2rem;
+      font-weight: 800;
+      letter-spacing: -0.04em;
+      margin-bottom: 1rem;
+      line-height: 1.1;
+    }
+    .hero p {
+      color: var(--text-dim);
+      font-size: 1rem;
+      max-width: 640px;
+      line-height: 1.7;
+    }
+    .hero .summary-bar {
+      margin-top: 2rem;
+      display: flex;
+      gap: 2rem;
+      flex-wrap: wrap;
+    }
+    .hero .summary-item {
+      display: flex;
+      flex-direction: column;
+      gap: 0.2rem;
+    }
+    .hero .summary-item .num {
+      font-size: 1.6rem;
+      font-weight: 800;
+      color: var(--accent);
+      letter-spacing: -0.04em;
+    }
+    .hero .summary-item .label {
+      font-size: 0.75rem;
+      color: var(--text-dim);
+    }
+
+    /* FILTER BAR */
+    .filter-bar {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 1rem 2rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      align-items: center;
+      border-bottom: 1px solid var(--border);
+    }
+    .filter-label {
+      font-size: 0.72rem;
+      color: var(--text-dim);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-right: 0.5rem;
+    }
+    .filter-btn {
+      padding: 0.3rem 0.85rem;
+      border-radius: 100px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text-dim);
+      font-size: 0.78rem;
+      cursor: pointer;
+      transition: all var(--transition);
+    }
+    .filter-btn:hover { border-color: var(--text-dim); color: var(--text); }
+    .filter-btn.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: white;
+    }
+    .filter-btn .count {
+      font-size: 0.68rem;
+      opacity: 0.7;
+      margin-left: 0.2rem;
+    }
+
+    /* MAIN GRID */
+    .main {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 2rem 2rem 5rem;
+    }
+
+    .skill-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+      gap: 1rem;
+    }
+
+    /* SKILL CARD */
+    .skill-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      transition: border-color var(--transition), transform var(--transition);
+      cursor: pointer;
+    }
+    .skill-card:hover {
+      border-color: var(--accent);
+      transform: translateY(-2px);
+    }
+    .skill-card.hidden { display: none; }
+
+    .skill-card .card-header {
+      padding: 1.1rem 1.25rem 0.75rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 0.75rem;
+    }
+    .skill-card .skill-name {
+      font-family: var(--font-mono);
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--accent);
+      line-height: 1.3;
+    }
+    .skill-card .tag {
+      font-size: 0.68rem;
+      padding: 0.15rem 0.5rem;
+      border-radius: 4px;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .tag-workflow { background: rgba(240,192,122,0.15); color: var(--tag-workflow); border: 1px solid rgba(240,192,122,0.3); }
+    .tag-audit { background: rgba(244,114,182,0.15); color: var(--tag-audit); border: 1px solid rgba(244,114,182,0.3); }
+    .tag-ai { background: rgba(192,132,252,0.15); color: var(--tag-ai); border: 1px solid rgba(192,132,252,0.3); }
+    .tag-media { background: rgba(96,165,250,0.15); color: var(--tag-media); border: 1px solid rgba(96,165,250,0.3); }
+    .tag-codex { background: rgba(130,217,200,0.15); color: var(--tag-codex); border: 1px solid rgba(130,217,200,0.3); }
+
+    .skill-card .card-body {
+      padding: 0.9rem 1.25rem;
+    }
+    .skill-card .description {
+      font-size: 0.8rem;
+      color: var(--text-dim);
+      line-height: 1.55;
+      margin-bottom: 0.85rem;
+    }
+    .skill-card .scenario {
+      font-size: 0.75rem;
+      color: var(--text-dim);
+      background: var(--surface2);
+      border-radius: 6px;
+      padding: 0.5rem 0.75rem;
+      margin-bottom: 0.85rem;
+    }
+    .skill-card .scenario strong {
+      color: var(--accent);
+      font-weight: 600;
+    }
+    .skill-card .prompt-frag {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: #82d9c8;
+      background: rgba(130,217,200,0.07);
+      border: 1px solid rgba(130,217,200,0.15);
+      border-radius: 6px;
+      padding: 0.5rem 0.75rem;
+      white-space: pre-wrap;
+      word-break: break-all;
+      line-height: 1.5;
+    }
+    .skill-card .expand-hint {
+      font-size: 0.7rem;
+      color: var(--text-dim);
+      text-align: center;
+      padding: 0.5rem;
+      border-top: 1px solid var(--border);
+      opacity: 0;
+      transition: opacity var(--transition);
+    }
+    .skill-card:hover .expand-hint { opacity: 1; }
+
+    /* EXPANDED DETAIL */
+    .detail-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 200;
+      background: rgba(0,0,0,0.7);
+      backdrop-filter: blur(4px);
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+    }
+    .detail-overlay.open { display: flex; }
+    .detail-panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      width: 100%;
+      max-width: 780px;
+      max-height: 85vh;
+      overflow-y: auto;
+      position: relative;
+    }
+    .detail-panel .close-btn {
+      position: sticky;
+      top: 0;
+      float: right;
+      margin: 1rem 1rem 0 0;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text-dim);
+      border-radius: 8px;
+      padding: 0.4rem 0.9rem;
+      font-size: 0.8rem;
+      cursor: pointer;
+      z-index: 10;
+    }
+    .detail-panel .close-btn:hover { color: var(--text); border-color: var(--text-dim); }
+    .detail-content { padding: 1.5rem 2rem 2rem; clear: both; }
+    .detail-name {
+      font-family: var(--font-mono);
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--accent);
+      margin-bottom: 0.75rem;
+    }
+    .detail-desc {
+      font-size: 0.88rem;
+      color: var(--text-dim);
+      line-height: 1.7;
+      margin-bottom: 1.5rem;
+    }
+    .detail-section-title {
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-dim);
+      margin-bottom: 0.75rem;
+      margin-top: 1.5rem;
+    }
+    .detail-scenario-box {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.85rem 1rem;
+      font-size: 0.82rem;
+      color: var(--text-dim);
+      margin-bottom: 1rem;
+    }
+    .detail-scenario-box strong { color: var(--accent); }
+    .workflow-steps {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    .workflow-step {
+      display: flex;
+      gap: 0.75rem;
+      align-items: flex-start;
+      font-size: 0.82rem;
+    }
+    .workflow-step .step-num {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: rgba(124,111,255,0.2);
+      color: var(--accent);
+      font-size: 0.68rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-top: 0.1rem;
+    }
+    .workflow-step .step-text { color: var(--text-dim); line-height: 1.5; }
+    .workflow-step .step-text strong { color: var(--text); }
+    .detail-prompt {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      color: #82d9c8;
+      background: rgba(130,217,200,0.06);
+      border: 1px solid rgba(130,217,200,0.15);
+      border-radius: 8px;
+      padding: 0.85rem 1rem;
+      white-space: pre-wrap;
+      word-break: break-all;
+      line-height: 1.65;
+    }
+    .detail-note {
+      font-size: 0.78rem;
+      color: var(--text-dim);
+      background: rgba(240,192,122,0.07);
+      border: 1px solid rgba(240,192,122,0.15);
+      border-radius: 8px;
+      padding: 0.75rem 1rem;
+      margin-top: 1rem;
+    }
+    .detail-note strong { color: var(--tag-workflow); }
+
+    /* USAGE LEGEND */
+    .usage-legend {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 2rem 2rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1.5rem;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.75rem;
+      color: var(--text-dim);
+    }
+    .legend-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+
+    @media (max-width: 768px) {
+      nav .links { display: none; }
+      .hero { padding: 3rem 1.5rem 2rem; }
+      .hero h1 { font-size: 1.5rem; }
+      .filter-bar { padding: 1rem 1.5rem; overflow-x: auto; flex-wrap: nowrap; }
+      .main { padding: 1.5rem 1.5rem 4rem; }
+      .skill-grid { grid-template-columns: 1fr; }
+      .detail-panel { max-height: 90vh; }
+      .detail-content { padding: 1rem 1.25rem 1.5rem; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a href="index.html" class="brand">MengTo/Skills <span>· 研究</span></a>
+  <div class="links">
+    <a href="index.html">总览</a>
+    <a href="demo-gallery.html">Demo 展示</a>
+    <a href="capability-map.html">能力地图</a>
+    <a href="scene-testing.html">场景测试</a>
+    <a href="workflow-demo.html">工作流</a>
+    <a href="skill-reference.html" class="active">参考手册</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="eyebrow">Project 2 · 研究产出</div>
+  <h1>Codex Skill 参考手册</h1>
+  <p>
+    17 个 Codex 工作流技能的速查手册。提炼每个 Skill 的触发条件（description）、核心工作流、使用场景和可复用的 Prompt 片段。目的是让我们自己的 Agent Skill 库有参考模板。
+  </p>
+  <div class="summary-bar">
+    <div class="summary-item">
+      <div class="num">17</div>
+      <div class="label">Codex 工作流</div>
+    </div>
+    <div class="summary-item">
+      <div class="num">5</div>
+      <div class="label">核心类型</div>
+    </div>
+    <div class="summary-item">
+      <div class="num">3</div>
+      <div class="label">高可借鉴</div>
+    </div>
+  </div>
+</section>
+
+<!-- FILTER -->
+<div class="filter-bar">
+  <span class="filter-label">类型</span>
+  <button class="filter-btn active" data-filter="all">全部 <span class="count">17</span></button>
+  <button class="filter-btn" data-filter="workflow">⭐ 工作流型 <span class="count">5</span></button>
+  <button class="filter-btn" data-filter="audit">🔍 审计型 <span class="count">3</span></button>
+  <button class="filter-btn" data-filter="ai">🤖 AI 生成型 <span class="count">5</span></button>
+  <button class="filter-btn" data-filter="media">🎬 媒体型 <span class="count">4</span></button>
+</div>
+
+<!-- USAGE LEGEND -->
+<div class="usage-legend">
+  <div class="legend-item"><div class="legend-dot" style="background:var(--tag-workflow)"></div>⭐ 工作流型 — 直接可套用流程</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--tag-audit)"></div>🔍 审计型 — 验证/检查类</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--tag-ai)"></div>🤖 AI 生成型 — 提示词/内容生成</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--tag-media)"></div>🎬 媒体型 — 音视频/截图处理</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--tag-codex)"></div>工具型 — 特定技术实现</div>
+</div>
+
+<!-- GRID -->
+<div class="main">
+  <div class="skill-grid" id="skillGrid">
+
+    <!-- 1. video-to-superprompt -->
+    <div class="skill-card" data-type="ai" data-name="video-to-superprompt">
+      <div class="card-header">
+        <span class="skill-name">video-to-superprompt</span>
+        <span class="tag tag-ai">🤖 AI 生成</span>
+      </div>
+      <div class="card-body">
+        <p class="description">将参考视频转换为可重建的超级提示词。捕捉设计、UI、动画、过渡、滚动交互、字体、颜色、资产完整信息。</p>
+        <p class="scenario"><strong>使用场景：</strong>看到一段很酷的网站动画视频，想让 AI 精准复现它</p>
+        <p class="prompt-frag">ffprobe -v error -show_entries format=duration,size:stream=width,height,r_frame_rate -of json "$VIDEO"</p>
+      </div>
+      <div class="expand-hint">点击展开详情 →</div>
+    </div>
+
+    <!-- 2. html-to-interaction-prompts -->
+    <div class="skill-card" data-type="workflow" data-name="html-to-interaction-prompts">
+      <div class="card-header">
+        <span class="skill-name">html-to-interaction-prompts</span>
+        <span class="tag tag-workflow">⭐ 工作流</span>
+      </div>
+      <div class="card-body">
+        <p class="description">将 HTML 页面转换为截图-backed 的交互提示词组，每个交互一个可复用提示词。</p>
+        <p class="scenario"><strong>使用场景：</strong>有一个参考页面，想拆解出每个可复用交互的精确 Prompt</p>
+        <p class="prompt-frag">Use $html-to-interaction-prompts to analyze the HTML reference and create reusable interaction prompts.</p>
+      </div>
+      <div class="expand-hint">点击展开详情 →</div>
+    </div>
+
+    <!-- 3. stitched-full-page-capture -->
+    <div class="skill-card" data-type="media" data-name="stitched-full-page-capture">
+      <div class="card-header">
+        <span class="skill-name">stitched-full-page-capture</span>
+        <span class="tag tag-media">🎬 媒体</span>
+      </div>
+      <div class="card-body">
+        <p class="description">解决懒加载/WebGL/动画页截图为空白的问题。用分段截图 + 拼接的方式获取完整页面。</p>
+        <p class="scenario"><strong>使用场景：</strong>需要截取一个长页面，但浏览器全页截图结果是空白的</p>
+        <p class="prompt-frag">Scroll downward in viewport-sized steps. Wait 2s after each stop. Stitch into one full-page image.</p>
+      </div>
+      <div class="expand-hint">点击展开详情 →</div>
+    </div>
+
+    <!-- 4. daily-ui-inspiration-capture -->
+    <div class="skill-card" data-type="workflow" data-name="daily-ui-inspiration-capture">
+      <div class="card-header">
+        <span class="skill-name">daily-ui-inspiration-capture</span>
+        <span class="tag tag-workflow">⭐ 工作流</span>
+      </div>
+      <div class="card-body">
+        <p class="description">每日 UI 灵感捕获循环：浏览 → 捕获 → 参考研究 → 提示词生成，产出 5 个灵感包。</p>
+        <p class="scenario"><strong>使用场景：</strong>每天收集 5 个优质落地页，生成可执行的 AI 构建 Prompt</p>
+        <p class="prompt-frag">Capture exactly 5 references. Each must have: full-page scroll screenshot + section crops + motion frames + builder prompt.</p>
+      </div>
+      <div class="expand-hint">点击展开详情 →</div>
+    </div>
+
+    <!-- 5. build-daily-inspiration-sites -->
+    <div class="skill-card" data-type="workflow" data-name="build-daily-inspiration-sites">
+      <div class="card-header">
+        <span class="skill-name">build-daily-inspiration-sites</span>
+        <span class="tag tag-workflow">⭐ 工作流</span>
+      </div>
+      <div class="card-body">
+        <p class="description">将 5 个 UI 灵感参考转换为 5 个独立的原创落地页构建任务，每个用 Sites 部署。</p>
+        <p class="scenario"><strong>使用场景：</strong>有了 5 个灵感参考，想让 AI 各自构建一个完整落地页</p>
+        <p class="prompt-frag">Create exactly 5 distinct replacement identities. Preserve only high-level visual grammar. Replace all brands, copy, people, numbers.</p>
+      </div>
+      <div class="expand-hint">点击展开详情 →</div>
+    </div>
+
+    <!-- 6. html-to-interaction-prompts detail already above -->
+
+    <!-- 7. iterate-until-verified -->
+    <div class="skill-card" data-type="workflow" data-name="iterate-until-verified">
+      <div class="card-header">
+        <span class="skill-name">iterate-until-verified</span>
+        <span class="tag tag-workflow">⭐ 工作流</span>
+      </div>
+      <div class="card-body">
+        <p class="description">提示词无关的执行-验证循环。Fan out 工作 → 独立评审 → 循环直到质量门通过。</p>
+        <p class="scenario"><strong>使用场景：</strong>一个复杂任务需要多轮迭代，不想让执行者和评审者是同一个人</p>
+        <p class="prompt-frag">Use an iterative execution-and-verification workflow. Assign an independent verifier. Route failed gates back to responsible workstream.</p>
+      </div>
+      <div class="expand-hint">点击展开详情 →</div>
+    </div>
+
+    <!-- 8. audit-verify-explain-grade-5 -->
+    <div class="skill-card" data-type="audit" data-name="audit-verify-explain-grade-5">
+      <div class="card-header">
+        <span class="skill-name">audit-verify-explain-grade-5</span>
+        <span class="tag tag-audit">🔍 审计</span>
+      </div>
+      <div class="card-body">
+        <p class="description">审计 + 验证 + 用五年级语言解释技术结果。三个步骤：找证据 → 验证 → 简单说明。</p>
+        <p class="scenario"><strong>使用场景：</strong>需要向非技术人员解释一个技术发现，或者需要把复杂发现简单化</p>
+        <p class="prompt-frag">What changed: ... Why it matters: ... How I verified: ... What is still not proven: ...</p>
+      </div>
+      <div class="expand-hint">点击展开详情 →</div>
+    </div>
+
+    <!-- 9. audit-reference-originality -->
+    <div class="skill-card" data-type="audit" data-name="audit-reference-originality">
+      <div class="card-header">
+        <span class="skill-name">audit-reference-originality</span>
+        <span class="tag tag-audit">🔍 审计</span>
+      </div>
+      <div class="card-body">
+        <p class="description">对比网站与参考素材，审计原创性/抄袭风险。区分普通视觉语法和实质性复制。</p>
+        <p class="scenario"><strong>使用场景：</strong>需要检查网站是否与某个参考网站过于相似，有原创性风险</p>
+        <p class="prompt-frag">Build the source registry first. Compare category by category. Triangulate every red flag with exact evidence.</p>
+      </div>
+      <div class="expand-hint">点击展开详情 →</div>
+    </div>
+
+    <!-- 10. article-prompts-to-skills -->
+    <div class="skill-card" data-type="workflow" data-name="article-prompts-to-skills">
+      <div class="card-header">
+        <span class="skill-name">article-prompts-to-skills</span>
+        <span class="tag tag-workflow">⭐ 工作流</span>
+      </div>
+      <div class="card-body">
+        <p class="description">将文章/教程/提示词包转换为独立可复用的 AgentSkill，含 demo、截图、验证。</p>
+        <p class="scenario"><strong>使用场景：</strong>发现一篇好教程，想把里面的提示词提取成可以独立使用的 Skill</p>
+        <p class="prompt-frag">Extract the Portable Contract: keep mechanics, remove brand/layout. One skill per independently reusable behavior.</p>
+      </div>
+      <div class="expand-hint">点击展开详情 →</div>
+    </div>
+
+    <!-- 11. browser-video-recording -->
+    <div class="skill-card" data-type="media" data-name="browser-video-recording">
+      <div class="card-header">
+        <span class="skill-name">browser-video-recording</span>
+        <span class="tag tag-media">🎬 媒体</span>
+      </div>
+      <div class="card-body">
+        <p class="description">制作 60fps 4K 4:3 浏览器演示视频，含 macOS 光标、自然点击编排、缩放跟随。</p>
+        <p class="scenario"><strong>使用场景：</strong>需要制作一个浏览器操作的演示视频，用于 Dribbble 或产品演示</p>
+        <p class="prompt-frag">Pause briefly on target before clicking. Sparse, straight cursor paths. Camera frames clicked content, not chasing mouse.</p>
+      </div>
+      <div class="expand-hint">点击展开详情 →</div>
+    </div>
+
+    <!-- 12. elevenlabs-tts -->
+    <div class="skill-card" data-type="media" data-name="elevenlabs-tts">
+      <div class="card-header">
+        <span class="skill-name">elevenlabs-tts</span>
+        <span class="tag tag-media">🎬 媒体</span>
+      </div>
+      <div class="card-body">
+        <p class="description">使用 ElevenLabs 本地 voice profile 生成 TTS 音频。提示词 → 语音旁白。</p>
+        <p class="scenario"><strong>使用场景：</strong>需要给视频或演示加旁白，用 ElevenLabs 生成自然语音</p>
+        <p class="prompt-frag">python3 generate_voice.py --text-file script.txt --profile default --output output.mp3</p>
+      </div>
+      <div class="expand-hint">点击展开详情 →</div>
+    </div>
+
+    <!-- 13. optimize-web-animations -->
+    <div class="skill-card" data-type="audit" data-name="optimize-web-animations">
+      <div class="card-header">
+        <span class="skill-name">optimize-web-animations</span>
+        <span class="tag tag-audit">🔍 审计</span>
+      </div>
+      <div class="card-body">
+        <p class="description">前端动画性能分析与优化：内存泄漏风险、长会话卡顿、Canvas/WebGL 性能、滚动卡顿。</p>
+        <p class="scenario"><strong>使用场景：</strong>页面越用越慢，怀疑是动画/Canvas/WebGL 没有正确清理</p>
+        <p class="prompt-frag">IntersectionObserver toggles is-offscreen. Pause CSS animations. Cancel RAF when offscreen. Disconnect observers on cleanup.</p>
+      </div>
+      <div class="expand-hint">点击展开详情 →</div>
+    </div>
+
+    <!-- 14. performance-profiling -->
+    <div class="skill-card" data-type="audit" data-name="performance-profiling">
+      <div class="card-header">
+        <span class="skill-name">performance-profiling</span>
+        <span class="tag tag-audit">🔍 审计</span>
+      </div>
+      <div class="card-body">
+        <p class="description">Apple 平台应用性能分析：Instruments、Xcode 诊断、MetricKit。UI 卡顿/内存/启动/电池。</p>
+        <p class="scenario"><strong>使用场景：</strong>iOS 应用卡顿或内存泄漏，需要用 Instruments 系统性诊断</p>
+        <p class="prompt-frag">Profile on device with Release build. Reproduce with representative data. Apply smallest targeted fix. Re-profile to confirm.</p>
+      </div>
+      <div class="expand-hint">点击展开详情 →</div>
+    </div>
+
+    <!-- 15. generate-reference-inspired-brand-worlds -->
+    <div class="skill-card" data-type="ai" data-name="generate-reference-inspired-brand-worlds">
+      <div class="card-header">
+        <span class="skill-name">generate-reference-inspired-brand-worlds</span>
+        <span class="tag tag-ai">🤖 AI 生成</span>
+      </div>
+      <div class="card-body">
+        <p class="description">从视觉参考生成多个原创品牌 campaign，通过相似度刻度盘控制亲近程度（30%-85%）。</p>
+        <p class="scenario"><strong>使用场景：</strong>有一个参考品牌视觉，想生成多个感觉相似但完全原创的品牌概念</p>
+        <p class="prompt-frag">30% = abstract mood only. 50% = share emotion, change palette/subjects. 70% = adjacent family, change composition. 85% = close neighbor, change 4+ signature elements.</p>
+      </div>
+      <div class="expand-hint">点击展开详情 →</div>
+    </div>
+
+    <!-- 16. write-like-meng-on-x -->
+    <div class="skill-card" data-type="ai" data-name="write-like-meng-on-x">
+      <div class="card-header">
+        <span class="skill-name">write-like-meng-on-x</span>
+        <span class="tag tag-ai">🤖 AI 生成</span>
+      </div>
+      <div class="card-body">
+        <p class="description">以 Meng To 的当前风格写 X/Twitter 帖子。用他本人发布的帖子语料库校准语气。</p>
+        <p class="scenario"><strong>使用场景：</strong>需要以某个特定人的风格写推文，先分析其历史发帖风格再生成</p>
+        <p class="prompt-frag">Ground the post in something real: a product built, a workflow, a constraint, a failure, a proof point from the corpus.</p>
+      </div>
+      <div class="expand-hint">点击展开详情 →</div>
+    </div>
+
+    <!-- 17. x-bookmark-quote-posts -->
+    <div class="skill-card" data-type="ai" data-name="x-bookmark-quote-posts">
+      <div class="card-header">
+        <span class="skill-name">x-bookmark-quote-posts</span>
+        <span class="tag tag-ai">🤖 AI 生成</span>
+      </div>
+      <div class="card-body">
+        <p class="description">把 X/Twitter 书签转换为风格校准的引用帖草稿。用最新 100 条发帖校准语气。</p>
+        <p class="scenario"><strong>使用场景：</strong>刷到一批好帖子，想把它们转成带有自己风格的引用推文队列</p>
+        <p class="prompt-frag">Collect ~12-20 bookmarks. Draft 7-10 quote tweets. Prefer variety across tools, product ideas, design resources, technical lessons.</p>
+      </div>
+      <div class="expand-hint">点击展开详情 →</div>
+    </div>
+
+    <!-- 18. implement-fog-of-war -->
+    <div class="skill-card" data-type="codex" data-name="implement-fog-of-war">
+      <div class="card-header">
+        <span class="skill-name">implement-fog-of-war</span>
+        <span class="tag tag-codex">工具型</span>
+      </div>
+      <div class="card-body">
+        <p class="description">Three.js 游戏战争迷雾实现：正交/等距可见性遮罩、障碍物感知视线、敌人感知范围。</p>
+        <p class="scenario"><strong>使用场景：</strong>需要给 Three.js 游戏加战争迷雾效果（如果我们要做一个游戏类项目）</p>
+        <p class="prompt-frag">1. Define perception truth (sight blockers, angular distance). 2. Build visibility lookup (ray casting → LUT). 3. Render one soft overlay shader.</p>
+      </div>
+      <div class="expand-hint">点击展开详情 →</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- DETAIL OVERLAY -->
+<div class="detail-overlay" id="detailOverlay">
+  <div class="detail-panel">
+    <button class="close-btn" id="closeBtn">关闭 ✕</button>
+    <div class="detail-content" id="detailContent"></div>
+  </div>
+</div>
+
+<script>
+// Detail data for expanded view
+const DETAIL_DATA = {
+  'video-to-superprompt': {
+    desc: '将参考视频转换为超级重建提示词。捕捉设计、UI、动画、过渡、字体、颜色、资产完整信息，使 AI 能在不看原视频的情况下重建交互。',
+    scenario: '<strong>使用场景：</strong>看到一个酷炫的落地页动画视频，想让 AI 精准复现它。先用 ffprobe 提取元数据，再提取关键帧，再逐层分析，再写 superprompt。',
+    steps: [
+      { num: 1, text: '<strong>Locate source video.</strong> 接受本地文件/URL/上传，检查源代码连接' },
+      { num: 2, text: '<strong>Inspect technically.</strong> ffprobe 提取元数据，ffmpeg 提取代表性帧' },
+      { num: 3, text: '<strong>Analyze in layers.</strong> Story → Screen/layout → Motion → Visual design → Technical rebuild → Accessibility' },
+      { num: 4, text: '<strong>Plan assets.</strong> 产出 asset map，含 URL 或 placeholder' },
+      { num: 5, text: '<strong>Write superprompt.</strong> 从最终产物倒推，含 asset map、品牌语言、section anatomy、motion system' },
+      { num: 6, text: '<strong>Verify.</strong> 检查所有 asset 路径是否存在，帧是否非空' },
+    ],
+    prompt: `Use $video-to-superprompt to analyze the reference video.
+
+Extract: duration, dimensions, frame rate, codec.
+Then extract representative frames at timeline beats.
+Analyze in layers: Story / Screen-layout / Motion / Visual design / Technical rebuild.
+Write one paste-ready prompt that captures what to build and how.`,
+    note: '<strong>核心价值：</strong>提供了一套从视频到可执行 Prompt 的完整 SOP。如果我们自己要做一个「视频转设计稿」的工具，这套方法论可以直接借鉴。'
+  },
+  'html-to-interaction-prompts': {
+    desc: '将 HTML 页面转换为多个可复用交互提示词。每个交互（hover/滚动/悬停）一个独立 Prompt，可直接给 AI 用来重建该交互。',
+    scenario: '<strong>使用场景：</strong>有一个参考页面，想拆解出每个可复用交互的精确 Prompt，而不是一个模糊的「帮我做一个类似页面」。',
+    steps: [
+      { num: 1, text: '<strong>Inspect source first.</strong> 读 HTML/CSS/JS，找 interaction terms：mousemove, ScrollTrigger, hover, sticky, parallax...' },
+      { num: 2, text: '<strong>Decide prompt list.</strong> 按可复用交互idea分割，不要按代码行数' },
+      { num: 3, text: '<strong>Write reusable prompts.</strong> 结构：Core idea / Technology / Implementation / Interaction / Success' },
+      { num: 4, text: '<strong>Capture screenshots.</strong> 每个 Prompt 对应一个截图，动作触发前捕获' },
+      { num: 5, text: '<strong>Create article.</strong> 每个 Prompt + 截图组成一个可交付单元' },
+      { num: 6, text: '<strong>Verify.</strong> git diff --check，确认截图存在且非空' },
+    ],
+    prompt: `Use $html-to-interaction-prompts to analyze the HTML reference at [path].
+
+1. Read the HTML and find all interaction terms.
+2. Split into reusable prompts by interaction idea (not line count).
+3. Write flexible prompts: describe core idea, tech, interaction, scroll choreography.
+4. Capture one screenshot per prompt showing where the interaction happens.
+5. Create content.md with each prompt + screenshot.`,
+    note: '<strong>核心价值：</strong>最实用的一步是「按交互idea分割而不是按代码分割」——这正是做 Skill 的核心思路。'
+  },
+  'iterate-until-verified': {
+    desc: '提示词无关的执行-验证循环框架。Fan out 工作 → 独立评审 → 循环直到质量门通过。preserves the original task without letting implementer be sole approver.',
+    scenario: '<strong>使用场景：</strong>一个复杂任务需要多轮迭代，不想让写代码的人和评审代码的人是同一个 AI。',
+    steps: [
+      { num: 1, text: '<strong>Lock the original task.</strong> 提取 outcome/deliverables/constraints/exclusions/definition of done' },
+      { num: 2, text: '<strong>Convert ambition to gates.</strong> 把「perfect/professional」翻译成可观测的检查项' },
+      { num: 3, text: '<strong>Decompose and assign.</strong> 拆成独立工作流，给每个worker清晰边界' },
+      { num: 4, text: '<strong>Separate making from judging.</strong> 让 verifier 独立评审，不看 implementer 的自我评估' },
+      { num: 5, text: '<strong>Match proof to work.</strong> 代码→测试/构建；视觉→渲染输出/对比；研究→原始来源/矛盾搜索' },
+      { num: 6, text: '<strong>Run the loop.</strong> 失败的门打回负责的工作流，修订后再检查' },
+    ],
+    prompt: `Use an iterative execution-and-verification workflow around this task:
+[AUTHORITATIVE TASK - preserve exactly]
+
+1. Extract task contract. Convert "完美/专业" into observable gates.
+2. Decompose independent workstreams. Fan out when delegation is useful.
+3. Assign an independent verifier (not the implementer).
+4. Route failed gates back to responsible workstream. Revise and re-check.
+5. Stop only when all gates pass or a concrete blocker is proven.`,
+    note: '<strong>核心价值：</strong>「把模糊的"好"翻译成可测量的门」+「让评审者独立于执行者」——这是做质量验证 Skill 的方法论核心。'
+  },
+  'audit-verify-explain-grade-5': {
+    desc: '审计 + 验证 + 五年级语言解释。三个步骤：找证据 → 实际验证 → 简单说明。treat every answer as three jobs: Audit what changed, Verify with evidence, Explain simply.',
+    scenario: '<strong>使用场景：</strong>需要向非技术人员解释一个技术发现，或者向老板汇报一个复杂的技术问题。',
+    steps: [
+      { num: 1, text: '<strong>Audit.</strong> 找真实来源：代码diff/日志/测试/截图/生成物，不要只靠推断' },
+      { num: 2, text: '<strong>Verify.</strong> 自动化测试 > 实际运行 > 日志 > 静态检查 > 明确标注的推断' },
+      { num: 3, text: '<strong>Explain Simply.</strong> 短句，定义术语，一个简单类比，避免居高临下' },
+    ],
+    prompt: `Use $audit-verify-explain-grade-5 to review this finding:
+[描述发现/报告/结论]
+
+1. Audit: Find the real source of truth. What changed? What claims are being made?
+2. Verify: Run actual tests / checks. Cite evidence. Do not pretend something was verified if it was only inferred.
+3. Explain: Short sentences. Plain words. What changed, why it matters, how to test it.`,
+    note: '<strong>核心价值：</strong>「不要假装被验证了」+「事实和判断分开」——这是做审计类 Skill 的基本原则。'
+  },
+  'article-prompts-to-skills': {
+    desc: '将文章/教程/提示词包转换为独立可复用的 AgentSkill。每个新 Skill 含 SKILL.md + Demo + PROMPT.md + 验证 + gallery 更新。',
+    scenario: '<strong>使用场景：</strong>发现一篇好教程，想把里面的提示词提取成可以独立使用的 Skill——这是构建我们自己的 Skill 库的核心方法。',
+    steps: [
+      { num: 1, text: '<strong>Inspect Before Extracting.</strong> 读完原文，inventory 所有 prompt/heading/asset/验收标准' },
+      { num: 2, text: '<strong>Build extraction ledger.</strong> 表格：源 prompt → 可复用能力 → 保留/移除 → Skill名 → Demo证明' },
+      { num: 3, text: '<strong>Extract Portable Contract.</strong> 保留 mechanics（行为/状态/参数默认值/时序/可访问性），移除品牌特定内容' },
+      { num: 4, text: '<strong>Package Every Skill.</strong> 含 SKILL.md + agents/openai.yaml + demo/ + PROMPT.md + input.md + expected-output.md' },
+      { num: 5, text: '<strong>Write 3 useful prompts.</strong> Minimal / Recreate the demo / Remix' },
+      { num: 6, text: '<strong>Validate.</strong> quick_validate.py + 浏览器验证 + 截图 + 控制台清洁' },
+    ],
+    prompt: `Use $article-prompts-to-skills to extract reusable skills from [article URL or path].
+
+1. Read the full article. Inventory every explicit prompt, heading, example, and acceptance criterion.
+2. Build an extraction ledger: Source → Reusable capability → Keep/Remove → Skill name.
+3. Extract the Portable Contract: keep mechanics, remove brand/layout/hard-coded values.
+4. Create the skill folder with SKILL.md + agents/openai.yaml + demo/.
+5. Write 3 prompts: Minimal / Recreate / Remix.`,
+    note: '<strong>核心价值：</strong>这是我们构建自己 Skill 库的「方法论手册」。如果我们从项目1提炼经验做成 Skill，这套流程直接可用。'
+  },
+  'daily-ui-inspiration-capture': {
+    desc: '每日 UI 灵感捕获循环：浏览 → 捕获 → 参考研究 → 提示词生成，产出 5 个灵感包，含全页截图 + 区域裁剪 + 运动帧 + Builder Prompt。',
+    scenario: '<strong>使用场景：</strong>每天花固定时间收集 5 个优质落地页，生成可直接给 AI 用来构建的详细 Prompt。',
+    steps: [
+      { num: 1, text: '<strong>Check previous captures.</strong> 查重：reject 重复的 normalized title/source URL/image URL' },
+      { num: 2, text: '<strong>Select 5 references.</strong> 优先 live inspectable 落地页/Framer/Dribbble（尽力而为）' },
+      { num: 3, text: '<strong>Capture per reference.</strong> 代表性静帧 + 视频（含滚动/hover/sticky/marquee）+ 全页截图 + 区域裁剪 + ≥4运动帧' },
+      { num: 4, text: '<strong>Write article.</strong> content.md 含：pattern summary + 每个 item 的图/视频 + section crops + Builder Prompt + 为什么这个 Prompt 有效' },
+      { num: 5, text: '<strong>Write manifest.</strong> JSON 含 title/date/captureMethod/itemCount/items（含 fullPageImage/sectionImages/motionFrames/prompt）' },
+      { num: 6, text: '<strong>Verify.</strong> check-ui-inspiration-duplicates.mjs，duplicateCount 必须为 0' },
+    ],
+    prompt: `Use $daily-ui-inspiration-capture to run today's UI inspiration capture.
+
+Collect exactly 5 references. For each:
+- Representative still image
+- Local video: slow scroll, hover states, sticky nav, reveal animations, marquee, cursor effects
+- Full-page scroll screenshot (top to bottom)
+- Section crops: hero + every meaningful middle section + footer
+- ≥4 motion progression frames
+- One detailed AI-builder prompt
+
+Create articles/YYYY-MM-DD-ui-inspiration-capture/content.md + manifest.json`,
+    note: '<strong>核心价值：</strong>「5 个」这个约束很有价值——强制精选而不是堆量。每个 item 的结构（静帧+视频+全页+区域+Prompt）也是做参考库的标准模板。'
+  }
+};
+
+const overlay = document.getElementById('detailOverlay');
+const closeBtn = document.getElementById('closeBtn');
+const detailContent = document.getElementById('detailContent');
+
+// Filter buttons
+document.querySelectorAll('.filter-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const filter = btn.dataset.filter;
+    document.querySelectorAll('.skill-card').forEach(card => {
+      if (filter === 'all' || card.dataset.type === filter) {
+        card.classList.remove('hidden');
+      } else {
+        card.classList.add('hidden');
+      }
+    });
+  });
+});
+
+// Open detail
+document.querySelectorAll('.skill-card').forEach(card => {
+  card.addEventListener('click', () => {
+    const name = card.dataset.name;
+    const data = DETAIL_DATA[name];
+    if (!data) return;
+
+    let stepsHtml = data.steps.map(s => `
+      <div class="workflow-step">
+        <div class="step-num">${s.num}</div>
+        <div class="step-text">${s.text}</div>
+      </div>
+    `).join('');
+
+    detailContent.innerHTML = `
+      <div class="detail-name">${name}</div>
+      <div class="detail-desc">${data.desc}</div>
+      <div class="detail-section-title">使用场景</div>
+      <div class="detail-scenario-box">${data.scenario}</div>
+      <div class="detail-section-title">核心工作流（${data.steps.length} 步）</div>
+      <div class="workflow-steps">${stepsHtml}</div>
+      <div class="detail-section-title">可直接使用的 Prompt</div>
+      <div class="detail-prompt">${data.prompt}</div>
+      <div class="detail-note">${data.note}</div>
+    `;
+    overlay.classList.add('open');
+  });
+});
+
+// Close
+closeBtn.addEventListener('click', () => overlay.classList.remove('open'));
+overlay.addEventListener('click', e => { if (e.target === overlay) overlay.classList.remove('open'); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') overlay.classList.remove('open'); });
+</script>
+</body>
+</html>
