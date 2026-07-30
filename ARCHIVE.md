@@ -1,8 +1,8 @@
 # 0730 · 本次会话归档
 
-> **里程碑 tag**: [`v0.10`](../../tags/v0.10)  
-> **归档时间**: 2026-07-30  
-> **归档内容**: 本地清理 + Phase A 模块化重构 + 4 页 nav 互通 + GitHub Pages 部署
+> **里程碑 tag**: `v0.11` · Project 2 启动
+> **归档时间**: 2026-07-30
+> **归档内容**: Project 2 启动（MengTo/Skills 深度研究）
 
 ---
 
@@ -20,6 +20,7 @@
 ## 提交时间线
 
 ```
+8606b8c feat: add Project 2 MengTo/Skills research  ← Project 2 启动
 58c2784 fix: 加 .nojekyll 关闭 Jekyll          ← 部署修复
 416d71e feat: Phase A 模块化重构 + nav + Pages  ← 主工作
 00e0aa5 docs: 三层 README 重构                  ← 早段
@@ -188,6 +189,41 @@ examples-index  ←→  capabilities  ←→  prompt-builder  ←→  family-orc
 - Lighthouse 跑分 ≥ 90
 
 详见 [finesse-skill-study/family-orchard/README.md · 后续打磨](./finesse-skill-study/family-orchard/README.md#后续打磨quality-roadmap)
+
+---
+
+## Project 2 · MengTo/Skills 研究（进行中）
+
+**上游**: [MengTo/Skills](https://github.com/MengTo/Skills) · 3.9k Stars · MIT
+
+### 研究内容
+
+| 文件 | 内容 |
+|---|---|
+| `mengto-skills-study/index.html` | 研究总览页面（分类展示 + Demo 预览 + 工作流图解） |
+| `mengto-skills-study/README.md` | 完整研究文档（哲学 / 分类 / 格式 / 契约） |
+| `mengto-skills-study/SKILL-MATRIX.md` | 118 个技能完整索引（分类 × Demo 链接） |
+
+### 技能规模
+
+- **118** Skills 总数
+- **89** Demo 示例（可直接浏览器运行）
+- **5** 分类：Codex Workflows (17) / Web Design (79) / Game Dev (19) / UI (1) / Media (2)
+
+### 核心发现
+
+1. **SKILL.md = 触发器 + 工作流**：frontmatter `description` 是 AI 路由的触发条件，Workflow 是执行手册
+2. **4 步招牌闭环**：video→superprompt → html→interactions → full-page-capture → daily-inspiration
+3. **垂直切片哲学**：游戏开发用垂直切片（Movement → Combat → Enemy → Reward），每个切片可独立验证
+4. **Demo 即证明**：每个技能附 `demo/index.html`，1280×720 截图 + 可运行代码
+5. **Quality Bar 可测试**：质量标准具体可验证（"prompt 长度足够不看原视频重建动画"）
+
+### 后续研究（待做）
+
+- 逐个分类深度分析（Web Design 79 个技能逐个研究）
+- 招牌工作流实战验证
+- 与 Finesse Skill 对比研究
+- 构建我们自己的 AI Agent Design Skills 库
 
 ---
 
