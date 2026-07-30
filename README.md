@@ -33,6 +33,11 @@
 | [`/finesse-skill-study/capabilities.html`](https://yydshly.github.io/0730_practical-skill-study/finesse-skill-study/capabilities.html) | 项目 1 · 能力全景 + 决策树 |
 | [`/finesse-skill-study/prompt-builder.html`](https://yydshly.github.io/0730_practical-skill-study/finesse-skill-study/prompt-builder.html) | 项目 1 · Prompt 自动拼装 |
 | [`/finesse-skill-study/family-orchard/`](https://yydshly.github.io/0730_practical-skill-study/finesse-skill-study/family-orchard/) | 项目 1 子交付物 · 拾穗果园 |
+| [`/mengto-skills-study/`](https://yydshly.github.io/0730_practical-skill-study/mengto-skills-study/) | 项目 2 研究总览 |
+| [`/mengto-skills-study/demo-gallery.html`](https://yydshly.github.io/0730_practical-skill-study/mengto-skills-study/demo-gallery.html) | 项目 2 · Demo 展示（89 个可运行） |
+| [`/mengto-skills-study/capability-map.html`](https://yydshly.github.io/0730_practical-skill-study/mengto-skills-study/capability-map.html) | 项目 2 · 能力地图（决策树） |
+| [`/mengto-skills-study/scene-testing.html`](https://yydshly.github.io/0730_practical-skill-study/mengto-skills-study/scene-testing.html) | 项目 2 · 场景测试（4 技能验证） |
+| [`/mengto-skills-study/workflow-demo.html`](https://yydshly.github.io/0730_practical-skill-study/mengto-skills-study/workflow-demo.html) | 项目 2 · 工作流实战（4 步闭环） |
 
 > 部署开关：`Settings → Pages → Source: master · /(root)`（首次部署需仓库 owner 手动开启）
 
@@ -45,13 +50,18 @@
 python -m http.server 8000
 
 # 然后浏览器打开：
-#   http://localhost:8000/                              ← 仓库总入口
-#   http://localhost:8000/finesse-skill-study/         ← 项目 1 入口
+#   http://localhost:8000/                                    ← 仓库总入口
+#   http://localhost:8000/finesse-skill-study/               ← 项目 1 入口
 #   http://localhost:8000/finesse-skill-study/examples-index.html
 #   http://localhost:8000/finesse-skill-study/family-orchard/
+#   http://localhost:8000/mengto-skills-study/               ← 项目 2 入口
+#   http://localhost:8000/mengto-skills-study/demo-gallery.html
+#   http://localhost:8000/mengto-skills-study/capability-map.html
+#   http://localhost:8000/mengto-skills-study/scene-testing.html
+#   http://localhost:8000/mengto-skills-study/workflow-demo.html
 ```
 
-> 项目 1 子交付物（family-orchard）使用了 ES module，必须走 HTTP 不能 `file://` 双击。其他 HTML 可以直接双击打开。
+> 项目 1 子交付物（family-orchard）使用了 ES module，必须走 HTTP 不能 `file://` 双击。项目 2 的 Demo 展示页内含"打开 Demo"链接，必须用 HTTP 服务打开。
 
 ---
 
