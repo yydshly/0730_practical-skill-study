@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>自有 Agent Skills — 原创技能库</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    :root {
+      --bg: #0a0a0f;
+      --surface: #12121a;
+      --surface2: #1a1a25;
+      --border: #2a2a3a;
+      --text: #e8e8f0;
+      --muted: #8888a0;
+      --accent: #00d4a1;
+      --accent2: #6fffb0;
+      --tag-bg: #1e1e2e;
+    }
+    body { background: var(--bg); color: var(--text); font-family: 'Inter', system-ui, sans-serif; margin: 0; }
+    nav { display: flex; gap: 2rem; padding: 1.2rem 2rem; border-bottom: 1px solid var(--border); align-items: center; }
+    nav .logo { font-weight: 700; font-size: 1.1rem; color: var(--accent); text-decoration: none; }
+    nav a { color: var(--muted); text-decoration: none; font-size: 0.9rem; transition: color 0.2s; }
+    nav a:hover, nav a.active { color: var(--text); }
+
+    .page-header { text-align: center; padding: 3rem 1rem 2rem; }
+    .page-header h1 { font-size: 1.8rem; font-weight: 700; margin: 0 0 0.5rem; color: var(--text); }
+    .page-header .subtitle { color: var(--accent); font-size: 0.95rem; margin-bottom: 0.5rem; }
+    .page-header p { color: var(--muted); margin: 0; font-size: 0.88rem; max-width: 600px; margin: 0 auto; line-height: 1.6; }
+    .page-header .origin-note { font-size: 0.78rem; color: var(--muted); margin-top: 0.75rem; padding: 0.75rem 1.5rem; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; display: inline-block; }
+    .page-header .origin-note code { color: var(--accent); background: var(--tag-bg); padding: 0.1rem 0.4rem; border-radius: 4px; }
+
+    .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1rem; padding: 0 2rem 3rem; max-width: 1200px; margin: 0 auto; }
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem; cursor: pointer; transition: all 0.2s; position: relative; overflow: hidden; }
+    .card:hover { border-color: var(--accent); transform: translateY(-2px); }
+    .card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, var(--accent), var(--accent2)); opacity: 0; transition: opacity 0.2s; }
+    .card:hover::before { opacity: 1; }
+    .card-type { font-size: 0.7rem; color: var(--accent); font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.4rem; }
+    .card-name { font-size: 1rem; font-weight: 700; margin: 0 0 0.4rem; }
+    .card-from { font-size: 0.75rem; color: var(--muted); margin-bottom: 0.6rem; }
+    .card-desc { font-size: 0.82rem; color: var(--muted); line-height: 1.5; margin: 0; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .card-footer { display: flex; gap: 0.4rem; margin-top: 0.8rem; flex-wrap: wrap; }
+    .card-tag { background: var(--tag-bg); border: 1px solid var(--border); padding: 0.15rem 0.5rem; border-radius: 4px; font-size: 0.7rem; color: var(--muted); }
+
+    /* Detail Overlay */
+    .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 1000; display: none; align-items: center; justify-content: center; padding: 1rem; }
+    .overlay.open { display: flex; }
+    .detail { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; width: 100%; max-width: 760px; max-height: 88vh; overflow-y: auto; position: relative; }
+    .detail-header { padding: 1.5rem 1.5rem 0; position: relative; }
+    .detail-close { position: absolute; top: 1.25rem; right: 1.25rem; background: var(--surface2); border: 1px solid var(--border); color: var(--muted); width: 2rem; height: 2rem; border-radius: 50%; cursor: pointer; font-size: 1rem; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+    .detail-close:hover { background: var(--border); color: var(--text); }
+    .detail-type { font-size: 0.7rem; color: var(--accent); font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.4rem; }
+    .detail-name { font-size: 1.4rem; font-weight: 700; margin: 0 0 0.3rem; }
+    .detail-from { font-size: 0.8rem; color: var(--muted); margin-bottom: 0.75rem; }
+    .detail-meta { display: flex; gap: 0.4rem; flex-wrap: wrap; margin-bottom: 1rem; }
+    .detail-body { padding: 0 1.5rem 1.5rem; }
+    .detail-section { margin-bottom: 1.25rem; }
+    .detail-section h3 { font-size: 0.8rem; color: var(--accent); font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; margin: 0 0 0.6rem; }
+    .detail-section p { color: var(--text); font-size: 0.88rem; line-height: 1.7; margin: 0 0 0.75rem; }
+    .detail-section p:last-child { margin-bottom: 0; }
+    .detail-section pre { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 1rem; font-size: 0.78rem; line-height: 1.65; overflow-x: auto; margin: 0; color: #c0c0d8; white-space: pre-wrap; max-height: 400px; overflow-y: auto; }
+    .detail-section ul { margin: 0; padding-left: 1.2rem; }
+    .detail-section li { color: var(--text); font-size: 0.88rem; line-height: 1.7; margin-bottom: 0.3rem; }
+    .detail-divider { border: none; border-top: 1px solid var(--border); margin: 1.5rem 0; }
+    .detail-copy-btn { background: var(--accent); border: none; color: #000; padding: 0.55rem 1.2rem; border-radius: 8px; cursor: pointer; font-size: 0.85rem; font-weight: 700; display: flex; align-items: center; gap: 0.4rem; transition: opacity 0.2s; }
+    .detail-copy-btn:hover { opacity: 0.85; }
+    .tag { background: var(--tag-bg); border: 1px solid var(--border); padding: 0.15rem 0.5rem; border-radius: 4px; font-size: 0.7rem; color: var(--muted); }
+
+    .section-label { text-align: center; font-size: 0.75rem; color: var(--accent); font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; margin: 2.5rem 0 1rem; }
+  </style>
+</head>
+<body>
+  <nav>
+    <a href="index.html" class="logo">@MengTo/Skills</a>
+    <a href="skill-reference.html">Codex</a>
+    <a href="web-design-reference.html">Web Design</a>
+    <a href="game-dev-reference.html">Game Dev</a>
+    <a href="patterns-reference.html">设计模式</a>
+    <a href="custom-skills-reference.html" class="active">自有技能</a>
+  </nav>
+
+  <div class="page-header">
+    <h1>自有 Agent Skills</h1>
+    <div class="subtitle">从 48 个研究样本中提炼的原创技能库</div>
+    <p>基于 MengTo/Skills 的模式研究，我们构建了 5 个原创通用技能。它们是从实际工作流中提取的，不是纸上谈兵。</p>
+    <div class="origin-note">
+      源: <code>agent-skills/custom/</code> · 从 <code>iterate-until-verified</code> <code>design-first-ui-prompting</code> <code>article-prompts-to-skills</code> <code>build-isometric-arpg</code> <code>build-game-inventory</code> 等模式提炼
+    </div>
+  </div>
+
+  <div class="section-label">5 个原创技能</div>
+
+  <div class="card-grid" id="cardGrid"></div>
+
+  <div class="overlay" id="overlay">
+    <div class="detail" id="detailPanel">
+      <div class="detail-header">
+        <button class="detail-close" id="detailClose">×</button>
+        <div class="detail-type" id="detailType"></div>
+        <div class="detail-name" id="detailName"></div>
+        <div class="detail-from" id="detailFrom"></div>
+        <div class="detail-meta" id="detailMeta"></div>
+      </div>
+      <div class="detail-body" id="detailBody"></div>
+    </div>
+  </div>
+
+<script>
+const SKILLS = {
+  "agentic-loop": {
+    name: "agentic-loop",
+    type: "工作流",
+    desc: "对任何非平凡任务应用执行-验证循环。包含显式质量门、独立审判、诚实停止条件。适用于迭代、精化、验证类任务。",
+    pitfalls: ["self-judging", "weak-gates", "churn", "scope-creep", "hypothetical-evidence"],
+    extractedFrom: "iterate-until-verified",
+    triggers: ["improve", "iterate", "refine", "verify", "check", "production-ready", "make it better"],
+    sections: {
+      "触发场景": [
+        "用户说「make it better」「improve」「refine」「verify」「check」",
+        "任务规模大，需要多个独立 worker 并行处理",
+        "质量标准模糊（「完美」「专业」「production-ready」）",
+        "之前的尝试被拒绝，需要系统性的修订路径"
+      ],
+      "核心流程": [
+        "Lock the task contract — 原样保留用户请求，不替换主题",
+        "Translate ambition into gates — 把模糊词翻译成可观测的 pass/fail 条件",
+        "Fan out only independent workstreams — 耦合的编辑留在同一 owner",
+        "Separate making from judging — implementer 不能是自己的唯一审核者",
+        "Match proof to work type — 代码用测试，视觉用渲染输出，研究用可复现计算",
+        "Run the loop — 产出→验证→失败路由→修订→再验证",
+        "Stop honestly — 证据不足时 disclose，不强行通过"
+      ],
+      "质量门矩阵示例": [
+        "Correctness → 单元测试+类型检查 → 0 failures → npm test",
+        "Completeness → 需求逐条核对 → 每条有对应实现 → 代码审查",
+        "Performance → Lighthouse → LCP<2.5s, CLS<0.1 → Report",
+        "Accessibility → axe-core → 0 violations → axe output"
+      ],
+      "分离制作与审判": [
+        "给审核者：原始任务合同 + 接受矩阵 + 候选产物 + 基准材料",
+        "隐藏：实现者的自评和推理过程",
+        "指示审核者：先找失败、引用证据、拒绝无依据声明、返回逐 gate 裁决"
+      ],
+      "失败模式": [
+        "Self-judging: 实现者没有独立验证就标记自己完成",
+        "Weak gates: 「看起来不错」不是 gate — 必须写可观测条件",
+        "Churn: 同一方法失败两次后仍在重复",
+        "Scope creep: 以迭代为借口添加超出范围的功能",
+        "Hypothetical evidence: 引用未实际运行的测试"
+      ]
+    }
+  },
+
+  "spec-first-ui": {
+    name: "spec-first-ui",
+    type: "Prompt 模式",
+    desc: "在任何 UI 生成之前先写规格说明，用系统设计思维驱动 Prompt，减少无效迭代，获得一致的输出。",
+    pitfalls: ["prompt-only", "multi-variable", "vague-goals", "self-verification", "over-constrained"],
+    extractedFrom: "design-first-ui-prompting",
+    triggers: ["design a landing page", "create a dashboard", "make a UI", "redesign this screen", "generate UI"],
+    sections: {
+      "触发场景": [
+        "用户要求生成 landing page、dashboard、组件、移动端屏幕",
+        "AI 生成的 UI 每次风格差异大、不可控",
+        "无休止迭代，没有明确的完成点",
+        "用户请求模糊（「让它更现代」）"
+      ],
+      "规格说明模板": [
+        "GOAL: What + For whom + Success criteria",
+        "FORMAT: Size/aspect + margins + breakpoints",
+        "LAYOUT: Grid + placement + hierarchy (wireframe in words)",
+        "TYPE SYSTEM: Font + scale + weights + leading",
+        "COLOR: Background + text + one accent + texture",
+        "UI STYLE: minimal / editorial / glass / playful 3D",
+        "COPY: exact lines (do not paraphrase)",
+        "CONSTRAINTS: change 1-2 things per variant",
+        "NEGATIVE PROMPT: No logos, watermarks, extra text"
+      ],
+      "关键原则": [
+        "先生成规格，再生成 UI — 不颠倒顺序",
+        "每次修订只改一个约束变量 — 同时改多个则无法判断哪个有效",
+        "text 准确度：用两遍法 — 第一遍不带文字，第二遍专门处理 copy"
+      ],
+      "Variant 策略": [
+        "Variant A: 同规格，换主色",
+        "Variant B: 同规格，换字体",
+        "Variant C: 同规格，换布局网格",
+        "每次只变 1-2 个约束，记录哪个导致了期望效果"
+      ],
+      "失败模式": [
+        "Prompt-only: 不写规格就生成，然后调整去「匹配」",
+        "Multi-variable revision: 一次改字体、颜色、布局 — 不知道哪个起作用",
+        "Vague goals: 「让它 pop」不是规格",
+        "Self-verification: 生成者自己说「符合规格」但没验证",
+        "Over-constrained: 一次塞 15 个约束 — 聚焦最重要的 5 个"
+      ]
+    }
+  },
+
+  "extract-skill": {
+    name: "extract-skill",
+    type: "工作流",
+    desc: "从文章、教程、工作流描述中提取可复用的 Skill。保留成功机制，移除来源特定包装，产出可迁移到其他主题/布局/技术栈的能力包。",
+    pitfalls: ["page-clone", "mega-skill", "micro-fragments", "theme-lock-in", "prompt-only-package"],
+    extractedFrom: "article-prompts-to-skills",
+    triggers: ["turn this into a skill", "make this reusable", "extract a workflow", "codify this pattern"],
+    sections: {
+      "触发场景": [
+        "用户提供了文章/教程，要求「把它变成一个 Skill」",
+        "发现跨项目的重复工作流模式，想把它固化",
+        "现有 Skill 太宽（mega-skill），需要拆分成更小的能力单元",
+        "团队成员有隐性知识，想变成显性的、可分享的 artifact"
+      ],
+      "提取检查清单": [
+        "✅ 保留：行为与状态转换",
+        "✅ 保留：数据模型与参数默认值",
+        "✅ 保留：timing/easing/spacing 规则",
+        "✅ 保留：可访问性 + reduced-motion + keyboard 行为",
+        "✅ 保留：性能约束与失败模式",
+        "✅ 保留：接受检查（证明结果有效）",
+        "❌ 移除：品牌名称、营销文案",
+        "❌ 移除：与能力无关的页面布局",
+        "❌ 移除：硬编码的 palette/asset/selector",
+        "❌ 移除：不影响结果的偶然实现选择"
+      ],
+      "文件夹结构": [
+        "agent-skills/<category>/<skill-name>/",
+        "  SKILL.md — 必须（祈使句，frontmatter 只放 name+description）",
+        "  REFERENCES.md — 可选（只放链接）",
+        "  ARTICLE.md — 可选（长篇上下文）",
+        "  demo/index.html — 可视技能需要",
+        "  demo/PROMPT.md — 工作流技能需要",
+        "  demo/input.md + expected-output.md — 工作流技能需要"
+      ],
+      "三个示例 Prompt": [
+        "Minimal: Use $<skill-name> to <capability> on <target>",
+        "Recreate demo: Describe reference experience, contract, deliverables",
+        "Remix: Change subject/content/palette while preserving mechanism"
+      ],
+      "失败模式": [
+        "Page clone: 复制来源布局而非提取底层机制",
+        "Mega-skill: 把独立能力合并成一个模糊技能",
+        "Micro-fragments: 把每句话变成技能但没有独立使用价值",
+        "Theme lock-in: 硬编码来源的调色板/资源/copy",
+        "Prompt-only package: 只有 .md，缺少可运行的 demo"
+      ]
+    }
+  },
+
+  "vertical-slice-delivery": {
+    name: "vertical-slice-delivery",
+    type: "架构模式",
+    desc: "按「最小组件可玩」切分项目，每次交付一个完整的端到端能力环，而非四个半成品系统并行开发。防止集成地狱，始终保持可演示状态。",
+    pitfalls: ["parallel-trap", "scope-bleed", "integration-afterthought", "no-demo", "skip-contract"],
+    extractedFrom: "build-isometric-arpg",
+    triggers: ["start a project", "new project", "multi-component", "parallel work", "show a demo"],
+    sections: {
+      "触发场景": [
+        "启动一个多组件项目（前端+后端+认证+数据库）",
+        "项目停滞 — 所有东西都「进行中」但没有可用的",
+        "需要向利益相关者展示 demo 但只有不相连的组件",
+        "团队并行工作但集成总是在最后阶段才痛苦地发生"
+      ],
+      "切片定义": [
+        "一个 slice = 一个完整端到端用户能力（从数据层到 UI）",
+        "Slice 1: 回答「什么是真正有用的最小完整功能？」",
+        "每个 slice 有：用户目标 + Demo 证明 + 主成功路径 + 失败模式",
+        "不要在 Slice 1 稳定之前开始 Slice 2"
+      ],
+      "每个 Slice 三阶段": [
+        "Phase A — 集成契约: 定义数据形状、API 边界、事件契约。锁定后才开始实现",
+        "Phase B — 实现: 端到端构建能力。测试主路径 + 关键失败模式",
+        "Phase C — 验证: 运行自动化测试。演示给真实人类（不只是自检）。锁定下一 slice 的集成点"
+      ],
+      "保持小切片": [
+        "一个切片应该能在 ~3 个专注会话中完成",
+        "如果超过，说明切片太大 — 拆分它",
+        "健康切片：一个段落能解释清楚，非工程师也能验证完成状态"
+      ],
+      "失败模式": [
+        "Parallel trap: 同时构建 A/B/C，只在最后集成",
+        "Scope bleed: 切片进行到一半变成了整个项目",
+        "Integration afterthought: 组件孤立时工作，组合时崩溃",
+        "No demo: 切片「完成」但无法展示给任何人",
+        "Skip the contract: 没对齐数据形状就跳进实现"
+      ]
+    }
+  },
+
+  "atomic-state-update": {
+    name: "atomic-state-update",
+    type: "架构模式",
+    desc: "所有双向状态转移（物品移动、认证会话、购物车、表单向导）走原子事务：验证→计算→提交或拒绝→持久化。从不移除前不确认目的地合法。",
+    pitfalls: ["split-mutation", "no-conflict-detection", "implicit-rollback", "copying-source-of-truth", "rapid-resubmission"],
+    extractedFrom: "build-game-inventory",
+    triggers: ["inventory", "cart", "transfer", "checkout", "equip", "booking", "reservation", "toggle state"],
+    sections: {
+      "触发场景": [
+        "Inventory、loot 或资源系统（游戏/电商）",
+        "认证会话（登录、登出、token 刷新）",
+        "购物车操作（添加、删除、更新数量、结算）",
+        "任何 toggle/开关状态（收藏、关注、预约）",
+        "表单向导，部分完成的提交需要原子性保障"
+      ],
+      "状态模型分层": [
+        "Source of truth: 权威数据 — item 定义、用户记录",
+        "Runtime state: 当前会话 — inventory 槽位、购物车项目",
+        "Pending state: 进行中变更 — 尚未提交"
+      ],
+      "原子事务代码模板": [
+        "1. Validate: 检查源所有权 + 目的地合法性",
+        "2. Compute: 计算下一步完整状态（不提交）",
+        "3. Commit or Reject: 原子决策，是否则 throw",
+        "4. Persist: 在确认后才持久化",
+        "Never: removeItem → then addToSlot → rollback on failure"
+      ],
+      "并发编辑处理": [
+        "Timestamp: 最后写入胜出 + 显示冲突消息",
+        "Version number: 第二次写入失败 + 显示冲突通知",
+        "Event queue: 序列化操作，一次处理一个"
+      ],
+      "失败模式": [
+        "Split mutation: 在确认目的地前就移除源 — 失败时 item 丢失",
+        "No conflict detection: 两个操作竞争，都成功，一个覆盖另一个",
+        "Implicit rollback: 依赖 catch 异常回滚部分状态 — 复杂且脆弱",
+        "Copying source of truth: 把 item 定义复制到运行时 — 源更新后引用过时",
+        "Rapid re-submission: 快速双击导致双重转移",
+        "No identity preservation: item 转移后获得新 ID — 下游引用断裂"
+      ]
+    }
+  }
+};
+
+// ── Render ────────────────────────────────────────────────────────────────
+const grid = document.getElementById('cardGrid');
+
+function renderSection(content) {
+  if (Array.isArray(content)) {
+    return '<ul>' + content.map(item => `<li>${item}</li>`).join('') + '</ul>';
+  }
+  return '<p>' + content + '</p>';
+}
+
+function openDetail(key) {
+  const s = SKILLS[key];
+  const body = document.getElementById('detailBody');
+  let html = '';
+  for (const [sectionTitle, sectionContent] of Object.entries(s.sections)) {
+    html += `
+      <div class="detail-section">
+        <h3>${sectionTitle}</h3>
+        ${renderSection(sectionContent)}
+      </div>
+      <hr class="detail-divider">`;
+  }
+  html += `
+      <div class="detail-section">
+        <h3>触发词</h3>
+        <div class="detail-meta">${s.triggers.map(t => `<span class="tag">${t}</span>`).join('')}</div>
+      </div>
+      <div class="detail-section">
+        <h3>来源模式</h3>
+        <p style="color: var(--muted)">提炼自 <code style="color: var(--accent)">${s.extractedFrom}</code></p>
+      </div>`;
+  html += `
+      <button class="detail-copy-btn" onclick="copySkill('${key}')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+        复制完整 SKILL.md
+      </button>`;
+
+  document.getElementById('detailType').textContent = s.type;
+  document.getElementById('detailName').textContent = s.name;
+  document.getElementById('detailFrom').textContent = '来源模式: ' + s.extractedFrom;
+  document.getElementById('detailMeta').innerHTML = s.pitfalls.map(p => `<span class="tag">${p}</span>`).join('');
+  body.innerHTML = html;
+  document.getElementById('overlay').classList.add('open');
+}
+
+function copySkill(key) {
+  const s = SKILLS[key];
+  const lines = [`---`, `name: ${s.name}`, `description: ${s.desc}`, `---`, ``];
+  lines.push(`# ${s.name.charAt(0).toUpperCase() + s.name.slice(1).replace(/-/g, ' ')}`, ``);
+  lines.push(`**Type:** ${s.type} | **Extracted from:** ${s.extractedFrom}`, ``);
+  for (const [sectionTitle, sectionContent] of Object.entries(s.sections)) {
+    lines.push(`## ${sectionTitle}`);
+    if (Array.isArray(sectionContent)) {
+      sectionContent.forEach(item => lines.push(`- ${item}`));
+    } else {
+      lines.push(sectionContent);
+    }
+    lines.push('');
+  }
+  lines.push(`## Triggers`);
+  s.triggers.forEach(t => lines.push(`- \`${t}\``));
+  lines.push('');
+  lines.push(`## Pitfalls`);
+  s.pitfalls.forEach(p => lines.push(`- ${p}`));
+
+  navigator.clipboard.writeText(lines.join('\n')).then(() => {
+    const btn = document.querySelector('.detail-copy-btn');
+    const orig = btn.innerHTML;
+    btn.innerHTML = '✓ 已复制完整结构';
+    setTimeout(() => { btn.innerHTML = orig; }, 2000);
+  });
+}
+
+Object.entries(SKILLS).forEach(([key, s]) => {
+  const card = document.createElement('div');
+  card.className = 'card';
+  card.innerHTML = `
+    <div class="card-type">${s.type}</div>
+    <div class="card-name">${s.name}</div>
+    <div class="card-from">来源: ${s.extractedFrom}</div>
+    <p class="card-desc">${s.desc}</p>
+    <div class="card-footer">
+      ${s.pitfalls.map(p => `<span class="card-tag">${p}</span>`).join('')}
+    </div>`;
+  card.addEventListener('click', () => openDetail(key));
+  grid.appendChild(card);
+});
+
+document.getElementById('detailClose').addEventListener('click', () => {
+  document.getElementById('overlay').classList.remove('open');
+});
+document.getElementById('overlay').addEventListener('click', (e) => {
+  if (e.target === document.getElementById('overlay')) document.getElementById('overlay').classList.remove('open');
+});
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') document.getElementById('overlay').classList.remove('open'); });
+</script>
+</body>
+</html>
