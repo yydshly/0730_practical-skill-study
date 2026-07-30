@@ -382,6 +382,18 @@
       margin-top: 1rem;
     }
     .detail-note strong { color: var(--tag-workflow); }
+    .detail-copy-btn {
+      display: inline-block;
+      margin-bottom: 0.5rem;
+      font-size: 0.72rem;
+      color: var(--accent);
+      background: rgba(124,111,255,0.1);
+      border: 1px solid rgba(124,111,255,0.3);
+      border-radius: 6px;
+      padding: 0.3rem 0.75rem;
+      cursor: pointer;
+    }
+    .detail-copy-btn:hover { background: rgba(124,111,255,0.2); }
 
     /* USAGE LEGEND */
     .usage-legend {
@@ -724,23 +736,33 @@
 <div class="detail-overlay" id="detailOverlay">
   <div class="detail-panel">
     <button class="close-btn" id="closeBtn">关闭 ✕</button>
-    <div class="detail-content" id="detailContent"></div>
+    <div class="detail-content">
+      <div class="detail-name" id="detailName"></div>
+      <div class="detail-desc" id="detailDesc"></div>
+      <div class="detail-section-title">使用场景</div>
+      <div class="detail-scenario-box" id="detailScenario"></div>
+      <div class="detail-section-title" id="detailStepsTitle">核心工作流</div>
+      <div class="workflow-steps" id="detailSteps"></div>
+      <div class="detail-section-title">可直接使用的 Prompt</div>
+      <button class="detail-copy-btn" onclick="copyPrompt(this)">复制 Prompt</button>
+      <pre class="detail-prompt" id="detailPrompt"></pre>
+      <div class="detail-note" id="detailNote"></div>
+    </div>
   </div>
 </div>
 
 <script>
-// Detail data for expanded view
 const DETAIL_DATA = {
   'video-to-superprompt': {
     desc: '将参考视频转换为超级重建提示词。捕捉设计、UI、动画、过渡、字体、颜色、资产完整信息，使 AI 能在不看原视频的情况下重建交互。',
-    scenario: '<strong>使用场景：</strong>看到一个酷炫的落地页动画视频，想让 AI 精准复现它。先用 ffprobe 提取元数据，再提取关键帧，再逐层分析，再写 superprompt。',
+    scenario: '看到一个酷炫的落地页动画视频，想让 AI 精准复现它。先用 ffprobe 提取元数据，再提取关键帧，再逐层分析，再写 superprompt。',
     steps: [
-      { num: 1, text: '<strong>Locate source video.</strong> 接受本地文件/URL/上传，检查源代码连接' },
-      { num: 2, text: '<strong>Inspect technically.</strong> ffprobe 提取元数据，ffmpeg 提取代表性帧' },
-      { num: 3, text: '<strong>Analyze in layers.</strong> Story → Screen/layout → Motion → Visual design → Technical rebuild → Accessibility' },
-      { num: 4, text: '<strong>Plan assets.</strong> 产出 asset map，含 URL 或 placeholder' },
-      { num: 5, text: '<strong>Write superprompt.</strong> 从最终产物倒推，含 asset map、品牌语言、section anatomy、motion system' },
-      { num: 6, text: '<strong>Verify.</strong> 检查所有 asset 路径是否存在，帧是否非空' },
+      { num:1, text:'<strong>Locate source video.</strong> 接受本地文件/URL/上传，检查源代码连接' },
+      { num:2, text:'<strong>Inspect technically.</strong> ffprobe 提取元数据，ffmpeg 提取代表性帧' },
+      { num:3, text:'<strong>Analyze in layers.</strong> Story → Screen/layout → Motion → Visual design → Technical rebuild → Accessibility' },
+      { num:4, text:'<strong>Plan assets.</strong> 产出 asset map，含 URL 或 placeholder' },
+      { num:5, text:'<strong>Write superprompt.</strong> 从最终产物倒推，含 asset map、品牌语言、section anatomy、motion system' },
+      { num:6, text:'<strong>Verify.</strong> 检查所有 asset 路径是否存在，帧是否非空' },
     ],
     prompt: `Use $video-to-superprompt to analyze the reference video.
 
@@ -752,14 +774,14 @@ Write one paste-ready prompt that captures what to build and how.`,
   },
   'html-to-interaction-prompts': {
     desc: '将 HTML 页面转换为多个可复用交互提示词。每个交互（hover/滚动/悬停）一个独立 Prompt，可直接给 AI 用来重建该交互。',
-    scenario: '<strong>使用场景：</strong>有一个参考页面，想拆解出每个可复用交互的精确 Prompt，而不是一个模糊的「帮我做一个类似页面」。',
+    scenario: '有一个参考页面，想拆解出每个可复用交互的精确 Prompt，而不是一个模糊的「帮我做一个类似页面」。',
     steps: [
-      { num: 1, text: '<strong>Inspect source first.</strong> 读 HTML/CSS/JS，找 interaction terms：mousemove, ScrollTrigger, hover, sticky, parallax...' },
-      { num: 2, text: '<strong>Decide prompt list.</strong> 按可复用交互idea分割，不要按代码行数' },
-      { num: 3, text: '<strong>Write reusable prompts.</strong> 结构：Core idea / Technology / Implementation / Interaction / Success' },
-      { num: 4, text: '<strong>Capture screenshots.</strong> 每个 Prompt 对应一个截图，动作触发前捕获' },
-      { num: 5, text: '<strong>Create article.</strong> 每个 Prompt + 截图组成一个可交付单元' },
-      { num: 6, text: '<strong>Verify.</strong> git diff --check，确认截图存在且非空' },
+      { num:1, text:'<strong>Inspect source first.</strong> 读 HTML/CSS/JS，找 interaction terms：mousemove, ScrollTrigger, hover, sticky, parallax...' },
+      { num:2, text:'<strong>Decide prompt list.</strong> 按可复用交互idea分割，不要按代码行数' },
+      { num:3, text:'<strong>Write reusable prompts.</strong> 结构：Core idea / Technology / Implementation / Interaction / Success' },
+      { num:4, text:'<strong>Capture screenshots.</strong> 每个 Prompt 对应一个截图，动作触发前捕获' },
+      { num:5, text:'<strong>Create article.</strong> 每个 Prompt + 截图组成一个可交付单元' },
+      { num:6, text:'<strong>Verify.</strong> git diff --check，确认截图存在且非空' },
     ],
     prompt: `Use $html-to-interaction-prompts to analyze the HTML reference at [path].
 
@@ -770,73 +792,41 @@ Write one paste-ready prompt that captures what to build and how.`,
 5. Create content.md with each prompt + screenshot.`,
     note: '<strong>核心价值：</strong>最实用的一步是「按交互idea分割而不是按代码分割」——这正是做 Skill 的核心思路。'
   },
-  'iterate-until-verified': {
-    desc: '提示词无关的执行-验证循环框架。Fan out 工作 → 独立评审 → 循环直到质量门通过。preserves the original task without letting implementer be sole approver.',
-    scenario: '<strong>使用场景：</strong>一个复杂任务需要多轮迭代，不想让写代码的人和评审代码的人是同一个 AI。',
+  'stitched-full-page-capture': {
+    desc: '解决懒加载/WebGL/动画页截图为空白的问题。用分段截图 + 拼接的方式获取完整页面截图，优于浏览器原生 fullPage 截屏。',
+    scenario: '需要截取一个长页面，但浏览器全页截图结果是空白的（比如 Framer/懒加载/WebGL 页面）。',
     steps: [
-      { num: 1, text: '<strong>Lock the original task.</strong> 提取 outcome/deliverables/constraints/exclusions/definition of done' },
-      { num: 2, text: '<strong>Convert ambition to gates.</strong> 把「perfect/professional」翻译成可观测的检查项' },
-      { num: 3, text: '<strong>Decompose and assign.</strong> 拆成独立工作流，给每个worker清晰边界' },
-      { num: 4, text: '<strong>Separate making from judging.</strong> 让 verifier 独立评审，不看 implementer 的自我评估' },
-      { num: 5, text: '<strong>Match proof to work.</strong> 代码→测试/构建；视觉→渲染输出/对比；研究→原始来源/矛盾搜索' },
-      { num: 6, text: '<strong>Run the loop.</strong> 失败的门打回负责的工作流，修订后再检查' },
+      { num:1, text:'<strong>Open real page URL</strong>，不是 marketplace 缩略图或 asset URL' },
+      { num:2, text:'<strong>Warm the page</strong>：从顶到底滚一次，让懒加载和 reveal 区域都渲染' },
+      { num:3, text:'<strong>Return to top</strong>' },
+      { num:4, text:'<strong>分段截图</strong>：按 viewport 大小（或略重叠）逐步向下滚动' },
+      { num:5, text:'<strong>每次停留约 2 秒</strong>，等待内容稳定' },
+      { num:6, text:'<strong>拼接</strong>：将所有 viewport 截图垂直拼接成一张完整页面图' },
+      { num:7, text:'<strong>从拼接图切区域</strong>，不用原生 fullPage 截图' },
+      { num:8, text:'<strong>Validate</strong>：检查尺寸、空白带、内容完整性' },
+      { num:9, text:'<strong>Script:</strong> node stitch_full_page_capture.mjs --manifest manifest.json' },
     ],
-    prompt: `Use an iterative execution-and-verification workflow around this task:
-[AUTHORITATIVE TASK - preserve exactly]
+    prompt: `Use $stitched-full-page-capture to capture the page at [URL].
 
-1. Extract task contract. Convert "完美/专业" into observable gates.
-2. Decompose independent workstreams. Fan out when delegation is useful.
-3. Assign an independent verifier (not the implementer).
-4. Route failed gates back to responsible workstream. Revise and re-check.
-5. Stop only when all gates pass or a concrete blocker is proven.`,
-    note: '<strong>核心价值：</strong>「把模糊的"好"翻译成可测量的门」+「让评审者独立于执行者」——这是做质量验证 Skill 的方法论核心。'
-  },
-  'audit-verify-explain-grade-5': {
-    desc: '审计 + 验证 + 五年级语言解释。三个步骤：找证据 → 实际验证 → 简单说明。treat every answer as three jobs: Audit what changed, Verify with evidence, Explain simply.',
-    scenario: '<strong>使用场景：</strong>需要向非技术人员解释一个技术发现，或者向老板汇报一个复杂的技术问题。',
-    steps: [
-      { num: 1, text: '<strong>Audit.</strong> 找真实来源：代码diff/日志/测试/截图/生成物，不要只靠推断' },
-      { num: 2, text: '<strong>Verify.</strong> 自动化测试 > 实际运行 > 日志 > 静态检查 > 明确标注的推断' },
-      { num: 3, text: '<strong>Explain Simply.</strong> 短句，定义术语，一个简单类比，避免居高临下' },
-    ],
-    prompt: `Use $audit-verify-explain-grade-5 to review this finding:
-[描述发现/报告/结论]
-
-1. Audit: Find the real source of truth. What changed? What claims are being made?
-2. Verify: Run actual tests / checks. Cite evidence. Do not pretend something was verified if it was only inferred.
-3. Explain: Short sentences. Plain words. What changed, why it matters, how to test it.`,
-    note: '<strong>核心价值：</strong>「不要假装被验证了」+「事实和判断分开」——这是做审计类 Skill 的基本原则。'
-  },
-  'article-prompts-to-skills': {
-    desc: '将文章/教程/提示词包转换为独立可复用的 AgentSkill。每个新 Skill 含 SKILL.md + Demo + PROMPT.md + 验证 + gallery 更新。',
-    scenario: '<strong>使用场景：</strong>发现一篇好教程，想把里面的提示词提取成可以独立使用的 Skill——这是构建我们自己的 Skill 库的核心方法。',
-    steps: [
-      { num: 1, text: '<strong>Inspect Before Extracting.</strong> 读完原文，inventory 所有 prompt/heading/asset/验收标准' },
-      { num: 2, text: '<strong>Build extraction ledger.</strong> 表格：源 prompt → 可复用能力 → 保留/移除 → Skill名 → Demo证明' },
-      { num: 3, text: '<strong>Extract Portable Contract.</strong> 保留 mechanics（行为/状态/参数默认值/时序/可访问性），移除品牌特定内容' },
-      { num: 4, text: '<strong>Package Every Skill.</strong> 含 SKILL.md + agents/openai.yaml + demo/ + PROMPT.md + input.md + expected-output.md' },
-      { num: 5, text: '<strong>Write 3 useful prompts.</strong> Minimal / Recreate the demo / Remix' },
-      { num: 6, text: '<strong>Validate.</strong> quick_validate.py + 浏览器验证 + 截图 + 控制台清洁' },
-    ],
-    prompt: `Use $article-prompts-to-skills to extract reusable skills from [article URL or path].
-
-1. Read the full article. Inventory every explicit prompt, heading, example, and acceptance criterion.
-2. Build an extraction ledger: Source → Reusable capability → Keep/Remove → Skill name.
-3. Extract the Portable Contract: keep mechanics, remove brand/layout/hard-coded values.
-4. Create the skill folder with SKILL.md + agents/openai.yaml + demo/.
-5. Write 3 prompts: Minimal / Recreate / Remix.`,
-    note: '<strong>核心价值：</strong>这是我们构建自己 Skill 库的「方法论手册」。如果我们从项目1提炼经验做成 Skill，这套流程直接可用。'
+1. Open the real page URL (not a thumbnail).
+2. Warm by scrolling top-to-bottom once.
+3. Return to top.
+4. Scroll in viewport-sized steps (~950px), waiting 2s each stop.
+5. Stitch the settled viewport captures vertically.
+6. Cut section crops from the stitched image.
+7. Validate dimensions and content completeness.`,
+    note: '<strong>核心价值：</strong>懒加载和 WebGL 页面是前端常见截图表手，这个 Skill 给出了系统性解决方案。'
   },
   'daily-ui-inspiration-capture': {
     desc: '每日 UI 灵感捕获循环：浏览 → 捕获 → 参考研究 → 提示词生成，产出 5 个灵感包，含全页截图 + 区域裁剪 + 运动帧 + Builder Prompt。',
-    scenario: '<strong>使用场景：</strong>每天花固定时间收集 5 个优质落地页，生成可直接给 AI 用来构建的详细 Prompt。',
+    scenario: '每天花固定时间收集 5 个优质落地页，生成可直接给 AI 用来构建的详细 Prompt。',
     steps: [
-      { num: 1, text: '<strong>Check previous captures.</strong> 查重：reject 重复的 normalized title/source URL/image URL' },
-      { num: 2, text: '<strong>Select 5 references.</strong> 优先 live inspectable 落地页/Framer/Dribbble（尽力而为）' },
-      { num: 3, text: '<strong>Capture per reference.</strong> 代表性静帧 + 视频（含滚动/hover/sticky/marquee）+ 全页截图 + 区域裁剪 + ≥4运动帧' },
-      { num: 4, text: '<strong>Write article.</strong> content.md 含：pattern summary + 每个 item 的图/视频 + section crops + Builder Prompt + 为什么这个 Prompt 有效' },
-      { num: 5, text: '<strong>Write manifest.</strong> JSON 含 title/date/captureMethod/itemCount/items（含 fullPageImage/sectionImages/motionFrames/prompt）' },
-      { num: 6, text: '<strong>Verify.</strong> check-ui-inspiration-duplicates.mjs，duplicateCount 必须为 0' },
+      { num:1, text:'<strong>Check previous captures.</strong> 查重：reject 重复的 normalized title/source URL/image URL' },
+      { num:2, text:'<strong>Select 5 references.</strong> 优先 live inspectable 落地页/Framer/Dribbble（尽力而为）' },
+      { num:3, text:'<strong>Capture per reference.</strong> 代表性静帧 + 视频（含滚动/hover/sticky/marquee）+ 全页截图 + 区域裁剪 + ≥4运动帧' },
+      { num:4, text:'<strong>Write article.</strong> content.md 含：pattern summary + 每个 item 的图/视频 + section crops + Builder Prompt + 为什么这个 Prompt 有效' },
+      { num:5, text:'<strong>Write manifest.</strong> JSON 含 title/date/captureMethod/itemCount/items（含 fullPageImage/sectionImages/motionFrames/prompt）' },
+      { num:6, text:'<strong>Verify.</strong> check-ui-inspiration-duplicates.mjs，duplicateCount 必须为 0' },
     ],
     prompt: `Use $daily-ui-inspiration-capture to run today's UI inspiration capture.
 
@@ -850,59 +840,324 @@ Collect exactly 5 references. For each:
 
 Create articles/YYYY-MM-DD-ui-inspiration-capture/content.md + manifest.json`,
     note: '<strong>核心价值：</strong>「5 个」这个约束很有价值——强制精选而不是堆量。每个 item 的结构（静帧+视频+全页+区域+Prompt）也是做参考库的标准模板。'
+  },
+  'build-daily-inspiration-sites': {
+    desc: '将 5 个 UI 灵感参考转换为 5 个独立的原创落地页 Sites 项目，每个保留高层视觉语法但替换全部品牌/文案/人物/数据/图片。',
+    scenario: '有了 5 个灵感参考，想让 AI 各自构建一个完整落地页，保留视觉结构但完全原创。',
+    steps: [
+      { num:1, text:'<strong>Locate and validate the capture.</strong> 要求 manifest.json(itemCount:5) + content.md + 每项一张 fullPageImage + pageUrl + builder prompt' },
+      { num:2, text:'<strong>Create the originality matrix.</strong> 为每项定义新品牌名/定位/受众/词汇/证明点/图片方向，搜索防止名称相似' },
+      { num:3, text:'<strong>Prepare one build brief per item.</strong> 每 brief 含：原 manifest 标题、fullPageImage 附件、新品牌全部信息、独创性边界、使用 sites:sites-building 和 sites:sites-hosting' },
+      { num:4, text:'<strong>Create five separate Codex tasks.</strong> 每个任务独立，不得合并；复用已有任务而非重复创建' },
+      { num:5, text:'<strong>Require a complete Sites handoff.</strong> 每任务须：初始化 Sites → 构建完整单路由落地页 → 验证构建 → 提交 → 私有部署 → 返回 URL' },
+      { num:6, text:'<strong>Report the launch.</strong> 返回参考→替换品牌的映射表 + 每任务状态（URL/提交/状态）' },
+    ],
+    prompt: `Use $build-daily-inspiration-sites to convert articles/YYYY-MM-DD-ui-inspiration-capture/ into five distinct Sites projects.
+
+1. Validate the capture: manifest.json with itemCount:5, content.md, one fullPageImage per item, pageUrl per item.
+2. Define five distinct replacement identities (brand name, positioning, audience, copy, imagery).
+3. Prepare one build brief per item with the full-page image attachment and originality boundary.
+4. Create five separate Codex tasks (one per item).
+5. Require each task to: build a complete single-route landing page, validate, commit, and privately deploy via Sites.
+6. Report reference-to-brand mapping + deployment URLs.`,
+    note: '<strong>核心价值：</strong>这个 Skill 展示了如何把「灵感捕获」变成「可交付网站」——是一种 Skill 连技能的编排模式。'
+  },
+  'iterate-until-verified': {
+    desc: '提示词无关的执行-验证循环框架。Fan out 工作 → 独立评审 → 循环直到质量门通过。preserves the original task without letting implementer be sole approver.',
+    scenario: '一个复杂任务需要多轮迭代，不想让写代码的人和评审代码的人是同一个 AI。',
+    steps: [
+      { num:1, text:'<strong>Lock the original task.</strong> 提取 outcome/deliverables/constraints/exclusions/definition of done' },
+      { num:2, text:'<strong>Convert ambition to gates.</strong> 把「perfect/professional」翻译成可观测的检查项' },
+      { num:3, text:'<strong>Decompose and assign.</strong> 拆成独立工作流，给每个worker清晰边界' },
+      { num:4, text:'<strong>Separate making from judging.</strong> 让 verifier 独立评审，不看 implementer 的自我评估' },
+      { num:5, text:'<strong>Match proof to work.</strong> 代码→测试/构建；视觉→渲染输出/对比；研究→原始来源/矛盾搜索' },
+      { num:6, text:'<strong>Run the loop.</strong> 失败的门打回负责的工作流，修订后再检查' },
+    ],
+    prompt: `Use an iterative execution-and-verification workflow around this task:
+[AUTHORITATIVE TASK - preserve exactly]
+
+1. Extract task contract. Convert "完美/专业" into observable gates.
+2. Decompose independent workstreams. Fan out when delegation is useful.
+3. Assign an independent verifier (not the implementer).
+4. Route failed gates back to responsible workstream. Revise and re-check.
+5. Stop only when all gates pass or a concrete blocker is proven.`,
+    note: '<strong>核心价值：</strong>「把模糊的"好"翻译成可测量的门」+「让评审者独立于执行者」——这是做质量验证 Skill 的方法论核心。'
+  },
+  'audit-verify-explain-grade-5': {
+    desc: '审计 + 验证 + 五年级语言解释。三个步骤：找证据 → 实际验证 → 简单说明。treat every answer as three jobs: Audit what changed, Verify with evidence, Explain simply.',
+    scenario: '需要向非技术人员解释一个技术发现，或者向老板汇报一个复杂的技术问题。',
+    steps: [
+      { num:1, text:'<strong>Audit.</strong> 找真实来源：代码diff/日志/测试/截图/生成物，不要只靠推断' },
+      { num:2, text:'<strong>Verify.</strong> 自动化测试 > 实际运行 > 日志 > 静态检查 > 明确标注的推断' },
+      { num:3, text:'<strong>Explain Simply.</strong> 短句，定义术语，一个简单类比，避免居高临下' },
+    ],
+    prompt: `Use $audit-verify-explain-grade-5 to review this finding:
+[描述发现/报告/结论]
+
+1. Audit: Find the real source of truth. What changed? What claims are being made?
+2. Verify: Run actual tests / checks. Cite evidence. Do not pretend something was verified if it was only inferred.
+3. Explain: Short sentences. Plain words. What changed, why it matters, how to test it.`,
+    note: '<strong>核心价值：</strong>「不要假装被验证了」+「事实和判断分开」——这是做审计类 Skill 的基本原则。'
+  },
+  'audit-reference-originality': {
+    desc: '对比网站与参考素材，审计原创性/抄袭风险。区分普通视觉语法和实质性复制，给出可操作的修复建议。',
+    scenario: '需要检查网站是否与某个参考网站过于相似，有原创性风险——或需要向客户说明是否存在侵权风险。',
+    steps: [
+      { num:1, text:'<strong>Build source registry.</strong> 收集所有参考材料：manifest/prompt packs/截图/MP4/参考URL/品牌资产/项目简报' },
+      { num:2, text:'<strong>Inventory current site.</strong> 检查：文本/品牌/数据/图片/资产/视频/结构和运动/源码和历史' },
+      { num:3, text:'<strong>Compare category by category.</strong> 至少：文本、品牌、数据、图片、资产、视频、结构/运动、历史' },
+      { num:4, text:'<strong>Triangulate every red flag.</strong> 每个风险点须列出：当前站证据 + 参考站证据 + 可观测重叠 + 差异 + 严重程度 + 最小修复方案' },
+      { num:5, text:'<strong>Propose fixes.</strong> 给出具体替换方案，优先重写而非掩饰' },
+      { num:6, text:'<strong>Report verdict.</strong> Clear / Low-risk / Changes recommended / Block release / Blocked by missing evidence' },
+    ],
+    prompt: `Use $audit-reference-originality to audit [site URL] against [reference materials].
+
+1. Build the source registry from all supplied references.
+2. Inventory the current site: text, brands, numbers, images, assets, videos, structure/motion, history.
+3. Compare category by category. Triangulate every red flag with exact evidence from both sites.
+4. Propose smallest fixes that break overlap while preserving site goals.
+5. Lead with verdict: Clear / Low-risk similarities / Changes recommended / Block release.`,
+    note: '<strong>核心价值：</strong>「普通视觉语法 vs 实质性复制」的区分思维很有启发性——我们做原创性判断时也需要这个区分框架。'
+  },
+  'article-prompts-to-skills': {
+    desc: '将文章/教程/提示词包转换为独立可复用的 AgentSkill。每个新 Skill 含 SKILL.md + Demo + PROMPT.md + 验证 + gallery 更新。',
+    scenario: '发现一篇好教程，想把里面的提示词提取成可以独立使用的 Skill——这是构建我们自己的 Skill 库的核心方法。',
+    steps: [
+      { num:1, text:'<strong>Inspect Before Extracting.</strong> 读完原文，inventory 所有 prompt/heading/asset/验收标准' },
+      { num:2, text:'<strong>Build extraction ledger.</strong> 表格：源 prompt → 可复用能力 → 保留/移除 → Skill名 → Demo证明' },
+      { num:3, text:'<strong>Extract Portable Contract.</strong> 保留 mechanics（行为/状态/参数默认值/时序/可访问性），移除品牌特定内容' },
+      { num:4, text:'<strong>Package Every Skill.</strong> 含 SKILL.md + agents/openai.yaml + demo/ + PROMPT.md + input.md + expected-output.md' },
+      { num:5, text:'<strong>Write 3 useful prompts.</strong> Minimal / Recreate the demo / Remix' },
+      { num:6, text:'<strong>Validate.</strong> quick_validate.py + 浏览器验证 + 截图 + 控制台清洁' },
+    ],
+    prompt: `Use $article-prompts-to-skills to extract reusable skills from [article URL or path].
+
+1. Read the full article. Inventory every explicit prompt, heading, example, and acceptance criterion.
+2. Build an extraction ledger: Source → Reusable capability → Keep/Remove → Skill name.
+3. Extract the Portable Contract: keep mechanics, remove brand/layout/hard-coded values.
+4. Create the skill folder with SKILL.md + agents/openai.yaml + demo/.
+5. Write 3 prompts: Minimal / Recreate / Remix.`,
+    note: '<strong>核心价值：</strong>这是我们构建自己 Skill 库的「方法论手册」。如果我们从项目1提炼经验做成 Skill，这套流程直接可用。'
+  },
+  'browser-video-recording': {
+    desc: '制作 60fps 4K 4:3 浏览器演示视频。含 macOS 光标、自然点击编排、缩放跟随、ffprobe/缩略图验证。',
+    scenario: '需要制作一个浏览器操作的演示视频，用于 Dribbble 或产品演示。',
+    steps: [
+      { num:1, text:'<strong>Set viewport</strong> to 1920×1440 (for 4:3 4K output)，通过 browser:control-in-app-browser' },
+      { num:2, text:'<strong>Navigate and capture.</strong> 每次重要状态变化后保存截图（如 01-results-top.png），记录每个点击/滚动目标的视口坐标' },
+      { num:3, text:'<strong>Design cursor paths.</strong> 稀疏直线为主；在目标前暂停再点击；画面帧住点击内容而非追逐鼠标' },
+      { num:4, text:'<strong>Generate config.</strong> python3 render_browser_demo.py --write-template 生成配置，填入 shots/scene_starts/cursor_keys/camera_keys/click_times' },
+      { num:5, text:'<strong>Render.</strong> python3 render_browser_demo.py --config /tmp/config.json --output /tmp/output.mp4' },
+      { num:6, text:'<strong>Verify.</strong> ffprobe 检查分辨率(3840×2880)/帧率(60fps)/时长；提取缩略图确认光标可见' },
+    ],
+    prompt: `Use $browser-video-recording to create a 60fps 4K 4:3 browser demo video.
+
+1. Set viewport to 1920x1440 via browser:control-in-app-browser.
+2. Navigate to [URL] and capture screenshots at each important state change.
+3. Record viewport coordinates for each click/scroll target.
+4. Design sparse, mostly-straight cursor paths. Pause briefly before clicking.
+5. Render with: python3 render_browser_demo.py --config /tmp/config.json --output /tmp/output.mp4
+6. Verify: ffprobe -v error -show_entries stream=codec_name,width,height,r_frame_rate -of json output.mp4`,
+    note: '<strong>核心价值：</strong>「Cursor 帧住内容而非追逐鼠标」+「自然点击编排」——这两个细节决定视频质量。'
+  },
+  'elevenlabs-tts': {
+    desc: '使用 ElevenLabs 本地 voice profile 生成 TTS 音频。提示词 → 语音旁白，全流程本地配置，不在 Skill 中存 API key。',
+    scenario: '需要给视频或演示加旁白，用 ElevenLabs 生成自然语音。',
+    steps: [
+      { num:1, text:'<strong>Choose profile.</strong> 从 --profile / ELEVENLABS_TTS_CONFIG / local/elevenlabs/profiles.json 读取配置' },
+      { num:2, text:'<strong>Resolve voice.</strong> 有 voice_id 直接用；有 voice_id_env 读环境变量；否则用 voice_name 搜索' },
+      { num:3, text:'<strong>Generate.</strong> 用 generate_voice.py：python3 generate_voice.py --text-file script.txt --profile default --output output.mp3' },
+      { num:4, text:'<strong>Handle overrides.</strong> 支持 --voice-id/--voice-name/--model-id/--output-format/--settings-json 单次覆盖' },
+      { num:5, text:'<strong>Report.</strong> 返回输出路径和重要警告，不打印 secrets' },
+      { num:6, text:'<strong>Verify.</strong> ffprobe 检查音频文件是否有效' },
+    ],
+    prompt: `Use $elevenlabs-tts to generate voiceover for: [script text or path]
+
+1. Select profile from --profile or default config.
+2. Resolve voice: prefer voice_id > voice_id_env > voice_name search.
+3. Generate: python3 scripts/generate_voice.py --text-file [script.txt] --profile default --output output.mp3
+4. Report output path and any warnings.
+5. Verify: ffprobe -v error -show_entries format=duration,size -of json output.mp3`,
+    note: '<strong>核心价值：</strong>把 API key 和 voice profile 放在本地配置文件而非 Skill 源码中——这是 Skill 便携性的最佳实践。'
+  },
+  'optimize-web-animations': {
+    desc: '前端动画性能分析与优化：内存泄漏风险、长会话卡顿、Canvas/WebGL 性能、滚动卡顿。含 IntersectionObserver 暂停/RAF 取消/SPA 清理 checklist。',
+    scenario: '页面越用越慢，怀疑是动画/Canvas/WebGL 没有正确清理——需要系统性诊断和修复。',
+    steps: [
+      { num:1, text:'<strong>Inspect repo context.</strong> 找 requestAnimationFrame/setInterval/setTimeout/canvas/WebGL/GSAP 动画组件；搜索 effect cleanup' },
+      { num:2, text:'<strong>Capture baseline.</strong> 在浏览器中按 top/mid/footer/mobile 分别 profile；记录 offscreen 仍在运行的动画名和 DOM owner' },
+      { num:3, text:'<strong>Patch smallest owner.</strong> 优先用现有 page reveal/visibility hook；否则加 IntersectionObserver 切换 is-offscreen 类，暂停 CSS 动画' },
+      { num:4, text:'<strong>Gate RAF loops directly.</strong> Canvas/WebGL：进入视口时启动，离开时 cancelAnimationFrame + Disconnect observers' },
+      { num:5, text:'<strong>Verify behavior.</strong> 重新加载并重跑 profile；目标：offscreenRunningCount: 0；确认可见动画仍正常运行' },
+      { num:6, text:'<strong>Run local checks.</strong> git diff --check && npm run lint && npm run build' },
+      { num:7, text:'<strong>Report with evidence.</strong> 附：采样路由/ offscreen 动画数/ DOM-canvas 稳定性/ route-cycle 结果/本地检查' },
+    ],
+    prompt: `Use $optimize-web-animations to audit and fix [page URL] for animation performance.
+
+1. Inspect: find RAF loops, setInterval/setTimeout, canvas/WebGL/GSAP components and their cleanup.
+2. Profile at top/mid/footer/mobile. Record which animations run offscreen and their DOM owners.
+3. Patch: add IntersectionObserver toggling is-offscreen class; pause CSS animations; gate RAF loops.
+4. Verify: reload and rerun profile. Target: offscreenRunningCount: 0.
+5. Run: git diff --check && npm run lint && npm run build.
+6. Report with evidence.`,
+    note: '<strong>核心价值：</strong>「offscreenRunningCount: 0」作为验证目标——把性能指标翻译成可检查的行为结果，很实用。'
+  },
+  'performance-profiling': {
+    desc: 'Apple 平台应用性能分析：Instruments、Xcode 诊断、MetricKit。UI 卡顿/内存/启动/电池的完整决策树和 checklist。',
+    scenario: 'iOS 应用卡顿或内存泄漏，需要用 Instruments 系统性诊断——不知道从哪里入手。',
+    steps: [
+      { num:1, text:'<strong>Identify category.</strong> UI卡顿 → Time Profiler；内存泄漏 → Leaks+Memory Graph；启动慢 → App Launch；电池 → Energy Log；通用 → time-profiler.md + memory-profiling.md' },
+      { num:2, text:'<strong>Read reference file.</strong> 根据类别读取 references/time-profiler.md / memory-profiling.md / launch-optimization.md / energy-diagnostics.md' },
+      { num:3, text:'<strong>Profile on device, Release build.</strong> 真机优于 Simulator；用 Release 配置；用代表性数据复现' },
+      { num:4, text:'<strong>Inspect code path.</strong> 在 Propose fix 之前先找到 profile 显示的热点代码路径' },
+      { num:5, text:'<strong>Apply smallest targeted fix.</strong> 只改测量到的瓶颈点，不要过早优化' },
+      { num:6, text:'<strong>Re-profile to confirm.</strong> 验证修复有效；记录 before/after 对比' },
+    ],
+    prompt: `Use $performance-profiling to diagnose [iOS app] for [UI hangs / memory leaks / slow launch / battery drain].
+
+1. Identify the performance category from the user report.
+2. Read the matching reference: time-profiler.md / memory-profiling.md / launch-optimization.md / energy-diagnostics.md
+3. Profile on a real device with Release build and representative data.
+4. Inspect the code path named by the profile before proposing a fix.
+5. Apply the smallest targeted fix.
+6. Re-profile to confirm the improvement.`,
+    note: '<strong>核心价值：</strong>「在 Propose fix 之前先读 reference file」+「smallest targeted fix」——这是系统性性能分析的工作流，很值得借鉴。'
+  },
+  'generate-reference-inspired-brand-worlds': {
+    desc: '从视觉参考生成多个原创品牌 campaign，通过相似度刻度盘控制亲近程度（30%-85%）。每个品牌有独特名称/定位/受众/视觉语言。',
+    scenario: '有一个参考品牌视觉，想生成多个感觉相似但完全原创的品牌概念——而不是直接抄。',
+    steps: [
+      { num:1, text:'<strong>Load and inspect.</strong> 先检查所有提供的图片，标注 Image 1(primary) 和 Image 2(current concept if revising)' },
+      { num:2, text:'<strong>Set similarity dial.</strong> 30%=抽象情绪；50%=换情绪+换配色/主体；70%=保留构图逻辑+换4+元素(默认)；85%=保留大部分+改4+签名元素' },
+      { num:3, text:'<strong>Extract visual DNA.</strong> 写两个清单：可复用视觉语法（场景密度/配色关系/光影/字体/节奏）+ 保护性签名元素（精确人物/构图/品牌名）' },
+      { num:4, text:'<strong>Build brand matrix.</strong> 共享常数（比例/介质/色调关系）+ 每品牌必变字段（Name/Meaning/Environment/Human ritual/Signature motif）' },
+      { num:5, text:'<strong>Write one prompt per brand.</strong> 每次调用一个 image-gen，不要一个 prompt 出 5 个变体' },
+      { num:6, text:'<strong>Validate every output.</strong> 拼写/无多余文字/品牌感可见/相似度合理/至少4元素不同于参考' },
+      { num:7, text:'<strong>Save and hand off.</strong> 存原始文件 → 复制到项目 → 提交 → 报告' },
+      { num:8, text:'<strong>Revision.</strong> 用 Image 1=原参考 + Image 2=当前概念，只改相似度和共享视觉语法，不改品牌名和核心主体' },
+    ],
+    prompt: `Use $generate-reference-inspired-brand-worlds to create [N] original brand concepts from [reference image].
+
+1. Load and inspect the reference image. Label: Image 1 = primary visual-language reference.
+2. Set similarity dial: 30% (abstract mood) / 50% (share emotion, change palette) / 70% (preserve composition, change 4+ elements) / 85% (close neighbor, change 4+ signature elements).
+3. Extract visual DNA: reusable grammar + protected signature elements.
+4. Build brand matrix: shared constants + per-brand Name/Meaning/Environment/Ritual/Motif.
+5. Write one image-gen prompt per brand.
+6. Validate each output: spelling, no extra text, brand meaning visible, similarity plausible.
+7. Save and report paths.`,
+    note: '<strong>核心价值：</strong>相似度刻度盘（30%-85%）把「原创 vs 抄袭」的模糊争论变成了可量化的设计参数。'
+  },
+  'write-like-meng-on-x': {
+    desc: '以 Meng To 的当前风格写 X/Twitter 帖子。用他本人发布的帖子语料库校准语气，每次返回 5 个风格不同的草稿选项。',
+    scenario: '需要以某个特定人的风格写推文，先分析其历史发帖风格再生成——或者需要模仿 Meng To 的风格写帖子。',
+    steps: [
+      { num:1, text:'<strong>Read voice evidence.</strong> 读 references/voice-profile.md 和 references/tweet-corpus.jsonl，搜索 subject/hook/resource/product 相关帖子' },
+      { num:2, text:'<strong>Identify format.</strong> reply / original post / quote post / resource share / thread / product post——不同格式语气不同' },
+      { num:3, text:'<strong>Draft 5 options.</strong> 1)最近本意保真；2)更紧凑结构；3)更口语化；4)证明导向；5)更活泼/出乎意料' },
+      { num:4, text:'<strong>Ground in real things.</strong> 产品/工作流/失败/证明点/资源——不要发明用户未说过的事实' },
+      { num:5, text:'<strong>Prevent repetition.</strong> 搜索相同 hook/claim/resource/ending；避免 `taste is the moat` 等反复出现的梗除非有新证明' },
+    ],
+    prompt: `Use $write-like-meng-on-x to write 5 tweet drafts in Meng To's voice about: [topic].
+
+1. Read voice-profile.md and search tweet-corpus.jsonl for relevant posts.
+2. Identify format: reply / original post / quote post / resource share / thread / product post.
+3. Draft 5 materially different options:
+   - Closest polish preserving original thought
+   - Punchier hook or tighter structure
+   - Conversational / casual
+   - Proof-led or mechanism-led
+   - Playful, contrarian, or use-case-driven
+4. Ground in real: product built, workflow, failure, proof point, or resource Meng has actually shared.
+5. Check for repetition: same hook, claim, resource bundle, or ending.`,
+    note: '<strong>核心价值：</strong>「5 个选项而非 1 个」+「materially different」——这个约束强制多样性，避免 AI 生成同质化内容。'
+  },
+  'x-bookmark-quote-posts': {
+    desc: '把 X/Twitter 书签转换为风格校准的引用帖草稿。用最新 ~100 条发帖校准语气，产出 7-10 个可直接发布的草稿。',
+    scenario: '刷到一批好帖子，想把它们转成带有自己风格的引用推文队列——需要保持自己的声音而不是变成 AI 总结机器。',
+    steps: [
+      { num:1, text:'<strong>Calibrate voice from 100 posts.</strong> 收集最近 ~100 条发帖；区分 original/reply/quote-post；分别学习：replies→自然词汇；standalone→hooks/pacing/证明；quote→如何加原因和上下文' },
+      { num:2, text:'<strong>Collect bookmarks.</strong> 打开 x.com/i/bookmarks；收集最近 30 天书签中的 ~12-20 个可用候选；记录作者/handle/来源URL/时间戳/正文/文章摘要' },
+      { num:3, text:'<strong>Draft.</strong> 创建 data/x-growth/bookmark-quote-posts/YYYY-MM-DD.md；每个草稿含：Source URL + draft 文本 + Why this angle + Hone next' },
+      { num:4, text:'<strong>Write in target voice.</strong> 用第一人称；有真实领域经历（building/designing/shipping/debugging）；避免：短句交替/空框架/空洞同意/游戏改变者等流行语' },
+      { num:5, text:'<strong>Verify.</strong> 每个草稿必须有 Source URL；检查格式/节奏/长度是否与校准的 stand-alone/quote posts 一致' },
+      { num:6, text:'<strong>Report.</strong> 输出最强 3-5 条建议推文表格（含 Pick/Source/Suggested tweet/Why this angle/Hone next）；报告浏览器/采集/声音样本状态' },
+    ],
+    prompt: `Use $x-bookmark-quote-posts to turn recent X bookmarks into quote-post drafts in [target account]'s voice.
+
+1. Calibrate from ~100 latest authored posts: separate standalone / replies / quote posts; learn hooks, pacing, proof, endings, rhythm.
+2. Collect ~12-20 bookmarks from x.com/i/bookmarks (last 30 days).
+3. Draft 7-10 quote tweets. Each: Source URL + draft text + "Why this angle" + "Hone next".
+4. Write in target voice: first person, lived experience, direct language. Avoid: template cadence, generic frameworks, polished symmetry.
+5. Verify: each draft has a source URL; format matches calibrated standalone/quote post patterns.
+6. Report strongest 3-5 picks with table: Pick / Source / Suggested tweet / Why / Hone next.`,
+    note: '<strong>核心价值：</strong>「声音校准」不是找模板，而是从发帖数据中提取节奏/词汇/结构模式——这对任何品牌内容生成都有参考价值。'
+  },
+  'implement-fog-of-war': {
+    desc: 'Three.js 游戏战争迷雾实现：正交/等距可见性遮罩、障碍物感知视线、敌人感知范围、软边着色器。含完整生命周期和菜单状态集成。',
+    scenario: '需要给 Three.js 游戏加战争迷雾效果——如果我们要做一个游戏类项目，这套方法论可以直接用。',
+    steps: [
+      { num:1, text:'<strong>Define perception truth.</strong> 用 3D 视线段或光线与水平 footprint 和垂直跨度相交；区分 inactive blockers；暴露：敌人感知/确定性角距离填充' },
+      { num:2, text:'<strong>Build visibility lookup.</strong> 在玩家位置周围投射固定数量均匀分布的水平光线；将命中距离归一化到玩家视野半径并量化成一行红通道纹理' },
+      { num:3, text:'<strong>Render one soft overlay.</strong> 一个裁剪空间平面 + 一个透明着色器材质；重建每个片段的地面位置；组合：内清半径+外径向衰减+羽化墙壁边界' },
+      { num:4, text:'<strong>Integrate gameplay.</strong> 隐藏未揭示敌人：通过层或 presentation-only 机制；排除未揭示敌人于目标锁定/瞄准选择/HUD 计数/玩家命中资格之外' },
+      { num:5, text:'<strong>Integrate state and lifecycle.</strong> 仅在 active gameplay 期间启用雾；menus/inventory/paused/非 playing 状态禁用；teardown 时 dispose geometry/material/lookup texture' },
+    ],
+    prompt: `Use $implement-fog-of-war to add fog-of-war to [Three.js game scene].
+
+1. Define perception truth: represent sight blockers with stable footprint and vertical span.
+2. Build visibility LUT: cast fixed rays around player, quantize hit distances into red-channel texture.
+3. Render one soft overlay: clip-space plane with transparent shader; radial falloff + wall-aware boundary.
+4. Integrate gameplay: hide unrevealed enemies via layers; exclude from targeting/HUD/lock.
+5. Integrate lifecycle: enable only during active gameplay; disable for menus/paused states; dispose on teardown.
+6. Validate with desktop and mobile browser checks.`,
+    note: '<strong>核心价值：</strong>「确定性 CPU 感知 + 查找纹理 + 软边着色器」三层分离架构——这是游戏类 Skill 的方法论典范。'
   }
 };
 
 const overlay = document.getElementById('detailOverlay');
 const closeBtn = document.getElementById('closeBtn');
-const detailContent = document.getElementById('detailContent');
 
-// Filter buttons
 document.querySelectorAll('.filter-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     const filter = btn.dataset.filter;
     document.querySelectorAll('.skill-card').forEach(card => {
-      if (filter === 'all' || card.dataset.type === filter) {
-        card.classList.remove('hidden');
-      } else {
-        card.classList.add('hidden');
-      }
+      card.classList.toggle('hidden', filter !== 'all' && card.dataset.type !== filter);
     });
   });
 });
 
-// Open detail
 document.querySelectorAll('.skill-card').forEach(card => {
   card.addEventListener('click', () => {
     const name = card.dataset.name;
     const data = DETAIL_DATA[name];
     if (!data) return;
 
-    let stepsHtml = data.steps.map(s => `
-      <div class="workflow-step">
-        <div class="step-num">${s.num}</div>
-        <div class="step-text">${s.text}</div>
-      </div>
-    `).join('');
+    const stepsHtml = data.steps.map(s =>
+      `<div class="workflow-step"><div class="step-num">${s.num}</div><div class="step-text">${s.text}</div></div>`
+    ).join('');
 
-    detailContent.innerHTML = `
-      <div class="detail-name">${name}</div>
-      <div class="detail-desc">${data.desc}</div>
-      <div class="detail-section-title">使用场景</div>
-      <div class="detail-scenario-box">${data.scenario}</div>
-      <div class="detail-section-title">核心工作流（${data.steps.length} 步）</div>
-      <div class="workflow-steps">${stepsHtml}</div>
-      <div class="detail-section-title">可直接使用的 Prompt</div>
-      <div class="detail-prompt">${data.prompt}</div>
-      <div class="detail-note">${data.note}</div>
-    `;
+    document.getElementById('detailName').textContent = name;
+    document.getElementById('detailDesc').textContent = data.desc;
+    document.getElementById('detailScenario').textContent = data.scenario;
+    document.getElementById('detailStepsTitle').textContent = `核心工作流（${data.steps.length} 步）`;
+    document.getElementById('detailSteps').innerHTML = stepsHtml;
+    document.getElementById('detailPrompt').textContent = data.prompt.trim();
+    document.getElementById('detailNote').innerHTML = data.note;
+
     overlay.classList.add('open');
   });
 });
 
-// Close
+function copyPrompt(btn) {
+  const text = document.getElementById('detailPrompt').textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = '已复制!';
+    setTimeout(() => btn.textContent = '复制 Prompt', 1500);
+  });
+}
+
 closeBtn.addEventListener('click', () => overlay.classList.remove('open'));
 overlay.addEventListener('click', e => { if (e.target === overlay) overlay.classList.remove('open'); });
 document.addEventListener('keydown', e => { if (e.key === 'Escape') overlay.classList.remove('open'); });
