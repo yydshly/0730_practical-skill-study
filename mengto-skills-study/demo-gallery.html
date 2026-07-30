@@ -2471,5 +2471,33 @@
       });
     });
   </script>
+  <script>
+    // 38 个 NeuForm 沙盒 Demo 无法独立运行，将链接改为 preview.jpg
+    var SANDBOXED = {
+      'media/aura-asset-images':1,'web-design/agency-grid-layout-minimal':1,'web-design/background-grid-webgl':1,
+      'web-design/beautiful-shadows':1,'web-design/blue-cloudy-clean-modern':1,'web-design/book-serif-index':1,
+      'web-design/clean-minimal-beige-light-mode':1,'web-design/company-logos':1,'web-design/container-lines':1,
+      'web-design/corner-diagonals':1,'web-design/corner-lasers':1,'web-design/css-border-gradient':1,
+      'web-design/dither-background':1,'web-design/dither-laser-dark-mode':1,'web-design/editorial-tech':1,
+      'web-design/framed-grid-layout':1,'web-design/glass-dark-mode-clock':1,'web-design/globe-particles':1,
+      'web-design/gooey-blob-system':1,'web-design/gsap':1,'web-design/gsap-scrolltrigger-storytelling':1,
+      'web-design/high-contrast-skeuomorphic-clean':1,'web-design/image-first-grid-layout':1,
+      'web-design/light-mode-paper-technical':1,'web-design/marquee-loop':1,'web-design/masked-reveal':1,
+      'web-design/mesh-gradient-dark-blue-clean':1,'web-design/nested-container-clean-agency':1,
+      'web-design/nested-container-frames':1,'web-design/number-details':1,'web-design/orange-clean-paper-saas':1,
+      'web-design/progressive-blur':1,'web-design/skeuomorphic-ui':1,'web-design/solar-duotone-bold':1,
+      'web-design/split-layout-technical':1,'web-design/technical-wireframe-info-layout':1,
+      'web-design/webgl-3d-object':1,'web-design/webgl-laser':1
+    };
+    document.querySelectorAll('.btn-demo').forEach(function(link) {
+      var href = link.getAttribute('href');
+      var m = href.match(/agent-skills\/([^/]+\/[^/]+)\/demo/);
+      if (m && SANDBOXED[m[1]]) {
+        link.href = href.replace('/demo/index.html', '/demo/preview.jpg');
+        link.target = '_blank';
+        link.title = '（此 Demo 需在 gallery 中预览，图片为效果图）';
+      }
+    });
+  </script>
 </body>
 </html>
