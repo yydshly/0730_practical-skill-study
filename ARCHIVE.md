@@ -218,10 +218,47 @@ examples-index  ←→  capabilities  ←→  prompt-builder  ←→  family-orc
 4. **Demo 即证明**：每个技能附 `demo/index.html`，1280×720 截图 + 可运行代码
 5. **Quality Bar 可测试**：质量标准具体可验证（"prompt 长度足够不看原视频重建动画"）
 
+### Layer 3 · 真实场景测试（已完成）
+
+**文件**: `scene-testing.html`
+
+测试了 4 个代表技能，覆盖 3 类技能形态：
+
+| 技能 | 类型 | 结果 | 核心发现 |
+|---|---|---|---|
+| `beautiful-shadows` | 工具型 | ✅ 直接可用 | box-shadow 值零摩擦复制，质感远超 Tailwind 默认 shadow |
+| `animation-on-scroll` | 工具型 | ✅ 直接可用 | 零依赖 + Tailwind 兼容，但 stagger 方案 SKILL 未说明 |
+| `design-action-combat` | 原则型 | ✅ 原则清晰 | 7 状态枚举可落地，需游戏开发经验配合 |
+| `video-to-superprompt` | 工作流型 | ⚠️ 需平台 | 6 步 SOP 完整，依赖 ffmpeg/平台工具 |
+
+**三类技能形态的价值排序**：
+1. **工具型**（beautiful-shadows）— AI 使用时零摩擦，直接产出可用代码
+2. **原则型**（design-action-combat）— 给出设计约束，适合高阶 Agent
+3. **工作流型**（video-to-superprompt）— 提供 SOP + Quality Bar，可测试
+
+**对自己 Skill 库的启发**：
+- Pitfalls（避免指南）最实用，每个 Skill 都应加
+- Stagger 方案需要明确说明，不能让使用者自己摸索
+- 设计原则型 Skill 需要更多上下文和示例
+
+### 招牌工作流实战（已完成）
+
+**文件**: `workflow-demo.html`
+
+用上游真实素材（`contract-flight.mp4` + `scroll-world-storytelling` Demo）跑通 4 步闭环：
+
+| 步骤 | 技能 | 本地可跑 | 验证结果 |
+|---|---|---|---|
+| ① | `video-to-superprompt` | ⚠️ 部分 | ffprobe 实测元数据 ✅，AI superprompt 需模型 |
+| ② | `html-to-interaction-prompts` | ✅ 完全 | 源码分析 + 截图 + 3 个可复用 Prompt，全流程可跑 |
+| ③ | `stitched-full-page-capture` | ⚠️ 需工具 | Demo 可内嵌预览，长图拼接需 Puppeteer |
+| ④ | `build-daily-inspiration-sites` | ❌ 需平台 | 只能验证合约规范，私有部署需 Codex Sites API |
+
+**最有价值的发现**：`html-to-interaction-prompts` 是单步价值最高的——无需外部工具，读 HTML → 写 Prompt → 捕获截图，零摩擦可跑通。
+
 ### 后续研究（待做）
 
 - 逐个分类深度分析（Web Design 79 个技能逐个研究）
-- 招牌工作流实战验证
 - 与 Finesse Skill 对比研究
 - 构建我们自己的 AI Agent Design Skills 库
 

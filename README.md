@@ -94,6 +94,10 @@ python -m http.server 8000
 | - | [项目 1 · prompt-builder](./finesse-skill-study/prompt-builder.html) | Prompt 自动拼装器 | ✓ |
 | - | [项目 1 · 子交付物 · 拾穗果园](./finesse-skill-study/family-orchard/) | 家庭果园品牌官网（已模块化为 15 CSS + 9 JS） | ✓ |
 | 2 | [项目 2 · MengTo/Skills 研究](./mengto-skills-study/) | 118 个 AI Agent 设计技能深度研究 | 研究中 |
+| - | [项目 2 · Demo 展示](./mengto-skills-study/demo-gallery.html) | 118 技能 89 个 Demo 可视浏览 | ✓ |
+| - | [项目 2 · 能力地图](./mengto-skills-study/capability-map.html) | 118 技能"需要 X → 用哪个 Y"决策树 | ✓ |
+| - | [项目 2 · 场景测试](./mengto-skills-study/scene-testing.html) | Layer 3 · 4 个技能真实场景验证 | ✓ |
+| - | [项目 2 · 工作流实战](./mengto-skills-study/workflow-demo.html) | 招牌 4 步闭环完整演示 | ✓ |
 | - | [项目 2 · 技能矩阵](./mengto-skills-study/SKILL-MATRIX.md) | 全部 118 个技能的分类索引 | 建设中 |
 
 (更多项目待加入。)
