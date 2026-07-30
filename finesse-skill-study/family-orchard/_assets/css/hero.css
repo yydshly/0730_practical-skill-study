@@ -1,0 +1,308 @@
+/* =====================================================
+   hero.css — §1 HERO（5 层 cinematic）+ 图片披露 + 摄影指南
+   Phase A · family-orchard 模块化重构
+   ===================================================== */
+
+/* ===== §1 HERO ===== */
+.hero { padding-top: 0; padding-bottom: 0; max-width: none; }
+.hero-stage {
+  position: relative;
+  height: 94vh; min-height: 680px;
+  overflow: hidden;
+  background: #5a4f43;     /* 进一步提亮:fallback 暖褐色,照片失败时仍温暖可见 */
+}
+/* 第 1 层：真实晨光果园照片 */
+.layer {
+  position: absolute; inset: 0;
+  background: center / cover no-repeat;
+  will-change: mask, transform, opacity;
+  transition: opacity .8s ease;
+}
+/* ===== 轮播照片层 ===== */
+.layer-photo {
+  position: absolute; inset: -4%;             /* 四周扩 4%,Ken Burns translate 不会露边 */
+  background-position: center 60%;
+  background-size: cover;
+  background-repeat: no-repeat;
+  opacity: 0;
+  transform: scale(1.06);                     /* Ken Burns 起始略放大 */
+  transition: opacity 0.8s ease-in-out;       /* 与 hero-rotation.js CROSSFADE_MS 对齐 */
+  filter: brightness(0.92) saturate(0.96);    /* 暖色舒适 */
+  will-change: opacity, transform;
+}
+.layer-photo.is-active {
+  opacity: 1;
+  animation: ken-burns 8s ease-out forwards;  /* 8s 内从 1.06 缓慢推到 1.0 */
+}
+@keyframes ken-burns {
+  from { transform: scale(1.06) translate(0, 0); }
+  to   { transform: scale(1.0) translate(-1.5%, -0.8%); }
+}
+
+/* ===== 轮播控制（左右箭头 + 底部点） ===== */
+.hero-nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 6;
+  width: 48px; height: 48px;
+  border: 1px solid rgba(255,255,255,.35);
+  background: rgba(20,16,12,.32);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: var(--bone);
+  font-size: 28px; font-weight: 300;
+  cursor: pointer;
+  transition: background .2s, border-color .2s, opacity .2s;
+  display: grid; place-items: center;
+  font-family: var(--font-mono);
+  line-height: 1;
+  padding: 0;
+  opacity: .82;
+}
+.hero-nav:hover {
+  background: rgba(20,16,12,.62);
+  border-color: rgba(255,255,255,.6);
+  opacity: 1;
+}
+.hero-nav:active { transform: translateY(-50%) scale(.96); }
+.hero-nav-prev { left: 24px; }
+.hero-nav-next { right: 24px; }
+
+.hero-dots {
+  position: absolute;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 6;
+  display: flex;
+  gap: 8px;
+  padding: 0;
+  margin: 0;
+}
+.hero-dot {
+  width: 28px; height: 4px;
+  border-radius: 2px;
+  background: rgba(255,255,255,.32);
+  border: 0;
+  cursor: pointer;
+  transition: background .25s;
+  padding: 0;
+  font-size: 0;
+}
+.hero-dot:hover { background: rgba(255,255,255,.55); }
+.hero-dot.is-active {
+  background: var(--bone);
+}
+/* 第 2 层：上方天空暖色加权（柔和的 dawn glow） */
+.layer-dawn {
+  background: linear-gradient(180deg,
+    rgba(255, 230, 195, 0.28) 0%,     /* 0.42→0.28,别再"烧"更亮 */
+    rgba(255, 230, 195, 0.12) 25%,    /* 0.18→0.12 */
+    rgba(232, 192, 148, 0.04) 50%,    /* 0.06→0.04 */
+    rgba(0, 0, 0, 0.0) 100%);
+  mix-blend-mode: soft-light;
+  pointer-events: none;
+}
+/* 第 3 层：下方暗角（形成 vigratte，将视线聚焦中央果实区） */
+.layer-vig {
+  background: radial-gradient(ellipse 110% 100% at 50% 55%,   /* 进一步扩大保留区 */
+    transparent 70%,                                            /* 推迟到 70% 才起 */
+    rgba(20, 16, 12, 0.08) 90%,                                /* 中段轻微 */
+    rgba(20, 16, 12, 0.18) 100%);                              /* 最边缘也只 0.18 */
+  pointer-events: none;
+}
+/* 第 4 层：颗粒（超轻） */
+.layer-grain {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  opacity: 0.05;        /* 重平衡:原 0.07,降噪 */
+  mix-blend-mode: overlay;
+  pointer-events: none;
+}
+/* 第 5 层：暖色聚光圈（鼠标 hover 时局部提亮） */
+.layer-spot {
+  background: radial-gradient(circle 380px at 50% 50%,
+    rgba(255, 240, 215, 0) 0%,
+    rgba(255, 240, 215, 0.05) 55%,
+    rgba(20, 16, 12, 0.18) 95%);
+  opacity: 0;
+  transition: opacity .3s ease;
+  pointer-events: none;
+}
+/* 鼠标 hover 时整层亮 + mask 反向（让中心进一步提亮） */
+.hero-stage.is-active .layer-spot {
+  opacity: 1;
+}
+.hero-text {
+  position: absolute;
+  left: 48px; bottom: 100px;
+  z-index: 5;
+  color: var(--ink);
+  max-width: 780px;
+}
+.hero-kicker {
+  font-size: 11.5px; letter-spacing: 0.34em; font-weight: 500;
+  text-transform: uppercase; color: var(--accent);
+  margin-bottom: 22px; opacity: .9;
+}
+.hero-title {
+  font-weight: 200;
+  font-size: clamp(54px, 8vw, 124px);
+  line-height: .94; letter-spacing: -.03em;
+  color: var(--ink);
+  /* 让标题读起来稳：给一个细微文字阴影 */
+  text-shadow: 0 1px 0 rgba(255,255,255,.7);
+}
+.hero-title .thin { font-weight: 100; color: var(--accent); }
+.hero-title .accent { color: var(--amber); font-style: italic; font-weight: 400; }
+.hero-sub {
+  margin-top: 28px; font-size: 17px; font-weight: 300;
+  max-width: 540px; color: var(--ink-2);
+  line-height: 1.7;
+}
+.hero-meta {
+  position: absolute; right: 48px; top: 28px;
+  z-index: 5;
+  display: flex; gap: 32px; font-size: 11px; color: var(--ink-2);
+  letter-spacing: 0.18em; text-transform: uppercase;
+}
+.hero-meta span { display: block; }
+.hero-meta span b {
+  display: block; font-weight: 600; color: var(--ink);
+  font-family: var(--font-mono);
+  letter-spacing: 0.04em;
+  margin-bottom: 4px; font-size: 14px;
+}
+.hero-hint {
+  position: absolute; right: 48px; bottom: 36px;
+  font-size: 10.5px; letter-spacing: 0.28em;
+  text-transform: uppercase; color: var(--ink-3);
+  z-index: 5; opacity: .8;
+  display: flex; align-items: center; gap: 8px;
+}
+.hero-hint::before {
+  content: ''; width: 18px; height: 1px; background: var(--ink-3);
+}
+.hero-scroll {
+  position: absolute; left: 48px; bottom: 36px;
+  width: 1px; height: 56px;
+  background: linear-gradient(180deg, var(--ink-2), transparent);
+  opacity: .5; z-index: 5;
+}
+
+/* ===== 图片来源披露条 ===== */
+.img-disclosure {
+  background: rgba(91, 75, 209, .06);
+  border-bottom: 1px solid var(--hairline);
+}
+.img-disclosure-inner {
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 14px 40px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-size: 13px;
+  color: var(--ink-2);
+  line-height: 1.6;
+}
+.img-disclosure-mark {
+  width: 22px; height: 22px;
+  background: var(--accent);
+  color: var(--bone);
+  border-radius: 50%;
+  display: grid; place-items: center;
+  font-family: var(--font-mono); font-size: 12px; font-weight: 700;
+  flex-shrink: 0;
+}
+.img-disclosure-text strong { color: var(--accent); font-weight: 600; }
+.img-disclosure-cta {
+  color: var(--accent);
+  font-weight: 600;
+  cursor: pointer;
+  margin-left: 6px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1px;
+}
+.img-disclosure-detail {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px dashed var(--hairline);
+  font-size: 12.5px; line-height: 1.7;
+  color: var(--ink-2); flex-basis: 100%;
+}
+.img-disclosure-detail strong { color: var(--ink); font-weight: 600; display: inline-block; margin-top: 6px; }
+.img-disclosure-detail code { background: var(--bg); padding: 1px 5px; border-radius: 3px; font-size: 12px; }
+.img-disclosure-detail em { font-style: italic; color: var(--ink-3); }
+
+/* ===== photo-guide (expanded disclosure) ===== */
+.photo-guide {
+  margin-top: 22px;
+  padding-top: 22px;
+  border-top: 1px dashed var(--hairline);
+  font-size: 13px;
+  color: var(--ink-2);
+  line-height: 1.6;
+}
+.photo-guide[hidden] { display: none; }
+.photo-guide-h {
+  display: flex; align-items: baseline; justify-content: space-between;
+  flex-wrap: wrap; gap: 8px;
+  margin-bottom: 14px;
+}
+.photo-guide-h h5 {
+  font-family: var(--font-serif); font-size: 17px; font-weight: 500;
+  color: var(--ink); letter-spacing: -.005em;
+}
+.photo-guide-h small {
+  font-size: 11px; color: var(--ink-3); letter-spacing: 0.06em;
+  text-transform: uppercase; font-weight: 500;
+}
+.photo-table {
+  width: 100%; border-collapse: collapse;
+  font-size: 12.5px;
+}
+.photo-table th, .photo-table td {
+  border-bottom: 1px solid var(--hairline);
+  padding: 10px 12px;
+  text-align: left;
+  vertical-align: top;
+}
+.photo-table th {
+  font-size: 10.5px; letter-spacing: 0.14em;
+  text-transform: uppercase; color: var(--ink-3);
+  font-weight: 600;
+  background: rgba(47,82,51,.04);
+}
+.photo-table td code {
+  background: var(--bone); padding: 1px 6px; border-radius: 3px;
+  font-family: var(--font-mono); font-size: 12px;
+  color: var(--accent);
+}
+.photo-table td em {
+  font-style: normal; font-size: 11.5px;
+  color: var(--ink-3); line-height: 1.5;
+}
+.photo-flow {
+  margin: 0; padding-left: 22px;
+}
+.photo-flow li { padding: 4px 0; font-size: 13px; color: var(--ink-2); }
+.photo-flow li code {
+  background: var(--bone); padding: 1px 6px; border-radius: 3px;
+  font-family: var(--font-mono); font-size: 11.5px;
+  color: var(--accent);
+}
+.photo-checklist {
+  margin: 0; padding: 0; list-style: none;
+}
+.photo-checklist li {
+  font-size: 13px; color: var(--ink-2);
+  padding: 4px 0 4px 22px; position: relative;
+}
+.photo-checklist li::before {
+  content: ''; position: absolute;
+  left: 0; top: 11px; width: 12px; height: 12px;
+  border: 1.5px solid var(--accent); border-radius: 50%;
+  background: var(--accent-soft);
+}

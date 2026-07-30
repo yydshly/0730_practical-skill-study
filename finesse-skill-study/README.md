@@ -136,9 +136,29 @@ family-orchard/
 
 ---
 
-## 项目索引
+## HTML 入口 · 4 个可访问页面
 
-- **[子交付物 · 拾穗果园品牌官网](./family-orchard/)** — 5 节内容 + 真表单 + 主题切换,按 Quiet Luxury Minimal + Forest palette 规格生成的可交付品牌页,详见 [./family-orchard/README.md](./family-orchard/README.md)
-- [研究工具 · examples-index](./examples-index.html) — 13 个范例索引
-- [研究工具 · capabilities](./capabilities.html) — 能力全景 + 决策树
-- [研究工具 · prompt-builder](./prompt-builder.html) — Prompt 自动拼装
+本项目所有可访问的 HTML 页面，按"学 → 用"工作流顺序：
+
+### 研究工具（学 · 3 个）
+
+- **[`examples-index.html`](./examples-index.html)** — 13 个 shipped 范例的索引浏览器
+  - 每张卡含 AI 复刻 Prompt / 真实色板 / 布局参数 / 核心代码 4 个可展开标签
+  - 点"展开详情"直接复制 Prompt 让 AI 生成类似页面
+
+- **[`capabilities.html`](./capabilities.html)** — 能力全景 + 决策树
+  - 三拨盘（注册 / 引擎 / 灵魂）+ 5 hero engine + 10 persona + 8 chart + 12 节"这节解决什么问题"演示
+  - 不确定选什么时来这查
+
+- **[`prompt-builder.html`](./prompt-builder.html)** — 表单式 AI 复刻指令拼装器
+  - 10 步表单实时拼出可粘贴到 Claude / Codex 的指令
+  - 左侧改、右侧同步更新
+
+### 子交付物（用 · 1 个）
+
+- **[`family-orchard/`](./family-orchard/)** — 拾穗果园家庭果园品牌官网
+  - 按 Quiet Luxury Minimal + Forest palette 规格生成的单 HTML 页面（已模块化为 15 CSS + 9 JS）
+  - 5 节内容 + 真表单 + 主题切换 + 工艺日志时间线
+  - 详见 [`./family-orchard/README.md`](./family-orchard/README.md)
+
+> 这 4 个页面 nav 互通：3 个工具页的 topnav 都有"→ 拾穗果园样例"，family-orchard 顶部有"← 研究工具"返回研究库。

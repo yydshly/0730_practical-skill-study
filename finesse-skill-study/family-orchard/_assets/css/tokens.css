@@ -1,0 +1,65 @@
+/* =====================================================
+   tokens.css — 设计令牌 + dark theme + reset
+   Phase A · family-orchard 模块化重构
+   ===================================================== */
+
+/* ===== 通用 reset ===== */
+*,*::before,*::after { margin:0; padding:0; box-sizing:border-box; }
+
+/* ===== Forest palette (Quiet Luxury · 浅色主题) ===== */
+:root {
+  /* 颜色 */
+  --page:        #EFEFED;   /* page bg, off-white tinted cool */
+  --bg:          #FFFFFF;   /* card bg */
+  --ink:         #15140F;
+  --ink-2:       #4a4a3d;
+  --ink-3:       #75756a;
+  --ink-faint:   #a8a89a;   /* 极淡文本（原 CSS 引用但未定义，补上） */
+  --hairline:    rgba(21,20,15,.08);
+  --accent:      #2F5233;   /* deep forest green */
+  --accent-2:    #1c3a1f;   /* CTA bg */
+  --accent-3:    #5d8a5e;   /* mid green for hover */
+  --accent-soft: rgba(47,82,51,.15);   /* 原 CSS 引用但未定义 */
+  --bone:        #E8E4D8;   /* fruit-skin warm white */
+  --amber:       #C87820;   /* autumn warm pop */
+  --focus-ring:  0 0 0 3px rgba(47,82,51,.25);
+
+  /* 字体（原 CSS 引用 var(--font-mono/serif/sans) 但未定义，补上） */
+  --font-sans:   'Raleway', 'Helvetica Neue', system-ui, -apple-system, sans-serif;
+  --font-serif:  'Georgia', 'Times New Roman', serif;
+  --font-mono:   'JetBrains Mono', 'SF Mono', 'Cascadia Code', monospace;
+
+  /* 严禁 box-shadow（除 focus ring）· 严禁 border-radius（除必要处）· 严禁 gradient-text */
+}
+
+[data-theme="dark"] {
+  --page:        #12180F;
+  --bg:          #1a2014;
+  --ink:         #E8E4D8;
+  --ink-2:       #b0aea3;
+  --ink-3:       #75756a;
+  --ink-faint:   #5a5a4d;
+  --hairline:    rgba(232,228,216,.10);
+  --accent:      #5d8a5e;
+  --accent-2:    #7ba87b;
+  --accent-3:    #a3c89e;
+  --accent-soft: rgba(93,138,94,.18);
+  --bone:        #2a3a25;
+  --amber:       #d99444;
+  --focus-ring:  0 0 0 3px rgba(125,175,130,.35);
+}
+
+/* ===== 文档级 ===== */
+html { scroll-behavior: smooth; -webkit-font-smoothing: antialiased; }
+body {
+  background: var(--page);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-weight: 400;
+  line-height: 1.6;
+  overflow-x: hidden;
+  transition: background .5s ease, color .4s ease;
+}
+
+a { color: inherit; text-decoration: none; }
+button, input, select, textarea { font-family: inherit; }

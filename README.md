@@ -22,6 +22,39 @@
 
 ---
 
+## 在线访问（GitHub Pages）
+
+部署在 GitHub Pages 上，**100% 静态**（无后端、无构建步骤）：
+
+| 路径 | 内容 |
+|---|---|
+| [`/`](https://yydshly.github.io/0730_practical-skill-study/) | 仓库总入口（多项目索引） |
+| [`/finesse-skill-study/examples-index.html`](https://yydshly.github.io/0730_practical-skill-study/finesse-skill-study/examples-index.html) | 项目 1 · 13 个范例索引 |
+| [`/finesse-skill-study/capabilities.html`](https://yydshly.github.io/0730_practical-skill-study/finesse-skill-study/capabilities.html) | 项目 1 · 能力全景 + 决策树 |
+| [`/finesse-skill-study/prompt-builder.html`](https://yydshly.github.io/0730_practical-skill-study/finesse-skill-study/prompt-builder.html) | 项目 1 · Prompt 自动拼装 |
+| [`/finesse-skill-study/family-orchard/`](https://yydshly.github.io/0730_practical-skill-study/finesse-skill-study/family-orchard/) | 项目 1 子交付物 · 拾穗果园 |
+
+> 部署开关：`Settings → Pages → Source: master · /(root)`（首次部署需仓库 owner 手动开启）
+
+---
+
+## 本地浏览
+
+```bash
+# 在仓库根目录起一个静态服务器（任意端口都可）
+python -m http.server 8000
+
+# 然后浏览器打开：
+#   http://localhost:8000/                              ← 仓库总入口
+#   http://localhost:8000/finesse-skill-study/         ← 项目 1 入口
+#   http://localhost:8000/finesse-skill-study/examples-index.html
+#   http://localhost:8000/finesse-skill-study/family-orchard/
+```
+
+> 项目 1 子交付物（family-orchard）使用了 ES module，必须走 HTTP 不能 `file://` 双击。其他 HTML 可以直接双击打开。
+
+---
+
 ## 仓库结构
 
 ```
@@ -55,6 +88,10 @@
 | # | 项目 | 一句话 | 状态 |
 |---|---|---|---|
 | 1 | [finesse-skill-study](./finesse-skill-study/) | 学习 UI 设计 Skill 并实战一个家庭果园品牌页 | 已完成 v0 → v9 |
+| - | [项目 1 · examples-index](./finesse-skill-study/examples-index.html) | 13 个范例索引浏览器 | ✓ |
+| - | [项目 1 · capabilities](./finesse-skill-study/capabilities.html) | 能力全景 + 决策树 | ✓ |
+| - | [项目 1 · prompt-builder](./finesse-skill-study/prompt-builder.html) | Prompt 自动拼装器 | ✓ |
+| - | [项目 1 · 子交付物 · 拾穗果园](./finesse-skill-study/family-orchard/) | 家庭果园品牌官网（已模块化为 15 CSS + 9 JS） | ✓ |
 
 (更多项目待加入。)
 

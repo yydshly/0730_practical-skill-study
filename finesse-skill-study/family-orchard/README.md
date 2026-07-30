@@ -71,3 +71,32 @@ family-orchard/
 - **多语种**：复制 `<body>` 内容包一层 `<html lang="en">`，把文案替换
 - **多页面**：当前是首页，要"关于我们"再复制一份结构替换内容
 - **对接后端表单**：把 `submit` 事件里的 `setTimeout` 改成 `fetch('/api/...')`
+
+---
+
+## 后续打磨（Quality Roadmap）
+
+> 当前为**规划、暂未实施**。按价值与投入分组。
+
+### 快速可做（5-30 分钟一个）
+
+- **触屏滑动 hero**：移动端左右划切图，移动 UX 立刻升级
+- **`prefers-reduced-motion` 适配**：用户开了系统"减少动效"时，停掉自动轮播 + Ken Burns 推进动画，a11y 合规
+- **`<link rel="preload">` 首屏 hero 图**：让首屏渲染前就开始下载 3 张图，减少切图白闪
+- **favicon + apple-touch-icon**：浏览器标签页有图标（目前没有）
+
+### 中等投入（半天到一天）
+
+- **WebP + `<picture>` + srcset**：10 张图全转 WebP + 多分辨率响应式，体积降 50-60%，Lighthouse 性能分上去
+- **OG / Twitter Card / `<meta description>` / Schema.org Product**：微信朋友圈分享有缩略图，搜索结果更丰富
+- **PWA 起步**：`manifest.json` + 简单 service worker，可"安装到桌面"+ 离线 fallback
+- **更新本 README**：反映当前模块化结构（15 CSS + 9 JS + main.js + 薄壳 HTML）+ 启动指南，目前还是单文件时代的描述
+
+### 长期打磨
+
+- **Lighthouse 跑分 ≥ 90**：性能 / a11y / 最佳实践 / SEO 四维全达标
+- **axe-core a11y 审计 0 violation**：自动检测所有 a11y 问题
+- **性能预算**：HTML<50KB · JS<60KB · CSS<30KB · LCP<2s，超阈值 CI 报警
+- **`@media print` 打印样式**：PDF 打印 ≤ 8 页，联系方式 + FAQ 完整可读
+
+完成以上后，本页就有了：可复用的架构 + 已验证的技术能力 + 已达标的质量基线，后面加任何新项目都站在这个底座上。

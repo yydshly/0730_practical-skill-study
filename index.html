@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>0730 · 实用技能应用研究</title>
+<meta name="description" content="多项目研究容器。每个项目是独立的设计 / 前端实战，从学到的理论到真实落地的页面 / 模块走完全闭环。" />
+
+<style>
+  *,*::before,*::after { margin:0; padding:0; box-sizing:border-box; }
+  :root {
+    --page:      #EFEFED;
+    --bg:        #FFFFFF;
+    --ink:       #15140F;
+    --ink-2:     #4a4a3d;
+    --ink-3:     #75756a;
+    --hairline:  rgba(21,20,15,.08);
+    --accent:    #2F5233;
+    --accent-2:  #1c3a1f;
+    --bone:      #E8E4D8;
+    --amber:     #C87820;
+    --font-sans: 'Raleway', 'Helvetica Neue', system-ui, -apple-system, sans-serif;
+    --font-serif: 'Georgia', 'Times New Roman', serif;
+    --font-mono: 'JetBrains Mono', 'SF Mono', 'Cascadia Code', monospace;
+  }
+  [data-theme="dark"] {
+    --page:      #12180F;
+    --bg:        #1a2014;
+    --ink:       #E8E4D8;
+    --ink-2:     #b0aea3;
+    --ink-3:     #75756a;
+    --hairline:  rgba(232,228,216,.10);
+    --accent:    #5d8a5e;
+    --accent-2:  #7ba87b;
+    --bone:      #2a3a25;
+    --amber:     #d99444;
+  }
+  html { scroll-behavior: smooth; -webkit-font-smoothing: antialiased; }
+  body {
+    background: var(--page); color: var(--ink);
+    font-family: var(--font-sans); font-weight: 400;
+    line-height: 1.6; min-height: 100vh;
+    transition: background .5s ease, color .4s ease;
+  }
+  a { color: inherit; text-decoration: none; }
+  button { font-family: inherit; }
+
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 96px 36px 80px; }
+  header { text-align: center; margin-bottom: 80px; }
+  .eyebrow {
+    font-size: 11px; letter-spacing: 0.34em; font-weight: 500;
+    text-transform: uppercase; color: var(--accent);
+    margin-bottom: 28px;
+  }
+  h1 {
+    font-size: clamp(40px, 6vw, 84px); font-weight: 200;
+    line-height: 1.05; letter-spacing: -0.025em; color: var(--ink);
+    margin-bottom: 18px;
+  }
+  h1 em { font-style: italic; color: var(--accent); font-weight: 300; }
+  .lede {
+    font-size: 17px; color: var(--ink-2); font-weight: 300;
+    max-width: 620px; margin: 0 auto;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 24px;
+    margin-top: 56px;
+  }
+  .card {
+    background: var(--bg);
+    border: 1px solid var(--hairline);
+    padding: 32px 28px 28px;
+    transition: transform .3s cubic-bezier(.2,.8,.2,1), border-color .25s;
+  }
+  .card:hover {
+    transform: translateY(-3px);
+    border-color: var(--accent);
+  }
+  .card-num {
+    font-family: var(--font-mono); font-size: 11px;
+    color: var(--ink-3); letter-spacing: 0.18em;
+    margin-bottom: 18px;
+  }
+  .card h3 {
+    font-size: 22px; font-weight: 500; letter-spacing: -0.01em;
+    color: var(--ink); margin-bottom: 8px;
+  }
+  .card h3 small {
+    display: block; font-size: 10.5px; font-weight: 400;
+    letter-spacing: 0.22em; text-transform: uppercase;
+    color: var(--ink-3); margin-bottom: 4px;
+  }
+  .card p {
+    font-size: 14px; color: var(--ink-2); font-weight: 300;
+    line-height: 1.65; margin-bottom: 22px;
+  }
+  .card .links {
+    display: flex; flex-direction: column; gap: 8px;
+    border-top: 1px solid var(--hairline); padding-top: 18px;
+  }
+  .card a.link {
+    font-size: 13px; color: var(--accent); font-weight: 500;
+    display: inline-flex; align-items: center; gap: 6px;
+    transition: gap .2s;
+  }
+  .card a.link:hover { gap: 10px; }
+  .card a.link::before {
+    content: '→'; font-family: var(--font-mono); font-weight: 300;
+  }
+
+  .sec-tag {
+    font-size: 11px; font-weight: 600; letter-spacing: 0.32em;
+    color: var(--accent); text-transform: uppercase; margin-bottom: 14px;
+    text-align: center;
+  }
+  .more {
+    margin-top: 80px;
+    padding-top: 48px;
+    border-top: 1px solid var(--hairline);
+    text-align: center;
+    color: var(--ink-3);
+    font-size: 14px;
+  }
+  .more a { color: var(--accent); font-weight: 500; }
+
+  /* theme toggle */
+  .theme-toggle {
+    position: fixed; top: 22px; right: 22px;
+    background: transparent; border: 1px solid var(--hairline);
+    color: var(--ink-2); padding: 8px 12px; font-size: 11.5px;
+    letter-spacing: 0.08em; cursor: pointer; transition: .2s;
+    font-family: var(--font-sans);
+  }
+  .theme-toggle:hover { color: var(--ink); border-color: var(--ink-2); }
+
+  @media (max-width: 720px) {
+    .wrap { padding: 64px 22px 60px; }
+    header { margin-bottom: 48px; }
+  }
+</style>
+</head>
+
+<body>
+
+<button class="theme-toggle" id="themeBtn" aria-label="切换深浅模式">浅 / 深</button>
+
+<div class="wrap">
+
+  <header>
+    <div class="eyebrow">0730 · 实用技能应用研究</div>
+    <h1>理论 + 实战 =<br><em>能上线的真东西。</em></h1>
+    <p class="lede">
+      一个多项目研究容器。每个项目是独立的设计 / 前端实战，
+      从学到的理论到真实落地的页面 / 模块走完全闭环。
+    </p>
+  </header>
+
+  <div class="sec-tag">项 目 索 引</div>
+
+  <div class="grid">
+
+    <div class="card">
+      <div class="card-num">P R O J E C T &nbsp; 01</div>
+      <h3><small>FINESSE-SKILL-STUDY</small>UI 设计 Skill 实战</h3>
+      <p>
+        学习 finesse-ui 上游设计 Skill 的 13 个范例、20 篇 references、动词命令，
+        并用所学方法真实搭建一个家庭果园品牌官网（拾穗果园）。
+      </p>
+      <div class="links">
+        <a class="link" href="finesse-skill-study/examples-index.html">13 个范例索引</a>
+        <a class="link" href="finesse-skill-study/capabilities.html">能力全景 + 决策树</a>
+        <a class="link" href="finesse-skill-study/prompt-builder.html">Prompt 自动拼装</a>
+        <a class="link" href="finesse-skill-study/family-orchard/">拾穗果园样例</a>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="more">
+    <p>未来每个新项目按 <code>项目名/</code> 单目录形式加入。</p>
+    <p style="margin-top:8px">完整说明见 <a href="https://github.com/yydshly/0730_practical-skill-study">GitHub 仓库</a></p>
+  </div>
+
+</div>
+
+<script>
+  // 主题切换 + localStorage 持久化
+  (function () {
+    var KEY = 'shisui-theme';
+    var root = document.documentElement;
+    var btn = document.getElementById('themeBtn');
+    function labelFor(t) { return t === 'dark' ? '深 / 浅' : '浅 / 深'; }
+    var saved = localStorage.getItem(KEY);
+    if (saved === 'dark' || saved === 'light') {
+      root.setAttribute('data-theme', saved);
+      btn.textContent = labelFor(saved);
+    }
+    btn.addEventListener('click', function () {
+      var cur = root.getAttribute('data-theme') || 'light';
+      var next = cur === 'light' ? 'dark' : 'light';
+      root.setAttribute('data-theme', next);
+      btn.textContent = labelFor(next);
+      try { localStorage.setItem(KEY, next); } catch (e) {}
+    });
+  }());
+</script>
+
+</body>
+</html>

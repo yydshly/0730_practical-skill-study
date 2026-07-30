@@ -1,0 +1,98 @@
+/* =====================================================
+   journal.css — 工艺日志 changelog 时间线
+   Phase A · family-orchard 模块化重构
+   ===================================================== */
+
+.journal {
+  border-bottom: 1px solid var(--hairline);
+  padding: 56px 40px 60px;
+  max-width: 1240px;
+  margin: 0 auto;
+}
+.journal-h { margin-bottom: 32px; }
+.journal-h h2 em { font-style: italic; color: var(--accent); font-weight: 400; }
+.journal-rail {
+  display: flex;
+  align-items: stretch;
+  gap: 4px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+  scrollbar-width: thin;
+}
+.journal-node {
+  display: flex; flex-direction: column; align-items: center;
+  background: none; border: 0; padding: 14px 18px;
+  cursor: pointer; text-align: center;
+  flex-shrink: 0;
+  transition: opacity .2s;
+  position: relative; min-width: 122px;
+}
+.journal-node .journal-dot {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  display: grid; place-items: center;
+  font-family: var(--font-mono); font-size: 13px; font-weight: 600;
+  color: var(--ink-3);
+  border: 1.5px solid var(--hairline);
+  background: var(--page);
+  transition: all .25s;
+}
+.journal-node.done .journal-dot {
+  background: var(--accent); border-color: var(--accent); color: var(--bone);
+}
+.journal-node.todo .journal-dot {
+  color: var(--ink-faint);
+  border-style: dashed;
+}
+.journal-node.is-active .journal-dot {
+  transform: scale(1.1);
+  box-shadow: 0 0 0 6px var(--accent-soft);
+}
+.journal-node .journal-label {
+  display: flex; flex-direction: column; gap: 2px;
+  margin-top: 10px; color: var(--ink);
+}
+.journal-node .ver {
+  font-family: var(--font-mono); font-size: 10.5px;
+  color: var(--ink-3); letter-spacing: 0.1em;
+}
+.journal-node .ttl {
+  font-size: 13px; font-weight: 500;
+  color: var(--ink); letter-spacing: -0.005em;
+}
+.journal-node .hint {
+  font-size: 11px; color: var(--ink-3);
+  line-height: 1.4;
+}
+.journal-node.todo .ttl { color: var(--ink-3); }
+.journal-node.todo .hint { color: var(--ink-faint); }
+.journal-conn {
+  flex-shrink: 0;
+  width: 32px;
+  align-self: center;
+  height: 2px;
+  background: var(--hairline);
+  transform: translateY(-13px);
+}
+.journal-conn.done { background: var(--accent); }
+.journal-detail {
+  margin-top: 28px;
+  background: var(--bg);
+  border: 1px solid var(--hairline);
+  padding: 24px 26px;
+}
+.journal-detail h4 {
+  font-family: var(--font-serif);
+  font-size: 22px; font-weight: 500;
+  margin-bottom: 10px;
+}
+.journal-detail h4 small {
+  margin-left: 10px; font-size: 11px; letter-spacing: 0.18em;
+  color: var(--accent); text-transform: uppercase; font-weight: 600;
+  vertical-align: middle;
+}
+.journal-detail p { font-size: 14px; line-height: 1.7; }
+.journal-detail code {
+  background: var(--bone); padding: 2px 6px;
+  border-radius: 3px; font-size: 12.5px;
+}

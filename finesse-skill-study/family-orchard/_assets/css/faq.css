@@ -1,0 +1,36 @@
+/* =====================================================
+   faq.css — §8 常见问题 accordion
+   Phase A · family-orchard 模块化重构
+   ===================================================== */
+
+.faq-grid {
+  margin-top: 40px;
+  display: flex; flex-direction: column;
+  border-top: 1px solid var(--hairline);
+}
+.faq {
+  border-bottom: 1px solid var(--hairline);
+  padding: 22px 0;
+}
+.faq-q {
+  display: flex; justify-content: space-between; align-items: baseline;
+  font-family: var(--font-sans); font-size: 17px; font-weight: 500;
+  color: var(--ink); background: none; border: 0; padding: 0;
+  width: 100%; cursor: pointer; text-align: left;
+  letter-spacing: -.005em;
+}
+.faq-q::after {
+  content: '+';
+  font-family: var(--font-mono); font-weight: 300;
+  font-size: 22px; color: var(--accent);
+  transition: transform .3s ease;
+}
+.faq.open .faq-q::after { content: '−'; }
+.faq-a {
+  font-size: 14.5px; line-height: 1.7;
+  color: var(--ink-2); font-weight: 300;
+  max-height: 0; overflow: hidden;
+  transition: max-height .35s ease, margin-top .35s ease;
+  margin-top: 0;
+}
+.faq.open .faq-a { max-height: 300px; margin-top: 14px; }

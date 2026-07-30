@@ -1,0 +1,87 @@
+/* =====================================================
+   cta.css — §4 双入口 CTA（真表单）
+   Phase A · family-orchard 模块化重构
+   注：.form-banner 替代原 JS 内联创建的 banner style.cssText
+   ===================================================== */
+
+.cta-grid {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 28px; margin-top: 50px;
+}
+.cta-card {
+  background: var(--bg);
+  border: 1px solid var(--hairline);
+  padding: 38px 34px 34px;
+}
+.cta-card .for {
+  font-size: 10.5px; letter-spacing: 0.3em;
+  color: var(--amber); text-transform: uppercase;
+  font-weight: 700; margin-bottom: 12px;
+}
+.cta-card .for.b { color: var(--accent); }
+.cta-card h3 {
+  font-size: 28px; font-weight: 400; margin-bottom: 8px;
+}
+.cta-card h3 small {
+  display: block; font-size: 13px; font-weight: 300;
+  color: var(--ink-3); margin-top: 6px; letter-spacing: 0.02em;
+}
+.cta-card .quote-mini {
+  margin-top: 14px; padding-top: 14px;
+  border-top: 1px dashed var(--hairline);
+  font-size: 12px; color: var(--ink-3);
+  font-weight: 300;
+}
+.cta-card .quote-mini b { color: var(--accent); font-weight: 600; }
+.cta-card .label {
+  display: block;
+  font-size: 11px; letter-spacing: 0.12em;
+  color: var(--ink-3); text-transform: uppercase;
+  font-weight: 700; margin-bottom: 6px; margin-top: 18px;
+}
+.cta-card input,
+.cta-card select,
+.cta-card textarea {
+  width: 100%; padding: 12px 14px;
+  background: var(--page); border: 1px solid var(--hairline);
+  color: var(--ink); font-size: 14px;
+  transition: border-color .2s; outline: none;
+  font-family: inherit;
+}
+.cta-card input:focus,
+.cta-card select:focus,
+.cta-card textarea:focus {
+  border-color: var(--accent);
+  box-shadow: var(--focus-ring);
+}
+.cta-card .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.cta-card textarea { min-height: 82px; resize: vertical; }
+.cta-card .submit {
+  margin-top: 22px; width: 100%;
+  padding: 15px; background: var(--accent-2);
+  color: var(--bone);
+  border: 0; font-size: 13px; font-weight: 500;
+  letter-spacing: 0.18em; text-transform: uppercase;
+  cursor: pointer; transition: background .25s;
+}
+.cta-card .submit:hover { background: var(--accent); }
+.cta-card .submit.sent {
+  background: var(--amber); cursor: default;
+}
+.cta-card .note {
+  font-size: 12px; color: var(--ink-3);
+  margin-top: 14px; font-weight: 300;
+}
+
+/* ===== 表单提交后展示的反馈条 ===== */
+.form-banner {
+  margin-top: 14px;
+  padding: 12px 14px;
+  background: rgba(47,82,51,.08);
+  border: 1px solid rgba(47,82,51,.25);
+  font-size: 13px;
+  color: var(--accent);
+  display: none;
+  border-radius: 2px;
+}
+.form-banner.is-visible { display: block; }

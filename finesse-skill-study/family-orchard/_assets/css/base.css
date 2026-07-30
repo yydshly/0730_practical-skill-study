@@ -1,0 +1,31 @@
+/* =====================================================
+   base.css — 共用排版 + 工具类
+   Phase A · family-orchard 模块化重构
+   ===================================================== */
+
+/* ===== 共用排印 ===== */
+.sec-tag {
+  font-size: 11px; font-weight: 600; letter-spacing: 0.32em;
+  color: var(--accent); text-transform: uppercase; margin-bottom: 22px;
+}
+.sec-tag--tight { margin-bottom: 0; }   /* 替代原 inline style="margin-bottom:0" */
+
+h1, h2, h3 { letter-spacing: -0.02em; line-height: 1.05; font-weight: 600; }
+h2 {
+  font-size: clamp(34px, 4.4vw, 60px); font-weight: 300;
+  margin-bottom: 18px;
+}
+h2 .em { font-style: italic; color: var(--accent); font-weight: 400; }
+p.lede {
+  font-size: 17px; color: var(--ink-2);
+  max-width: 580px; font-weight: 300;
+}
+
+/* ===== section 容器 ===== */
+section { padding: 110px 36px; max-width: 1240px; margin: 0 auto; }
+section + section { padding-top: 40px; }
+
+/* ===== 工具类（替代 inline style 中 margin-top） ===== */
+.mt-sm { margin-top: 14px; }
+.mt-md { margin-top: 24px; }
+.mt-lg { margin-top: 30px; }

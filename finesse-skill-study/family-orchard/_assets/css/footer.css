@@ -1,0 +1,34 @@
+/* =====================================================
+   footer.css — 页面 footer
+   Phase A · family-orchard 模块化重构
+   ===================================================== */
+
+.foot {
+  border-top: 1px solid var(--hairline);
+  padding: 70px 36px 50px;
+  max-width: 1240px; margin: 0 auto;
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr;
+  gap: 50px;
+}
+.foot h4 {
+  font-size: 10.5px; letter-spacing: 0.3em;
+  text-transform: uppercase; color: var(--ink-3);
+  font-weight: 700; margin-bottom: 16px;
+}
+.foot p, .foot li {
+  font-size: 14px; color: var(--ink-2);
+  font-weight: 300; line-height: 1.75;
+}
+.foot ul { list-style: none; }
+.foot-bottom {
+  border-top: 1px solid var(--hairline);
+  padding: 22px 36px;
+  max-width: 1240px; margin: 0 auto;
+  display: flex; justify-content: space-between;
+  font-size: 11.5px; color: var(--ink-3);
+  letter-spacing: 0.04em;
+}
+.foot-bottom .ban {
+  color: var(--amber); font-weight: 600;
+}

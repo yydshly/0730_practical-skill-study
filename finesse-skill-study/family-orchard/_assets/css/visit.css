@@ -1,0 +1,66 @@
+/* =====================================================
+   visit.css — §6 来访路线 (map + 3 routes)
+   Phase A · family-orchard 模块化重构
+   ===================================================== */
+
+.visit-map {
+  margin-top: 36px;
+  display: grid;
+  grid-template-columns: 1.6fr 1fr;
+  gap: 28px;
+  align-items: start;
+}
+.visit-map-frame {
+  aspect-ratio: 16/10;
+  border: 1px solid var(--hairline);
+  background: var(--bone);
+  overflow: hidden;
+  position: relative;
+}
+.visit-map-frame iframe {
+  width: 100%; height: 100%;
+  border: 0;
+  filter: saturate(.85) contrast(.95);
+}
+.visit-map-frame::after {
+  content: '↑ 全屏 / ⌥ 点击';
+  position: absolute; bottom: 10px; right: 14px;
+  background: rgba(20,16,12,.78); color: var(--bone);
+  padding: 4px 10px; font-size: 11px;
+  font-family: var(--font-mono); letter-spacing: 0.08em;
+  pointer-events: none;
+}
+.visit-pin {
+  position: absolute;
+  top: 14px; left: 14px;
+  z-index: 5;
+  background: var(--accent);
+  color: var(--bone);
+  padding: 6px 12px;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  font-weight: 500;
+}
+.visit-routes {
+  display: flex; flex-direction: column; gap: 16px;
+}
+.route {
+  padding: 18px;
+  background: var(--bg);
+  border: 1px solid var(--hairline);
+  border-left: 3px solid var(--accent);
+}
+.route-h {
+  display: flex; align-items: baseline; gap: 10px;
+  margin-bottom: 6px;
+}
+.route-h b {
+  font-size: 15px; font-weight: 600; color: var(--ink);
+  letter-spacing: -.005em;
+}
+.route-meta {
+  font-size: 11px; color: var(--ink-3);
+  letter-spacing: 0.06em; font-weight: 500;
+}
+.route p { font-size: 13px; line-height: 1.6; color: var(--ink-2); font-weight: 300; }
+.route p b { color: var(--ink); font-weight: 500; }
