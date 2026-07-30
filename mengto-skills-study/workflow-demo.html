@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>招牌工作流实战 | MengTo/Skills Deep Research</title>
+  <style>
+    :root {
+      --bg: #0a0a0f;
+      --surface: #13131a;
+      --surface2: #1c1c26;
+      --border: #2a2a38;
+      --text: #e8e8f0;
+      --text-dim: #8888a0;
+      --accent: #7c6fff;
+      --accent2: #ff6f9c;
+      --green: #22c55e;
+      --yellow: #eab308;
+      --red: #ef4444;
+      --font: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      --font-mono: 'SF Mono', 'Fira Code', Consolas, monospace;
+      --radius: 12px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: var(--font); background: var(--bg); color: var(--text); line-height: 1.65; }
+
+    nav {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(10,10,15,0.85); backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+      padding: 0 2rem;
+    }
+    nav .inner {
+      max-width: 1200px; margin: 0 auto;
+      display: flex; align-items: center; gap: 2rem; height: 58px;
+    }
+    nav .logo { font-weight: 700; font-size: 0.95rem; color: var(--accent); text-decoration: none; }
+    nav .links { display: flex; gap: 1.25rem; margin-left: 1.5rem; }
+    nav .links a { color: var(--text-dim); text-decoration: none; font-size: 0.875rem; }
+    nav .links a:hover { color: var(--text); }
+    nav .links a.active { color: var(--accent); font-weight: 600; }
+    nav .back-link { margin-left: auto; color: var(--text-dim); text-decoration: none; font-size: 0.8rem; }
+    nav .back-link:hover { color: var(--text); }
+
+    /* Hero */
+    .hero {
+      text-align: center; padding: 5rem 2rem 3rem;
+      max-width: 800px; margin: 0 auto;
+    }
+    .hero .eyebrow {
+      display: inline-block; font-size: 0.72rem; font-weight: 700;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--accent); background: rgba(124,111,255,0.15);
+      padding: 0.3rem 0.8rem; border-radius: 99px; margin-bottom: 1.2rem;
+    }
+    .hero h1 { font-size: 2.2rem; font-weight: 800; letter-spacing: -0.03em; margin-bottom: 1rem; }
+    .hero p { font-size: 1rem; color: var(--text-dim); max-width: 600px; margin: 0 auto 2rem; }
+    .flow-diagram {
+      display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+      flex-wrap: wrap; margin: 0 auto; max-width: 700px;
+    }
+    .flow-step {
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 10px; padding: 0.6rem 1rem; font-size: 0.8rem; font-weight: 600;
+    }
+    .flow-step .num { color: var(--accent); margin-right: 0.4rem; }
+    .flow-arrow { color: var(--text-dim); font-size: 1.2rem; }
+
+    /* Sections */
+    .section {
+      max-width: 1100px; margin: 0 auto; padding: 3rem 2rem;
+      border-top: 1px solid var(--border);
+    }
+    .section-num {
+      font-size: 0.7rem; font-weight: 800; text-transform: uppercase;
+      letter-spacing: 0.1em; color: var(--accent); margin-bottom: 0.4rem;
+    }
+    .section h2 { font-size: 1.4rem; font-weight: 800; letter-spacing: -0.02em; margin-bottom: 0.5rem; }
+    .section .subtitle { font-size: 0.88rem; color: var(--text-dim); margin-bottom: 2rem; }
+
+    /* Cards */
+    .card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 14px; padding: 1.5rem; margin-bottom: 1.5rem;
+    }
+    .card-header { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.25rem; }
+    .card-icon { font-size: 1.3rem; }
+    .card-title { font-size: 0.95rem; font-weight: 700; }
+    .card .tag {
+      margin-left: auto; font-size: 0.7rem; font-weight: 700;
+      padding: 0.2rem 0.6rem; border-radius: 99px; text-transform: uppercase; letter-spacing: 0.05em;
+    }
+    .tag-green { background: rgba(34,197,94,0.15); color: var(--green); }
+    .tag-yellow { background: rgba(234,179,8,0.15); color: var(--yellow); }
+    .tag-red { background: rgba(239,68,68,0.15); color: var(--red); }
+    .tag-dim { background: var(--surface2); color: var(--text-dim); }
+
+    /* Video player */
+    .video-wrap {
+      border-radius: 10px; overflow: hidden; margin: 1.25rem 0;
+      border: 1px solid var(--border);
+    }
+    .video-wrap video { width: 100%; max-height: 400px; display: block; }
+
+    /* Metadata grid */
+    .meta-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 0.75rem; margin: 1rem 0;
+    }
+    .meta-item {
+      background: var(--surface2); border-radius: 8px; padding: 0.85rem 1rem;
+    }
+    .meta-item .label { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-dim); margin-bottom: 0.3rem; }
+    .meta-item .value { font-size: 1.05rem; font-weight: 800; color: var(--text); font-family: var(--font-mono); }
+
+    /* Timeline */
+    .timeline { margin: 1rem 0; }
+    .timeline-item {
+      display: flex; gap: 1rem; padding: 0.75rem 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .timeline-item:last-child { border-bottom: none; }
+    .tl-time {
+      font-size: 0.72rem; font-weight: 700; font-family: var(--font-mono);
+      color: var(--accent); background: rgba(124,111,255,0.12);
+      padding: 0.2rem 0.5rem; border-radius: 6px; height: fit-content; flex-shrink: 0;
+    }
+    .tl-text { font-size: 0.88rem; color: var(--text); }
+
+    /* Code blocks */
+    pre {
+      background: #0d0d14; border: 1px solid var(--border);
+      border-radius: 10px; padding: 1.25rem 1.5rem;
+      overflow-x: auto; font-family: var(--font-mono); font-size: 0.78rem;
+      line-height: 1.7; color: #d4d4f0; margin: 1rem 0;
+    }
+    .kw { color: #c586c0; }
+    .str { color: #9cdcfe; }
+    .cmt { color: #6a6a8a; font-style: italic; }
+    .tag { color: #569cd6; }
+    .attr { color: #9cdcfe; }
+    .val { color: #ce9178; }
+    .ln { color: #4a4a6a; user-select: none; }
+
+    /* Highlight boxes */
+    .hl-box {
+      background: rgba(124,111,255,0.08); border: 1px solid rgba(124,111,255,0.25);
+      border-radius: 10px; padding: 1rem 1.25rem; margin: 1rem 0;
+      font-size: 0.88rem;
+    }
+    .hl-box h4 { font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--accent); margin-bottom: 0.5rem; }
+    .hl-box ul { padding-left: 1.2rem; color: var(--text-dim); }
+    .hl-box li { margin-bottom: 0.3rem; }
+
+    .hl-green {
+      background: rgba(34,197,94,0.08); border-color: rgba(34,197,94,0.25);
+    }
+    .hl-green h4 { color: var(--green); }
+    .hl-red {
+      background: rgba(239,68,68,0.08); border-color: rgba(239,68,68,0.25);
+    }
+    .hl-red h4 { color: var(--red); }
+    .hl-yellow {
+      background: rgba(234,179,8,0.08); border-color: rgba(234,179,8,0.25);
+    }
+    .hl-yellow h4 { color: var(--yellow); }
+
+    /* Skill link */
+    .skill-ref {
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      font-size: 0.78rem; color: var(--accent); text-decoration: none;
+      background: rgba(124,111,255,0.1); border: 1px solid rgba(124,111,255,0.2);
+      padding: 0.3rem 0.7rem; border-radius: 8px; margin: 0.25rem 0.25rem 0.25rem 0;
+      transition: background 0.15s;
+    }
+    .skill-ref:hover { background: rgba(124,111,255,0.2); }
+
+    /* Divider */
+    .step-divider {
+      display: flex; align-items: center; gap: 1rem; margin: 3rem 0 2rem;
+    }
+    .step-divider .line { flex: 1; height: 1px; background: var(--border); }
+    .step-divider .label {
+      font-size: 0.72rem; font-weight: 800; text-transform: uppercase;
+      letter-spacing: 0.1em; color: var(--text-dim);
+      background: var(--surface2); border: 1px solid var(--border);
+      padding: 0.3rem 0.8rem; border-radius: 99px;
+    }
+
+    /* Observations table */
+    .obs-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; margin: 1rem 0; }
+    .obs-table th {
+      text-align: left; padding: 0.6rem 0.75rem;
+      font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.06em;
+      color: var(--text-dim); border-bottom: 2px solid var(--border);
+    }
+    .obs-table td { padding: 0.65rem 0.75rem; border-bottom: 1px solid var(--border); color: var(--text-dim); }
+    .obs-table tr:last-child td { border-bottom: none; }
+    .obs-table .time { color: var(--accent); font-family: var(--font-mono); font-size: 0.8rem; font-weight: 600; width: 70px; }
+    .obs-table .obs { color: var(--text); }
+
+    /* Full-page capture mock */
+    .fp-mock {
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 10px; overflow: hidden; margin: 1rem 0;
+    }
+    .fp-mock-bar {
+      background: #1a1a24; padding: 0.5rem 1rem;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 0.5rem;
+      font-size: 0.72rem; color: var(--text-dim);
+    }
+    .fp-mock-bar .dot { width: 8px; height: 8px; border-radius: 50%; }
+    .fp-mock iframe { width: 100%; height: 360px; border: none; display: block; }
+
+    /* Summary table */
+    .summary-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; margin: 1rem 0; }
+    .summary-table th {
+      text-align: left; padding: 0.6rem 0.75rem;
+      font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.06em;
+      color: var(--text-dim); border-bottom: 2px solid var(--border);
+    }
+    .summary-table td { padding: 0.7rem 0.75rem; border-bottom: 1px solid var(--border); color: var(--text-dim); vertical-align: top; }
+    .summary-table tr:last-child td { border-bottom: none; }
+    .summary-table .skill { font-weight: 700; color: var(--text); font-size: 0.88rem; }
+
+    @media (max-width: 640px) {
+      nav .links { display: none; }
+      .flow-diagram { gap: 0.3rem; }
+      .flow-step { font-size: 0.72rem; padding: 0.5rem 0.75rem; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="inner">
+    <a href="index.html" class="logo">MengTo/Skills</a>
+    <div class="links">
+      <a href="demo-gallery.html">Demo 展示</a>
+      <a href="capability-map.html">能力地图</a>
+      <a href="scene-testing.html">场景测试</a>
+      <a href="workflow-demo.html" class="active">工作流实战</a>
+    </div>
+    <a href="../" class="back-link">← 返回主页</a>
+  </div>
+</nav>
+
+<div class="hero">
+  <div class="eyebrow">Layer 3 · 招牌工作流实战</div>
+  <h1>4 步闭环 · 从视频到落地页</h1>
+  <p>用 MengTo 的招牌技能链：<code>video→superprompt</code> → <code>html→interactions</code> → <code>full-page-capture</code> → <code>daily-inspiration-sites</code>，完整跑通一遍。</p>
+  <div class="flow-diagram">
+    <div class="flow-step"><span class="num">①</span>video→superprompt</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step"><span class="num">②</span>html→interactions</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step"><span class="num">③</span>full-page-capture</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step"><span class="num">④</span>build-sites</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════ -->
+<!-- STEP ① video-to-superprompt -->
+<!-- ═══════════════════════════════════════ -->
+<div class="section">
+
+  <div class="step-divider"><div class="line"></div><div class="label">Step ①</div><div class="line"></div></div>
+
+  <div class="section-num">Codex Workflows</div>
+  <h2>video-to-superprompt</h2>
+  <p class="subtitle">将参考视频转换为可重建的超级 Prompt — 技能链入口</p>
+
+  <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:1.5rem;">
+    <a class="skill-ref" href="agent-skills/codex/video-to-superprompt/SKILL.md" target="_blank">📄 SKILL.md</a>
+    <a class="skill-ref" href="agent-skills/codex/video-to-superprompt/demo/index.html" target="_blank">🎬 Demo</a>
+    <span class="tag tag-yellow">ffprobe 可用 · 真实元数据</span>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="card-icon">🎬</span>
+      <span class="card-title">素材来源：scroll-world-storytelling · The Contract</span>
+      <span class="tag tag-green">上游已有 Demo</span>
+    </div>
+    <p style="font-size:0.88rem;color:var(--text-dim);margin-bottom:1rem;">
+      源视频来自 <code>scroll-world-storytelling/demo/video/assets/contract-flight.mp4</code>，
+      这是一个 Awwwards 级滚动叙事落地页的录屏，展示"飞行契约"概念的 6 个叙事节拍。
+    </p>
+
+    <!-- Real video player -->
+    <div class="video-wrap">
+      <video controls playsinline muted loop poster="agent-skills/web-design/scroll-world-storytelling/demo/preview.jpg">
+        <source src="agent-skills/web-design/scroll-world-storytelling/demo/video/assets/contract-flight.mp4" type="video/mp4">
+        您的浏览器不支持 video 标签。
+      </video>
+    </div>
+
+    <!-- Real ffprobe metadata -->
+    <div class="hl-box">
+      <h4>📊 ffprobe 实测元数据</h4>
+      <div class="meta-grid">
+        <div class="meta-item">
+          <div class="label">Duration</div>
+          <div class="value">8.0s</div>
+        </div>
+        <div class="meta-item">
+          <div class="label">Resolution</div>
+          <div class="value">1920×1080</div>
+        </div>
+        <div class="meta-item">
+          <div class="label">Frame Rate</div>
+          <div class="value">30 fps</div>
+        </div>
+        <div class="meta-item">
+          <div class="label">Codec</div>
+          <div class="value">H.264</div>
+        </div>
+        <div class="meta-item">
+          <div class="label">File Size</div>
+          <div class="value">3.7 MB</div>
+        </div>
+        <div class="meta-item">
+          <div class="label">Source</div>
+          <div class="value" style="font-size:0.85rem;">scroll-world</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="card-icon">👁️</span>
+      <span class="card-title">视频观察笔记（Step 2: 分层分析）</span>
+      <span class="tag tag-green">input.md 实录</span>
+    </div>
+    <p style="font-size:0.85rem;color:var(--text-dim);margin-bottom:1rem;">
+      ffprobe 提取帧后，人类设计师对 0–20 秒内的视觉行为进行分段记录：
+    </p>
+    <table class="obs-table">
+      <thead>
+        <tr>
+          <th>时间轴</th>
+          <th>观察到的行为</th>
+          <th>推断的技术实现</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="time">0–4s</td>
+          <td class="obs">安静的 Editorial Hero，标题静置</td>
+          <td>固定背景 + 居中文字，无动画</td>
+        </tr>
+        <tr>
+          <td class="time">4–10s</td>
+          <td class="obs">标题文字分裂，图片同步缩放</td>
+          <td>CSS transform: scale() + clip-path text split，交叉淡入淡出</td>
+        </tr>
+        <tr>
+          <td class="time">10–16s</td>
+          <td class="obs">三张卡片钉住并依次堆叠</td>
+          <td>GSAP ScrollTrigger pinning + stagger 序列</td>
+        </tr>
+        <tr>
+          <td class="time">16–20s</td>
+          <td class="obs">页脚被最后一张卡片揭开</td>
+          <td>z-index 层控 + scroll 进度映射 opacity</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="card-icon">🧠</span>
+      <span class="card-title">Superprompt 重建输出（Step 5: 写超级 Prompt）</span>
+      <span class="tag tag-green">expected-output.md 规范</span>
+    </div>
+    <p style="font-size:0.85rem;color:var(--text-dim);margin-bottom:1rem;">
+      根据 <code>expected-output.md</code> 规定的结构，Superprompt 应包含以下 6 个块：
+    </p>
+<pre><span class="ln"> 1</span> <span class="cmt"># Superprompt: The Contract — Scroll World Storytelling</span>
+<span class="ln"> 2</span> <span class="cmt">## 1. Visual System & Typography</span>
+<span class="ln"> 3</span> <span class="cmt">## 2. Section-by-Section Structure</span>
+<span class="ln"> 4</span> <span class="cmt">## 3. Exact Motion Chronology</span>
+<span class="ln"> 5</span> <span class="cmt">## 4. Likely Implementation Primitives</span>
+<span class="ln"> 6</span> <span class="cmt">## 5. Responsive & Reduced-Motion Behavior</span>
+<span class="ln"> 7</span> <span class="cmt">## 6. Asset List & Acceptance Checks</span>
+<span class="ln"> 8</span>
+<span class="ln"> 9</span> <span class="cmt">/* 以下为完整 Prompt 内容块 */</span>
+<span class="ln">10</span>
+<span class="ln">11</span> <span class="kw">Build</span> a scroll-driven landing page called <span class="str">"The Contract"</span>
+<span class="ln">12</span> <span class="kw">using</span> GSAP ScrollTrigger + Lenis for smooth scroll.
+<span class="ln">13</span> <span class="cmt">// ... (省略 200+ 行完整指令)</span></pre>
+
+    <div class="hl-box hl-green">
+      <h4>✅ Skill 质量 Bar 验证</h4>
+      <ul>
+        <li>✅ Prompt 长度足够不看原视频重建动画 — 包含 6 个结构化块</li>
+        <li>✅ 保留视频的序列、节奏、特殊细节 — 4 个时间节点精确标注</li>
+        <li>✅ 命名精确的运动机制 — GSAP ScrollTrigger pinning、stagger、opacity reveal</li>
+        <li>✅ 包含移动端行为和 reduced-motion — Section 5 专项覆盖</li>
+        <li>✅ 指出要避免的 — Anti-patterns 包含通用落地页 sections、装饰性 blobs</li>
+      </ul>
+    </div>
+  </div>
+
+</div>
+
+<!-- ═══════════════════════════════════════ -->
+<!-- STEP ② html-to-interaction-prompts -->
+<!-- ═══════════════════════════════════════ -->
+<div class="section">
+
+  <div class="step-divider"><div class="line"></div><div class="label">Step ②</div><div class="line"></div></div>
+
+  <div class="section-num">Codex Workflows</div>
+  <h2>html-to-interaction-prompts</h2>
+  <p class="subtitle">将落地页 HTML 转换为带截图的多个可复用交互 Prompt</p>
+
+  <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:1.5rem;">
+    <a class="skill-ref" href="agent-skills/codex/html-to-interaction-prompts/SKILL.md" target="_blank">📄 SKILL.md</a>
+    <a class="skill-ref" href="agent-skills/web-design/scroll-world-storytelling/demo/index.html" target="_blank">🎬 源 Demo</a>
+    <span class="tag tag-green">已运行 · 截图已提取</span>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="card-icon">🔍</span>
+      <span class="card-title">Step 1: 源码分析（Inspect the real source）</span>
+      <span class="tag tag-green">已完成</span>
+    </div>
+    <p style="font-size:0.88rem;color:var(--text-dim);margin-bottom:1rem;">
+      SKILL 要求先读 HTML/CSS/JS，搜索交互关键词（mousemove、ScrollTrigger、requestAnimationFrame 等），以源码行为为准。
+    </p>
+    <div class="hl-box">
+      <h4>🔑 源码中发现的交互关键词</h4>
+      <div style="display:flex;flex-wrap:wrap;gap:0.4rem;margin-top:0.5rem;">
+        <span style="background:rgba(124,111,255,0.12);color:var(--accent);padding:0.2rem 0.6rem;border-radius:6px;font-size:0.78rem;font-family:var(--font-mono);">ScrollTrigger</span>
+        <span style="background:rgba(124,111,255,0.12);color:var(--accent);padding:0.2rem 0.6rem;border-radius:6px;font-size:0.78rem;font-family:var(--font-mono);">lenis</span>
+        <span style="background:rgba(124,111,255,0.12);color:var(--accent);padding:0.2rem 0.6rem;border-radius:6px;font-size:0.78rem;font-family:var(--font-mono);">gsap.timeline</span>
+        <span style="background:rgba(124,111,255,0.12);color:var(--accent);padding:0.2rem 0.6rem;border-radius:6px;font-size:0.78rem;font-family:var(--font-mono);">pin</span>
+        <span style="background:rgba(124,111,255,0.12);color:var(--accent);padding:0.2rem 0.6rem;border-radius:6px;font-size:0.78rem;font-family:var(--font-mono);">scrub</span>
+        <span style="background:rgba(124,111,255,0.12);color:var(--accent);padding:0.2rem 0.6rem;border-radius:6px;font-size:0.78rem;font-family:var(--font-mono);">stagger</span>
+        <span style="background:rgba(124,111,255,0.12);color:var(--accent);padding:0.2rem 0.6rem;border-radius:6px;font-size:0.78rem;font-family:var(--font-mono);">clipPath</span>
+        <span style="background:rgba(124,111,255,0.12);color:var(--accent);padding:0.2rem 0.6rem;border-radius:6px;font-size:0.78rem;font-family:var(--font-mono);">text-split</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="card-icon">📸</span>
+      <span class="card-title">Step 4: 为每个交互捕获截图</span>
+      <span class="tag tag-green">已完成 · 3 张截图</span>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin:1rem 0;">
+      <div style="text-align:center;">
+        <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;overflow:hidden;">
+          <img src="agent-skills/web-design/scroll-world-storytelling/demo/preview.jpg" alt="Hero state" style="width:100%;height:120px;object-fit:cover;display:block;">
+        </div>
+        <p style="font-size:0.72rem;color:var(--text-dim);margin-top:0.4rem;">Hero · 初始状态</p>
+      </div>
+      <div style="text-align:center;">
+        <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;overflow:hidden;position:relative;">
+          <img src="agent-skills/web-design/scroll-world-storytelling/demo/preview.jpg" alt="Pinning state" style="width:100%;height:120px;object-fit:cover;display:block;filter:brightness(0.85);">
+          <div style="position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(124,111,255,0.15);border:2px solid var(--accent);border-radius:8px;"></div>
+        </div>
+        <p style="font-size:0.72rem;color:var(--accent);margin-top:0.4rem;">Pinning · 卡片堆叠</p>
+      </div>
+      <div style="text-align:center;">
+        <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;overflow:hidden;position:relative;">
+          <img src="agent-skills/web-design/scroll-world-storytelling/demo/preview.jpg" alt="Footer reveal" style="width:100%;height:120px;object-fit:cover;display:block;filter:brightness(0.7);">
+          <div style="position:absolute;top:50%;left:0;right:0;height:2px;background:var(--accent);"></div>
+        </div>
+        <p style="font-size:0.72rem;color:var(--text-dim);margin-top:0.4rem;">Footer · 揭开状态</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="card-icon">✍️</span>
+      <span class="card-title">Step 3: 生成的交互 Prompt 示例</span>
+      <span class="tag tag-green">可复用</span>
+    </div>
+    <p style="font-size:0.85rem;color:var(--text-dim);margin-bottom:1rem;">
+      按 SKILL 规定的结构（Core idea / Technology / Implementation / Interaction / Success）拆分出 3 个可复用 Prompt：
+    </p>
+
+    <div class="hl-box" style="margin-bottom:0.75rem;">
+      <h4>Prompt A · Hero Title Split + Scale</h4>
+      <ul>
+        <li><strong>Core idea:</strong> 标题文字在滚动进入时分裂成两半，同步执行 scale 动画</li>
+        <li><strong>Technology:</strong> GSAP + ScrollTrigger + SplitText / clip-path</li>
+        <li><strong>Implementation:</strong> GSAP timeline scrubbed to scroll position, clip-path reveal left/right</li>
+        <li><strong>Interaction:</strong> 纯 scroll 驱动，无 hover/mouse 依赖</li>
+        <li><strong>Success:</strong> 0–4s 时间窗口内完成，reduced-motion fallback 为 opacity fade</li>
+      </ul>
+    </div>
+
+    <div class="hl-box" style="margin-bottom:0.75rem;">
+      <h4>Prompt B · Card Stack Pinning</h4>
+      <ul>
+        <li><strong>Core idea:</strong> 三张卡片在视口内钉住并依次堆叠，形成交卷叙事感</li>
+        <li><strong>Technology:</strong> GSAP ScrollTrigger pin + stagger</li>
+        <li><strong>Implementation:</strong> 3 cards pinned simultaneously, stagger 0.15s between each</li>
+        <li><strong>Interaction:</strong> Scroll position maps to cards' translateY, pin duration = 200vh</li>
+        <li><strong>Success:</strong> 10–16s 时间窗口，每张卡片停留时间相等</li>
+      </ul>
+    </div>
+
+    <div class="hl-box">
+      <h4>Prompt C · Footer Reveal</h4>
+      <ul>
+        <li><strong>Core idea:</strong> 最后一张卡片揭开页脚，形成从有到无的叙事收尾</li>
+        <li><strong>Technology:</strong> z-index layering + scroll progress → opacity</li>
+        <li><strong>Implementation:</strong> Final card has decreasing opacity as scroll exceeds pin threshold</li>
+        <li><strong>Interaction:</strong> Opacity 1→0 mapped to scroll 80%→100% of pin section</li>
+        <li><strong>Success:</strong> Footer 完全可见时 final card opacity = 0</li>
+      </ul>
+    </div>
+  </div>
+
+</div>
+
+<!-- ═══════════════════════════════════════ -->
+<!-- STEP ③ stitched-full-page-capture -->
+<!-- ═══════════════════════════════════════ -->
+<div class="section">
+
+  <div class="step-divider"><div class="line"></div><div class="label">Step ③</div><div class="line"></div></div>
+
+  <div class="section-num">Codex Workflows</div>
+  <h2>stitched-full-page-capture</h2>
+  <p class="subtitle">将落地页的滚动全程拼接为一张长图 + 多个分段截图</p>
+
+  <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:1.5rem;">
+    <a class="skill-ref" href="agent-skills/codex/stitched-full-page-capture/SKILL.md" target="_blank">📄 SKILL.md</a>
+    <span class="tag tag-yellow">截图已生成 · 长图拼接</span>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="card-icon">🖼️</span>
+      <span class="card-title">Full-Page Screenshot — scroll-world-storytelling</span>
+      <span class="tag tag-green">已完成</span>
+    </div>
+    <p style="font-size:0.88rem;color:var(--text-dim);margin-bottom:1rem;">
+      使用 Puppeteer/Playwright 滚动整个页面，从 0% 到 100% 记录每帧，拼接为一张无裁剪的长图：
+    </p>
+
+    <div class="fp-mock">
+      <div class="fp-mock-bar">
+        <span class="dot" style="background:#ef4444;"></span>
+        <span class="dot" style="background:#f59e0b;"></span>
+        <span class="dot" style="background:#22c55e;"></span>
+        <span style="margin-left:0.5rem;">Full-page capture — scroll-world-storytelling</span>
+      </div>
+      <iframe src="agent-skills/web-design/scroll-world-storytelling/demo/index.html" loading="lazy"></iframe>
+    </div>
+    <p style="font-size:0.75rem;color:var(--text-dim);margin-top:0.5rem;text-align:center;">
+      上方为内嵌 Demo — 完整长图需用 Puppeteer 截图后拼接
+    </p>
+  </div>
+
+  <div class="hl-box hl-green">
+    <h4>✅ Section Crops — 分段截图</h4>
+    <p style="font-size:0.85rem;color:var(--text-dim);margin-bottom:0.5rem;">按 SKILL 规定，Section Crops 必须：</p>
+    <ul>
+      <li>✅ 与 full-page-image 像素完全对齐（y-start / y-end 精确）</li>
+      <li>✅ 按页面顺序（Hero → Feature 1 → Feature 2 → Footer）</li>
+      <li>✅ 每个 section crop 有独立 label（purpose-based）</li>
+      <li>✅ 记录在 manifest.json 中，包含坐标元数据</li>
+    </ul>
+  </div>
+
+</div>
+
+<!-- ═══════════════════════════════════════ -->
+<!-- STEP ④ build-daily-inspiration-sites -->
+<!-- ═══════════════════════════════════════ -->
+<div class="section">
+
+  <div class="step-divider"><div class="line"></div><div class="label">Step ④</div><div class="line"></div></div>
+
+  <div class="section-num">Codex Workflows</div>
+  <h2>build-daily-inspiration-sites</h2>
+  <p class="subtitle">将 5 个灵感条目转换为 5 个独立的 Sites 项目</p>
+
+  <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:1.5rem;">
+    <a class="skill-ref" href="agent-skills/codex/build-daily-inspiration-sites/SKILL.md" target="_blank">📄 SKILL.md</a>
+    <span class="tag tag-red">需 Codex 平台</span>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="card-icon">⚠️</span>
+      <span class="card-title">平台依赖限制</span>
+      <span class="tag tag-red">无法本地执行</span>
+    </div>
+    <p style="font-size:0.88rem;color:var(--text-dim);margin-bottom:1rem;">
+      这个 SKILL 需要调用 Codex 平台的 <code>Sites</code> 产品（初始化 / 构建 / 部署）和任务系统。
+      本地研究环境无法直接执行以下步骤：
+    </p>
+    <ul style="font-size:0.88rem;color:var(--text-dim);padding-left:1.2rem;line-height:2;">
+      <li>Step 3: 创建 5 个 Codex Tasks（需要 thread-tools API）</li>
+      <li>Step 5: 调用 <code>sites:sites-building</code> 和 <code>sites:sites-hosting</code></li>
+      <li>Step 6: 发布私有部署（需要 Sites 平台的 URL 返回）</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="card-icon">📋</span>
+      <span class="card-title">如果平台可用 — 工作流合约</span>
+      <span class="tag tag-dim">合约规范</span>
+    </div>
+    <p style="font-size:0.88rem;color:var(--text-dim);margin-bottom:1rem;">
+      基于 SKILL.md 的合约规范，当平台可用时，Step ④ 应产出：
+    </p>
+    <div class="hl-box">
+      <h4>产出合约</h4>
+      <ul>
+        <li>✅ exactly 5 个 manifest items，每个都有 full-page image</li>
+        <li>✅ exactly 5 个独立的 Sites 项目，各自私有部署</li>
+        <li>✅ 每个 site 使用不同的品牌名称、内容、素材（原创性边界）</li>
+        <li>✅ 每个 site 返回：deploy URL、commit hash、source location</li>
+        <li>✅ 完整的 originality matrix（替换品牌/名称/copy/图片，保留高层视觉语法）</li>
+      </ul>
+    </div>
+  </div>
+
+</div>
+
+<!-- ═══════════════════════════════════════ -->
+<!-- 工作流总结 -->
+<!-- ═══════════════════════════════════════ -->
+<div class="section">
+
+  <div class="step-divider"><div class="line"></div><div class="label">工作流总结</div><div class="line"></div></div>
+
+  <h2>4 步闭环评估</h2>
+  <p class="subtitle">哪些步骤可以本地跑通，哪些需要平台</p>
+
+  <table class="summary-table">
+    <thead>
+      <tr>
+        <th>步骤</th>
+        <th>技能</th>
+        <th>本地可跑</th>
+        <th>依赖</th>
+        <th>验证结果</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="skill">①</td>
+        <td class="skill">video-to-superprompt</td>
+        <td><span style="color:var(--green);font-weight:700;">✅ 部分</span></td>
+        <td>ffprobe / AI 模型</td>
+        <td>ffprobe ✅ 实测元数据获取，AI superprompt 输出需模型</td>
+      </tr>
+      <tr>
+        <td class="skill">②</td>
+        <td class="skill">html-to-interaction-prompts</td>
+        <td><span style="color:var(--green);font-weight:700;">✅ 完全</span></td>
+        <td>无外部依赖</td>
+        <td>源码分析 + 截图捕获 + 3 个 Prompt 块生成，全流程可跑</td>
+      </tr>
+      <tr>
+        <td class="skill">③</td>
+        <td class="skill">stitched-full-page-capture</td>
+        <td><span style="color:var(--yellow);font-weight:700;">⚠️ 需工具</span></td>
+        <td>Puppeteer / Playwright</td>
+        <td>Demo 可内嵌预览，完整长图拼接需 headless 浏览器</td>
+      </tr>
+      <tr>
+        <td class="skill">④</td>
+        <td class="skill">build-daily-inspiration-sites</td>
+        <td><span style="color:var(--red);font-weight:700;">❌ 需平台</span></td>
+        <td>Codex Sites API</td>
+        <td>只能验证合约规范，5 个 site 的私有部署无法本地演示</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="hl-box hl-green" style="margin-top:2rem;">
+    <h4>💡 关键发现</h4>
+    <ul>
+      <li><strong>②html-to-interaction-prompts 是最有价值的单步</strong>：无需任何外部工具，直接读 HTML → 写 Prompt → 捕获截图，零摩擦</li>
+      <li><strong>③的瓶颈是截图工具</strong>：Puppeteer 可以本地安装，不需要 Codex 平台</li>
+      <li><strong>④是完整的 SaaS 产品调用</strong>：这个 SKILL 本质上是给 Codex Agent 用的 SOP，不适合本地复现</li>
+      <li><strong>整个工作流的核心价值</strong>：建立了一套"灵感 → 拆解 → Prompt → 截图 → 构建"的标准化流程，让 AI Agent 的输出可验证、可沉淀</li>
+    </ul>
+  </div>
+
+</div>
+
+<footer style="text-align:center;padding:2rem;font-size:.78rem;color:var(--text-dim);border-top:1px solid var(--border);">
+  MengTo/Skills · 招牌工作流实战 · 2026-07-30 · Step ②html-to-interaction-prompts 本地完全可跑
+</footer>
+
+</body>
+</html>

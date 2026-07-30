@@ -62,24 +62,28 @@ python -m http.server 8000
 ├── README.md                       ← 你正在读的(外层)
 ├── .gitignore
 │
-└── finesse-skill-study/            ← 项目 1
-    ├── README.md                   ← 项目 1 入口
-    ├── AGENTS.md / USAGE.md        ← 上游 Skill 自带的文档
-    │
-    ├── .trae/skills/finesse-ui/    ← 上游 Skill 库(vendor,只读)
-    ├── skills/finesse-ui/          ← 同上的本地工作副本
-    │
-    ├── examples-index.html         ← 研究工具:13 个范例的索引浏览器
-    ├── capabilities.html           ← 研究工具:能力全景 + 决策树
-    ├── prompt-builder.html         ← 研究工具:Prompt 自动拼装器
-    │
-    └── family-orchard/             ← 项目 1 的子交付物
-        ├── README.md
-        ├── index.html
-        └── _assets/img/            ← 10 张 Pollinations AI 摄影
+├── finesse-skill-study/            ← 项目 1
+│   ├── README.md                   ← 项目 1 入口
+│   ├── examples-index.html         ← 研究工具:13 个范例的索引浏览器
+│   ├── capabilities.html           ← 研究工具:能力全景 + 决策树
+│   ├── prompt-builder.html         ← 研究工具:Prompt 自动拼装器
+│   └── family-orchard/             ← 项目 1 的子交付物
+│       ├── README.md
+│       ├── index.html
+│       └── _assets/img/            ← 10 张 Pollinations AI 摄影
+│
+└── mengto-skills-study/            ← 项目 2 · MengTo/Skills 研究
+    ├── README.md                   ← 项目 2 入口
+    ├── index.html                  ← 研究总览
+    ├── demo-gallery.html           ← Layer 1 · 118 技能 Demo 展示(89 有 Demo)
+    ├── capability-map.html         ← Layer 2 · 能力决策树
+    ├── scene-testing.html          ← Layer 3 · 4 技能真实场景验证
+    ├── workflow-demo.html          ← Layer 3 · 招牌 4 步工作流演示
+    ├── SKILL-MATRIX.md            ← 118 技能完整索引
+    └── agent-skills/               ← 118 个技能的源代码(SKILL.md + demo)
 ```
 
-**当前 1 个项目,3 个研究工具 HTML,1 个可交付页面。** 未来每个新项目按 `项目名/` 单目录形式加入。
+**当前 2 个项目,4 个研究工具 HTML,1 个可交付页面。** 未来每个新项目按 `项目名/` 单目录形式加入。
 
 ---
 
@@ -89,6 +93,11 @@ python -m http.server 8000
 |---|---|---|---|
 | 1 | [finesse-skill-study](./finesse-skill-study/) | 学习 UI 设计 Skill 并实战一个家庭果园品牌页 | 已完成 v0 → v9 |
 | 2 | [mengto-skills-study](./mengto-skills-study/) | 深度研究 MengTo/Skills 库（118 个 AI 设计技能） | 研究中 |
+
+> **项目 2 研究三层**：
+> - **Layer 1**：[Demo 展示](./mengto-skills-study/demo-gallery.html) — 118 技能 89 个 Demo 可视浏览
+> - **Layer 2**：[能力地图](./mengto-skills-study/capability-map.html) — "需要 X → 用哪个 Y"决策树
+> - **Layer 3**：[场景测试](./mengto-skills-study/scene-testing.html) + [工作流实战](./mengto-skills-study/workflow-demo.html) — 4 技能真实验证 + 招牌 4 步闭环演示
 | - | [项目 1 · examples-index](./finesse-skill-study/examples-index.html) | 13 个范例索引浏览器 | ✓ |
 | - | [项目 1 · capabilities](./finesse-skill-study/capabilities.html) | 能力全景 + 决策树 | ✓ |
 | - | [项目 1 · prompt-builder](./finesse-skill-study/prompt-builder.html) | Prompt 自动拼装器 | ✓ |

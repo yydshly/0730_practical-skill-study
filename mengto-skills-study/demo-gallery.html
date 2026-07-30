@@ -1,0 +1,2475 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Demo Gallery · MengTo/Skills</title>
+  <style>
+    :root {
+      --bg: #0a0a0f;
+      --surface: #13131a;
+      --surface2: #1c1c26;
+      --border: #2a2a38;
+      --text: #e8e8f0;
+      --text-dim: #8888a0;
+      --accent: #7c6fff;
+      --accent2: #ff6f9c;
+      --accent-glow: rgba(124, 111, 255, 0.2);
+      --tag-codex: #82d9c8;
+      --tag-webgl: #f0c07a;
+      --tag-css: #ff9f6f;
+      --tag-visual: #c084fc;
+      --tag-layout: #6ee7b7;
+      --tag-motion: #f472b6;
+      --tag-landing: #60a5fa;
+      --tag-3d: #34d399;
+      --tag-codex-bg: rgba(130, 217, 200, 0.1);
+      --tag-webgl-bg: rgba(240, 192, 122, 0.1);
+      --tag-css-bg: rgba(255, 159, 111, 0.1);
+      --tag-visual-bg: rgba(192, 132, 252, 0.1);
+      --tag-layout-bg: rgba(110, 231, 183, 0.1);
+      --tag-motion-bg: rgba(244, 114, 182, 0.1);
+      --tag-landing-bg: rgba(96, 165, 250, 0.1);
+      --tag-3d-bg: rgba(52, 211, 153, 0.1);
+      --font: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      --font-mono: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+      --radius: 10px;
+      --transition: 0.18s ease;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      min-height: 100vh;
+    }
+
+    /* ===== NAV ===== */
+    nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(10, 10, 15, 0.9);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+      padding: 0 2rem;
+    }
+    nav .inner {
+      max-width: 1400px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      gap: 2rem;
+      height: 58px;
+    }
+    nav .logo {
+      font-weight: 700;
+      font-size: 0.95rem;
+      color: var(--accent);
+      text-decoration: none;
+      white-space: nowrap;
+    }
+    nav .back-link {
+      margin-left: auto;
+      color: var(--text-dim);
+      text-decoration: none;
+      font-size: 0.8rem;
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+      transition: color var(--transition);
+    }
+    nav .back-link:hover { color: var(--text); }
+
+    /* ===== HEADER ===== */
+    .header {
+      padding: 3rem 2rem 1.5rem;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+    .header h1 {
+      font-size: clamp(1.8rem, 4vw, 2.8rem);
+      font-weight: 800;
+      letter-spacing: -0.04em;
+      margin-bottom: 0.5rem;
+    }
+    .header p {
+      color: var(--text-dim);
+      font-size: 0.95rem;
+    }
+    .header .stats {
+      margin-top: 1rem;
+      display: flex;
+      gap: 2rem;
+      flex-wrap: wrap;
+    }
+    .header .stat {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.85rem;
+      color: var(--text-dim);
+    }
+    .header .stat .num {
+      font-weight: 700;
+      color: var(--accent);
+    }
+
+    /* ===== FILTER BAR ===== */
+    .filter-bar {
+      padding: 1rem 2rem;
+      max-width: 1400px;
+      margin: 0 auto;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      align-items: center;
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 58px;
+      background: var(--bg);
+      z-index: 50;
+    }
+    .filter-bar .filter-label {
+      font-size: 0.75rem;
+      color: var(--text-dim);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-right: 0.5rem;
+    }
+    .filter-btn {
+      padding: 0.35rem 0.85rem;
+      border-radius: 100px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text-dim);
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: all var(--transition);
+      white-space: nowrap;
+    }
+    .filter-btn:hover {
+      border-color: var(--text-dim);
+      color: var(--text);
+    }
+    .filter-btn.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: white;
+    }
+    .filter-btn[data-filter="all"].active { background: var(--accent); border-color: var(--accent); }
+    .filter-btn[data-filter="codex"].active { background: var(--tag-codex); border-color: var(--tag-codex); color: #0a0a0f; }
+    .filter-btn[data-filter="motion"].active { background: var(--tag-motion); border-color: var(--tag-motion); color: #0a0a0f; }
+    .filter-btn[data-filter="3d"].active { background: var(--tag-3d); border-color: var(--tag-3d); color: #0a0a0f; }
+    .filter-btn[data-filter="css"].active { background: var(--tag-css); border-color: var(--tag-css); color: #0a0a0f; }
+    .filter-btn[data-filter="visual"].active { background: var(--tag-visual); border-color: var(--tag-visual); color: #0a0a0f; }
+    .filter-btn[data-filter="layout"].active { background: var(--tag-layout); border-color: var(--tag-layout); color: #0a0a0f; }
+    .filter-btn[data-filter="landing"].active { background: var(--tag-landing); border-color: var(--tag-landing); color: #0a0a0f; }
+    .filter-btn[data-filter="media"].active { background: var(--tag-webgl); border-color: var(--tag-webgl); color: #0a0a0f; }
+    .filter-btn[data-filter="ui"].active { background: var(--tag-landing); border-color: var(--tag-landing); color: #0a0a0f; }
+    .filter-btn[data-filter="game"].active { background: var(--tag-motion); border-color: var(--tag-motion); color: #0a0a0f; }
+
+    .filter-btn .count {
+      display: inline-block;
+      font-size: 0.7rem;
+      opacity: 0.7;
+      margin-left: 0.25rem;
+    }
+
+    /* ===== GRID ===== */
+    .grid-container {
+      padding: 1.5rem 2rem 4rem;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    .demo-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 1rem;
+    }
+
+    .demo-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      transition: border-color var(--transition), transform var(--transition);
+    }
+    .demo-card:hover {
+      border-color: var(--accent);
+      transform: translateY(-2px);
+    }
+    .demo-card.hidden { display: none; }
+
+    .demo-card .preview {
+      position: relative;
+      aspect-ratio: 16/9;
+      background: #0d0d14;
+      overflow: hidden;
+    }
+    .demo-card .preview img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.4s ease;
+    }
+    .demo-card:hover .preview img {
+      transform: scale(1.03);
+    }
+    .demo-card .preview .overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,0.6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.75rem;
+      opacity: 0;
+      transition: opacity var(--transition);
+    }
+    .demo-card:hover .overlay { opacity: 1; }
+    .demo-card .overlay a {
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all var(--transition);
+    }
+    .demo-card .overlay .btn-demo {
+      background: var(--accent);
+      color: white;
+    }
+    .demo-card .overlay .btn-demo:hover { background: #6a5fe0; }
+    .demo-card .overlay .btn-prompt {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text);
+    }
+    .demo-card .overlay .btn-prompt:hover { border-color: var(--accent); }
+
+    .demo-card .info {
+      padding: 1rem;
+    }
+    .demo-card .info .top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 0.5rem;
+    }
+    .demo-card .skill-name {
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--accent);
+      line-height: 1.3;
+    }
+    .demo-card .source-badge {
+      font-size: 0.65rem;
+      padding: 0.15rem 0.5rem;
+      border-radius: 4px;
+      white-space: nowrap;
+      flex-shrink: 0;
+      margin-left: 0.5rem;
+    }
+    .source-badge.neuform {
+      background: rgba(124, 111, 255, 0.15);
+      color: var(--accent);
+    }
+    .source-badge.local {
+      background: rgba(136, 136, 160, 0.15);
+      color: var(--text-dim);
+    }
+    .demo-card .desc {
+      font-size: 0.8rem;
+      color: var(--text-dim);
+      line-height: 1.4;
+    }
+    .demo-card .tag-row {
+      display: flex;
+      gap: 0.4rem;
+      flex-wrap: wrap;
+      margin-top: 0.5rem;
+    }
+    .demo-card .tag {
+      font-size: 0.65rem;
+      padding: 0.15rem 0.5rem;
+      border-radius: 4px;
+      font-weight: 600;
+      letter-spacing: 0.03em;
+    }
+
+    /* ===== TAG COLORS ===== */
+    .tag.codex { background: var(--tag-codex-bg); color: var(--tag-codex); }
+    .tag.motion { background: var(--tag-motion-bg); color: var(--tag-motion); }
+    .tag.webgl-3d { background: var(--tag-3d-bg); color: var(--tag-3d); }
+    .tag.css { background: var(--tag-css-bg); color: var(--tag-css); }
+    .tag.visual { background: var(--tag-visual-bg); color: var(--tag-visual); }
+    .tag.layout { background: var(--tag-layout-bg); color: var(--tag-layout); }
+    .tag.landing { background: var(--tag-landing-bg); color: var(--tag-landing); }
+    .tag.media { background: var(--tag-webgl-bg); color: var(--tag-webgl); }
+    .tag.ui { background: var(--tag-landing-bg); color: var(--tag-landing); }
+
+    /* ===== SECTION DIVIDER ===== */
+    .section-label {
+      grid-column: 1 / -1;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 1.5rem 0 0.5rem;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-dim);
+    }
+    .section-label::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+    .section-label.hidden { display: none; }
+
+    /* ===== NO RESULTS ===== */
+    .no-results {
+      grid-column: 1 / -1;
+      text-align: center;
+      padding: 4rem 2rem;
+      color: var(--text-dim);
+    }
+    .no-results h3 { font-size: 1.2rem; margin-bottom: 0.5rem; }
+
+    /* ===== FOOTER ===== */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 2rem;
+      text-align: center;
+      color: var(--text-dim);
+      font-size: 0.8rem;
+    }
+    footer a { color: var(--accent); text-decoration: none; }
+
+    @media (max-width: 768px) {
+      nav .logo { font-size: 0.85rem; }
+      .filter-bar { padding: 0.75rem 1rem; overflow-x: auto; flex-wrap: nowrap; }
+      .grid-container { padding: 1rem; }
+      .demo-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <div class="inner">
+      <a href="index.html" class="logo">MengTo/Skills</a>
+      <div class="nav-links" style="display:flex;gap:1.25rem;margin-left:1.5rem;">
+        <a href="demo-gallery.html" style="color:var(--accent);font-weight:600;font-size:0.875rem;">Demo 展示</a>
+        <a href="capability-map.html" style="color:var(--text-dim);font-size:0.875rem;">能力地图</a>
+        <a href="scene-testing.html" style="color:var(--text-dim);font-size:0.875rem;">场景测试</a>
+        <a href="workflow-demo.html" style="color:var(--text-dim);font-size:0.875rem;">工作流实战</a>
+      </div>
+      <a href="../" class="back-link">← 返回主页</a>
+    </div>
+  </nav>
+
+  <header class="header">
+    <h1>Demo Gallery</h1>
+    <p>118 个技能（89 个有 Demo），按能力分类过滤</p>
+    <div class="stats">
+      <span class="stat"><span class="num">118</span> 技能</span>
+      <span class="stat"><span class="num">89</span> 有Demo</span>
+      <span class="stat"><span class="num">29</span> 仅SKILL</span>
+      <span class="stat"><span class="num">8</span> 分类</span>
+    </div>
+  </header>
+
+  <div class="filter-bar">
+    <span class="filter-label">分类</span>
+    <button class="filter-btn active" data-filter="all">全部 <span class="count">89</span></button>
+    <button class="filter-btn" data-filter="motion">动画与滚动 <span class="count">13</span></button>
+    <button class="filter-btn" data-filter="3d">3D / WebGL <span class="count">12</span></button>
+    <button class="filter-btn" data-filter="css">CSS 特效 <span class="count">10</span></button>
+    <button class="filter-btn" data-filter="visual">视觉风格 <span class="count">22</span></button>
+    <button class="filter-btn" data-filter="layout">布局系统 <span class="count">13</span></button>
+    <button class="filter-btn" data-filter="landing">落地与转化 <span class="count">9</span></button>
+    <button class="filter-btn" data-filter="codex">Codex 工作流 <span class="count">11</span></button>
+    <button class="filter-btn" data-filter="ui">UI <span class="count">1</span></button>
+    <button class="filter-btn" data-filter="media">Media <span class="count">2</span></button>
+    <button class="filter-btn" data-filter="game">Game Dev <span class="count">19</span></button>
+  </div>
+
+  <main class="grid-container">
+    <div class="demo-grid" id="grid">
+
+      <!-- SECTION: Motion & Scroll -->
+      <div class="section-label" data-section="motion">动画与滚动 <span style="opacity:0.5">(13)</span></div>
+
+      <div class="demo-card" data-tags="motion">
+        <div class="preview">
+          <img src="agent-skills/web-design/gsap/demo/preview.jpg" alt="GSAP" loading="lazy">
+          <div class="overlay">
+            <a href="agent-skills/web-design/gsap/demo/index.html" target="_blank" class="btn-demo">打开 Demo</a>
+            <a href="agent-skills/web-design/gsap/demo/PROMPT.md" target="_blank" class="btn-prompt">Prompt</a>
+          </div>
+        </div>
+        <div class="info">
+          <div class="top">
+            <span class="skill-name">gsap</span>
+            <span class="source-badge neuform">Neuform #1</span>
+          </div>
+          <p class="desc">GSAP 时间线、ScrollTrigger、stagger 动画，含常见坑点</p>
+          <div class="tag-row"><span class="tag motion">动画</span></div>
+        </div>
+      </div>
+
+      <div class="demo-card" data-tags="motion">
+        <div class="preview">
+          <img src="agent-skills/web-design/marquee-loop/demo/preview.jpg" alt="Marquee Loop" loading="lazy">
+          <div class="overlay">
+            <a href="agent-skills/web-design/marquee-loop/demo/index.html" target="_blank" class="btn-demo">打开 Demo</a>
+            <a href="agent-skills/web-design/marquee-loop/demo/PROMPT.md" target="_blank" class="btn-prompt">Prompt</a>
+          </div>
+        </div>
+        <div class="info">
+          <div class="top">
+            <span class="skill-name">marquee-loop</span>
+            <span class="source-badge neuform">Neuform #1</span>
+          </div>
+          <p class="desc">无缝循环字幕动画，CSS-only + JS 增强</p>
+          <div class="tag-row"><span class="tag motion">动画</span></div>
+        </div>
+      </div>
+
+      <div class="demo-card" data-tags="motion">
+        <div class="preview">
+          <img src="agent-skills/web-design/masked-reveal/demo/preview.jpg" alt="Masked Reveal" loading="lazy">
+          <div class="overlay">
+            <a href="agent-skills/web-design/masked-reveal/demo/index.html" target="_blank" class="btn-demo">打开 Demo</a>
+            <a href="agent-skills/web-design/masked-reveal/demo/PROMPT.md" target="_blank" class="btn-prompt">Prompt</a>
+          </div>
+        </div>
+        <div class="info">
+          <div class="top">
+            <span class="skill-name">masked-reveal</span>
+            <span class="source-badge neuform">Neuform #1</span>
+          </div>
+          <p class="desc">CSS mask-image 遮罩动画，进入显示效果</p>
+          <div class="tag-row"><span class="tag motion">动画</span></div>
+        </div>
+      </div>
+
+      <div class="demo-card" data-tags="motion">
+        <div class="preview">
+          <img src="agent-skills/web-design/animation-on-scroll/demo/preview.jpg" alt="Animation on Scroll" loading="lazy">
+          <div class="overlay">
+            <a href="agent-skills/web-design/animation-on-scroll/demo/index.html" target="_blank" class="btn-demo">打开 Demo</a>
+            <a href="agent-skills/web-design/animation-on-scroll/demo/PROMPT.md" target="_blank" class="btn-prompt">Prompt</a>
+          </div>
+        </div>
+        <div class="info">
+          <div class="top">
+            <span class="skill-name">animation-on-scroll</span>
+            <span class="source-badge local">Local</span>
+          </div>
+          <p class="desc">IntersectionObserver 滚动动画，prefers-reduced-motion 降级</p>
+          <div class="tag-row"><span class="tag motion">动画</span></div>
+        </div>
+      </div>
+
+      <div class="demo-card" data-tags="motion">
+        <div class="preview">
+          <img src="agent-skills/web-design/animation-systems/demo/preview.jpg" alt="Animation Systems" loading="lazy">
+          <div class="overlay">
+            <a href="agent-skills/web-design/animation-systems/demo/index.html" target="_blank" class="btn-demo">打开 Demo</a>
+            <a href="agent-skills/web-design/animation-systems/demo/PROMPT.md" target="_blank" class="btn-prompt">Prompt</a>
+          </div>
+        </div>
+        <div class="info">
+          <div class="top">
+            <span class="skill-name">animation-systems</span>
+            <span class="source-badge local">Local</span>
+          </div>
+          <p class="desc">系统性动画架构设计：进入、强调、退出、状态变化</p>
+          <div class="tag-row"><span class="tag motion">动画</span></div>
+        </div>
+      </div>
+
+      <div class="demo-card" data-tags="motion">
+        <div class="preview">
+          <img src="agent-skills/web-design/cinematic-gsap-lenis-motion-system/demo/preview.jpg" alt="Cinematic GSAP Lenis" loading="lazy">
+          <div class="overlay">
+            <a href="agent-skills/web-design/cinematic-gsap-lenis-motion-system/demo/index.html" target="_blank" class="btn-demo">打开 Demo</a>
+            <a href="agent-skills/web-design/cinematic-gsap-lenis-motion-system/demo/PROMPT.md" target="_blank" class="btn-prompt">Prompt</a>
+          </div>
+        </div>
+        <div class="info">
+          <div class="top">
+            <span class="skill-name">cinematic-gsap-lenis-motion-system</span>
+            <span class="source-badge local">Local</span>
+          </div>
+          <p class="desc">GSAP + Lenis 平滑滚动 + 电影感视差</p>
+          <div class="tag-row"><span class="tag motion">动画</span></div>
+        </div>
+      </div>
+
+      <div class="demo-card" data-tags="motion">
+        <div class="preview">
+          <img src="agent-skills/web-design/cinematic-scroll-storytelling/demo/preview.jpg" alt="Cinematic Scroll" loading="lazy">
+          <div class="overlay">
+            <a href="agent-skills/web-design/cinematic-scroll-storytelling/demo/index.html" target="_blank" class="btn-demo">打开 Demo</a>
+            <a href="agent-skills/web-design/cinematic-scroll-storytelling/demo/PROMPT.md" target="_blank" class="btn-prompt">Prompt</a>
+          </div>
+        </div>
+        <div class="info">
+          <div class="top">
+            <span class="skill-name">cinematic-scroll-storytelling</span>
+            <span class="source-badge local">Local</span>
+          </div>
+          <p class="desc">滚动驱动叙事动画，锚点分镜与节奏控制</p>
+          <div class="tag-row"><span class="tag motion">动画</span></div>
+        </div>
+      </div>
+
+      <div class="demo-card" data-tags="motion">
+        <div class="preview">
+          <img src="agent-skills/web-design/gsap-scrolltrigger-storytelling/demo/preview.jpg" alt="GSAP ScrollTrigger" loading="lazy">
+          <div class="overlay">
+            <a href="agent-skills/web-design/gsap-scrolltrigger-storytelling/demo/index.html" target="_blank" class="btn-demo">打开 Demo</a>
+            <a href="agent-skills/web-design/gsap-scrolltrigger-storytelling/demo/PROMPT.md" target="_blank" class="btn-prompt">Prompt</a>
+          </div>
+        </div>
+        <div class="info">
+          <div class="top">
+            <span class="skill-name">gsap-scrolltrigger-storytelling</span>
+            <span class="source-badge neuform">Neuform #1</span>
+          </div>
+          <p class="desc">GSAP ScrollTrigger 滚动锚点叙事</p>
+          <div class="tag-row"><span class="tag motion">动画</span></div>
+        </div>
+      </div>
+
+      <div class="demo-card" data-tags="motion">
+        <div class="preview">
+          <img src="agent-skills/web-design/staggered-word-reveal/demo/preview.jpg" alt="Staggered Word Reveal" loading="lazy">
+          <div class="overlay">
+            <a href="agent-skills/web-design/staggered-word-reveal/demo/index.html" target="_blank" class="btn-demo">打开 Demo</a>
+            <a href="agent-skills/web-design/staggered-word-reveal/demo/PROMPT.md" target="_blank" class="btn-prompt">Prompt</a>
+          </div>
+        </div>
+        <div class="info">
+          <div class="top">
+            <span class="skill-name">staggered-word-reveal</span>
+            <span class="source-badge local">Local</span>
+          </div>
+          <p class="desc">文字错落显示动画，单词/字符逐个淡入</p>
+          <div class="tag-row"><span class="tag motion">动画</span></div>
+        </div>
+      </div>
+
+      <div class="demo-card" data-tags="motion">
+        <div class="preview">
+          <img src="agent-skills/web-design/scroll-progress-timeline/demo/preview.jpg" alt="Scroll Progress Timeline" loading="lazy">
+          <div class="overlay">
+            <a href="agent-skills/web-design/scroll-progress-timeline/demo/index.html" target="_blank" class="btn-demo">打开 Demo</a>
+            <a href="agent-skills/web-design/scroll-progress-timeline/demo/PROMPT.md" target="_blank" class="btn-prompt">Prompt</a>
+          </div>
+        </div>
+        <div class="info">
+          <div class="top">
+            <span class="skill-name">scroll-progress-timeline</span>
+            <span class="source-badge local">Local</span>
+          </div>
+          <p class="desc">滚动进度条/时间线，跟随滚动实时更新</p>
+          <div class="tag-row"><span class="tag motion">动画</span></div>
+        </div>
+      </div>
+
+      <div class="demo-card" data-tags="motion">
+        <div class="preview">
+          <img src="agent-skills/web-design/scroll-scrubbed-visual-sequence/demo/preview.jpg" alt="Scroll Scrubbed" loading="lazy">
+          <div class="overlay">
+            <a href="agent-skills/web-design/scroll-scrubbed-visual-sequence/demo/index.html" target="_blank" class="btn-demo">打开 Demo</a>
+            <a href="agent-skills/web-design/scroll-scrubbed-visual-sequence/demo/PROMPT.md" target="_blank" class="btn-prompt">Prompt</a>
+          </div>
+        </div>
+        <div class="info">
+          <div class="top">
+            <span class="skill-name">scroll-scrubbed-visual-sequence</span>
+            <span class="source-badge local">Local</span>
+          </div>
+          <p class="desc">滚动擦除视觉序列，滚动控制动画播放</p>
+          <div class="tag-row"><span class="tag motion">动画</span></div>
+        </div>
+      </div>
+
+      <div class="demo-card" data-tags="motion">
+        <div class="preview">
+          <img src="agent-skills/web-design/scroll-scrubbed-word-reveal/demo/preview.jpg" alt="Scroll Word Reveal" loading="lazy">
+          <div class="overlay">
+            <a href="agent-skills/web-design/scroll-scrubbed-word-reveal/demo/index.html" target="_blank" class="btn-demo">打开 Demo</a>
+            <a href="agent-skills/web-design/scroll-scrubbed-word-reveal/demo/PROMPT.md" target="_blank" class="btn-prompt">Prompt</a>
+          </div>
+        </div>
+        <div class="info">
+          <div class="top">
+            <span class="skill-name">scroll-scrubbed-word-reveal</span>
+            <span class="source-badge local">Local</span>
+          </div>
+          <p class="desc">滚动擦除文字显示，scrub 精确控制</p>
+          <div class="tag-row"><span class="tag motion">动画</span></div>
+        </div>
+      </div>
+
+      <div class="demo-card" data-tags="motion">
+        <div class="preview">
+          <img src="agent-skills/web-design/scroll-world-storytelling/demo/preview.jpg" alt="Scroll World" loading="lazy">
+          <div class="overlay">
+            <a href="agent-skills/web-design/scroll-world-storytelling/demo/index.html" target="_blank" class="btn-demo">打开 Demo</a>
+            <a href="agent-skills/web-design/scroll-world-storytelling/demo/PROMPT.md" target="_blank" class="btn-prompt">Prompt</a>
+          </div>
+        </div>
+        <div class="info">
+          <div class="top">
+            <span class="skill-name">scroll-world-storytelling</span>
+            <span class="source-badge local">Local</span>
+          </div>
+          <p class="desc">滚动世界叙事，带场景切换的沉浸式滚动</p>
+          <div class="tag-row"><span class="tag motion">动画</span></div>
+        </div>
+      </div>
+
+      <!-- SECTION: 3D / WebGL -->
+      <div class="section-label" data-section="3d">3D / WebGL <span style="opacity:0.5">(12)</span></div>
+
+      <div class="demo-card" data-tags="3d">
+        <div class="preview">
+          <img src="agent-skills/web-design/threejs/demo/preview.jpg" alt="Three.js" loading="lazy">
+          <div class="overlay">
+            <a href="agent-skills/web-design/threejs/demo/index.html" target="_blank" class="btn-demo">打开 Demo</a>
+            <a href="agent-skills/web-design/threejs/demo/PROMPT.md" target="_blank" class="btn-prompt">Prompt</a>
+          </div>
+        </div>
+        <div class="info">
+          <div class="top">
+            <span class="skill-name">threejs</span>
+            <span class="source-badge local">Local</span>
+          </div>
+          <p class="desc">Three.js 场景/相机/渲染/GLTF，含最小旋转立方体</p>
+          <div class="tag-row"><span class="tag webgl-3d">3D</span></div>
+        </div>
+      </div>
+
+      <div class="demo-card" data-tags="3d">
+        <div class="preview">
+          <img src="agent-skills/web-design/globe-gl/demo/preview.jpg" alt="Globe.gl" loading="lazy">
+          <div class="overlay">
+            <a href="agent-skills/web-design/globe-gl/demo/index.html" target="_blank" class="btn-demo">打开 Demo</a>
+            <a href="agent-skills/web-design/globe-gl/demo/PROMPT.md" target="_blank" class="btn-prompt">Prompt</a>
+          </div>
+        </div>
+        <div class="info">
+          <div class="top">
+            <span class="skill-name">globe-gl</span>
+            <span class="source-badge local">Local</span>
+          </div>
+          <p class="desc">3D 地球数据可视化，自定义标记/弧线/标注</p>
+          <div class="tag-row"><span class="tag webgl-3d">3D</span></div>
+        </div>
+      </div>
+
+      <div class="demo-card" data-tags="3d">
+        <div class="preview">
+          <img src="agent-skills/web-design/globe-particles/demo/preview.jpg" alt="Globe Particles" loading="lazy">
+          <div class="overlay">
+            <a href="agent-skills/web-design/globe-particles/demo/index.html" target="_blank" class="btn-demo">打开 Demo</a>
+            <a href="agent-skills/web-design/globe-particles/demo/PROMPT.md" target="_blank" class="btn-prompt">Prompt</a>
+          </div>
+        </div>
+        <div class="info">
+          <div class="top">
+            <span class="skill-name">globe-particles</span>
+            <span class="source-badge neuform">Neuform #1</span>
+          </div>
+          <p class="desc">地球粒子效果，飞行轨迹可视化</p>
+          <div class="tag-row"><span class="tag webgl-3d">3D</span></div>
+        </div>
+      </div>
+
+      <div class="demo-card" data-tags="3d">
+        <div class="preview">
+          <img src="agent-skills/web-design/vantajs/demo/preview.jpg" alt="Vanta.js" loading="lazy">
+          <div class="overlay">
+            <a href="agent-skills/web-design/vantajs/demo/index.html" target="_blank" class="btn-demo">打开 Demo</a>
+            <a href="agent-skills/web-design/vantajs/demo/PROMPT.md" target="_blank" class="btn-prompt">Prompt</a>
+          </div>
+        </div>
+        <div class="info">
+          <div class="top">
+            <span class="skill-name">vantajs</span>
+            <span class="source-badge local">Local</span>
+          </div>
+          <p class="desc">WebGL 动画背景：仙人掌/森林/海洋/波浪/星辰</p>
+          <div class="tag-row"><span class="tag webgl-3d">3D</span></div>
+        </div>
+      </div>
+
+      <div class="demo-card" data-tags="3d">
+        <div class="preview">
+          <img src="agent-skills/web-design/matterjs/demo/preview.jpg" alt="Matter.js" loading="lazy">
+          <div class="overlay">
+            <a href="agent-skills/web-design/matterjs/demo/index.html" target="_blank" class="btn-demo">打开 Demo</a>
+            <a href="agent-skills/web-design/matterjs/demo/PROMPT.md" target="_blank" class="btn-prompt">Prompt</a>
+          </div>
+        </div>
+        <div class="info">
+          <div class="top">
+            <span class="skill-name">matterjs</span>
+            <span class="source-badge local">Local</span>
+          </div>
+          <p class="desc">2D 物理引擎：碰撞、布料、粒子、刚体约束</p>
+          <div class="tag-row"><span class="tag webgl-3d">3D</span></div>
+        </div>
+      </div>
+
+      <div class="demo-card" data-tags="3d">
+        <div class="preview">
+          <img src="agent-skills/web-design/cobejs/demo/preview.jpg" alt="Cobe.js" loading="lazy">
+          <div class="overlay">
+            <a href="agent-skills/web-design/cobejs/demo/index.html" target="_blank" class="btn-demo">打开 Demo</a>
+            <a href="agent-skills/web-design/cobejs/demo/PROMPT.md" target="_blank" class="btn-prompt">Prompt</a>
+          </div>
+        </div>
+        <div class="info">
+          <div class="top">
+            <span class="skill-name">cobejs</span>
+            <span class="source-badge local">Local</span>
+          </div>
+          <p class="desc">轻量交互地球，效果类似 Globe.gl 但更轻量</p>
+          <div class="tag-row"><span class="tag webgl-3d">3D</span></div>
+        </div>
+      </div>
+
+      <div class="demo-card" data-tags="3d">
+        <div class="preview">
+          <img src="agent-skills/web-design/background-grid-webgl/demo/preview.jpg" alt="Background Grid WebGL" loading="lazy">
+          <div class="overlay">
+            <a href="agent-skills/web-design/background-grid-webgl/demo/index.html" target="_blank" class="btn-demo">打开 Demo</a>
+            <a href="agent-skills/web-design/background-grid-webgl/demo/PROMPT.md" target="_blank" class="btn-prompt">Prompt</a>
+          </div>
+        </div>
+        <div class="info">
+          <div class="top">
+            <span class="skill-name">background-grid-webgl</span>
+            <span class="source-badge neuform">Neuform #1</span>
+          </div>
+          <p class="desc">WebGL 背景网格动画，科技感背景</p>
+          <div class="tag-row"><span class="tag webgl-3d">3D</span></div>
+        </div>
+      </div>
+
+      <div class="demo-card" data-tags="3d">
+        <div class="preview">
+          <img src="agent-skills/web-design/webgl-3d-object/demo/preview.jpg" alt="WebGL 3D Object" loading="lazy">
+          <div class="overlay">
+            <a href="agent-skills/web-design/webgl-3d-object/demo/index.html" target="_blank" class="btn-demo">打开 Demo</a>
+            <a href="agent-skills/web-design/webgl-3d-object/demo/PROMPT.md" target="_blank" class="btn-prompt">Prompt</a>
+          </div>
+        </div>
+        <div class="info">
+          <div class="top">
+            <span class="skill-name">webgl-3d-object</span>
+            <span class="source-badge neuform">Neuform #1</span>
+          </div>
+          <p class="desc">WebGL 3D 对象展示，模型加载与材质</p>
+          <div class="tag-row"><span class="tag webgl-3d">3D</span></div>
+        </div>
+      </div>
+
+      <div class="demo-card" data-tags="3d">
+        <div class="preview">
+          <img src="agent-skills/web-design/webgl-laser/demo/preview.jpg" alt="WebGL Laser" loading="lazy">
+          <div class="overlay">
+            <a href="agent-skills/web-design/webgl-laser/demo/index.html" target="_blank" class="btn-demo">打开 Demo</a>
+            <a href="agent-skills/web-design/webgl-laser/demo/PROMPT.md" target="_blank" class="btn-prompt">Prompt</a>
+          </div>
+        </div>
+        <div class="info">
+          <div class="top">
+            <span class="skill-name">webgl-laser</span>
+            <span class="source-badge neuform">Neuform #1</span>
+          </div>
+          <p class="desc">WebGL 激光效果，动态光线渲染</p>
+          <div class="tag-row"><span class="tag webgl-3d">3D</span></div>
+        </div>
+      </div>
+
+      <div class="demo-card" data-tags="3d">
+        <div class="preview">
+          <img src="agent-skills/web-design/webgl-landing-steering/demo/preview.jpg" alt="WebGL Landing Steering" loading="lazy">
+          <div class="overlay">
+            <a href="agent-skills/web-design/webgl-landing-steering/demo/index.html" target="_blank" class="btn-demo">打开 Demo</a>
+            <a href="agent-skills/web-design/webgl-landing-steering/demo/PROMPT.md" target="_blank" class="btn-prompt">Prompt</a>
+          </div>
+        </div>
+        <div class="info">
+          <div class="top">
+            <span class="skill-name">webgl-landing-steering</span>
+            <span class="source-badge local">Local</span>
+          </div>
+          <p class="desc">WebGL 落地页引导动画，鼠标交互控制</p>
+          <div class="tag-row"><span class="tag webgl-3d">3D</span></div>
+        </div>
+      </div>
+
+      <div class="demo-card" data-tags="3d">
+        <div class="preview">
+          <img src="agent-skills/web-design/unicorn-studio/demo/preview.jpg" alt="Unicorn Studio" loading="lazy">
+          <div class="overlay">
+            <a href="agent-skills/web-design/unicorn-studio/demo/index.html" target="_blank" class="btn-demo">打开 Demo</a>
+            <a href="agent-skills/web-design/unicorn-studio/demo/PROMPT.md" target="_blank" class="btn-prompt">Prompt</a>
+          </div>
+        </div>
+        <div class="info">
+          <div class="top">
+            <span class="skill-name">unicorn-studio</span>
+            <span class="source-badge local">Local</span>
+          </div>
+          <p class="desc">Unicorn Studio 嵌入式交互设计工具</p>
+          <div class="tag-row"><span class="tag webgl-3d">3D</span></div>
+        </div>
+      </div>
+
+      <div class="demo-card" data-tags="3d">
+        <div class="preview">
+          <img src="agent-skills/web-design/bright-green-tech-system-webgl/demo/preview.jpg" alt="Bright Green Tech" loading="lazy">
+          <div class="overlay">
+            <a href="agent-skills/web-design/bright-green-tech-system-webgl/demo/index.html" target="_blank" class="btn-demo">打开 Demo</a>
+            <a href="agent-skills/web-design/bright-green-tech-system-webgl/demo/PROMPT.md" target="_blank" class="btn-prompt">Prompt</a>
+          </div>
+        </div>
+        <div class="info">
+          <div class="top">
+            <span class="skill-name">bright-green-tech-system-webgl</span>
+            <span class="source-badge local">Local</span>
+          </div>
+          <p class="desc">亮绿科技风 WebGL 效果</p>
+          <div class="tag-row"><span class="tag webgl-3d">3D</span></div>
+        </div>
+      </div>
+
+      <!-- SECTION: Missing Demos (exist in repo but no demo folder) -->
+      <div class="section-label" data-section="css">交互与特殊效果 <span style="opacity:0.5">(6 · 无 Demo · 仅 SKILL.md)</span></div>
+
+      <div class="demo-card" data-tags="css">
+        <div class="info" style="padding:1rem">
+          <div class="top">
+            <span class="skill-name">add-shader-cursor-trail</span>
+            <span class="source-badge local">SKILL only</span>
+          </div>
+          <p class="desc">WebGPU 鼠标轨迹着色器：白色闪烁半色调光标轨迹，ChromaFlow 驱动，DotGrid 遮罩，带色差涟漪和胶片颗粒</p>
+          <div class="tag-row">
+            <span class="tag webgl-3d">交互</span>
+            <a href="agent-skills/web-design/add-shader-cursor-trail/SKILL.md" target="_blank" class="skill-demo" style="margin-left:auto;font-size:0.75rem;color:var(--accent);text-decoration:none">SKILL.md →</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="demo-card" data-tags="css">
+        <div class="info" style="padding:1rem">
+          <div class="top">
+            <span class="skill-name">shaders-cursor-ripples</span>
+            <span class="source-badge local">SKILL only</span>
+          </div>
+          <p class="desc">WebGPU 光标涟漪效果：光标跟随流体扭曲，覆盖现有图片，Shaders 库 ImageTexture + CursorRipples</p>
+          <div class="tag-row">
+            <span class="tag webgl-3d">交互</span>
+            <a href="agent-skills/web-design/shaders-cursor-ripples/SKILL.md" target="_blank" class="skill-demo" style="margin-left:auto;font-size:0.75rem;color:var(--accent);text-decoration:none">SKILL.md →</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="demo-card" data-tags="css">
+        <div class="info" style="padding:1rem">
+          <div class="top">
+            <span class="skill-name">beam-glow-states</span>
+            <span class="source-badge local">SKILL only</span>
+          </div>
+          <p class="desc">React 边框光束状态：loading/processing/selected/focus/pressed 动画边框发光，border-beam 包</p>
+          <div class="tag-row">
+            <span class="tag css">组件</span>
+            <a href="agent-skills/web-design/beam-glow-states/SKILL.md" target="_blank" class="skill-demo" style="margin-left:auto;font-size:0.75rem;color:var(--accent);text-decoration:none">SKILL.md →</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="demo-card" data-tags="css">
+        <div class="info" style="padding:1rem">
+          <div class="top">
+            <span class="skill-name">liquid-metal-border</span>
+            <span class="source-badge local">SKILL only</span>
+          </div>
+          <p class="desc">液态金属边框：React metal-fx 包，金属流动边框动画，适用于按钮/卡片/标签的 active/hover/focus 状态</p>
+          <div class="tag-row">
+            <span class="tag webgl-3d">边框</span>
+            <a href="agent-skills/web-design/liquid-metal-border/SKILL.md" target="_blank" class="skill-demo" style="margin-left:auto;font-size:0.75rem;color:var(--accent);text-decoration:none">SKILL.md →</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="demo-card" data-tags="css">
+        <div class="info" style="padding:1rem">
+          <div class="top">
+            <span class="skill-name">thinking-orbs</span>
+            <span class="source-badge local">SKILL only</span>
+          </div>
+          <p class="desc">AI 活动指示器：React thinking-orbs 库，working/searching/solving/listening 状态球动画，替代 generic spinner</p>
+          <div class="tag-row">
+            <span class="tag css">组件</span>
+            <a href="agent-skills/web-design/thinking-orbs/SKILL.md" target="_blank" class="skill-demo" style="margin-left:auto;font-size:0.75rem;color:var(--accent);text-decoration:none">SKILL.md →</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="demo-card" data-tags="css">
+        <div class="info" style="padding:1rem">
+          <div class="top">
+            <span class="skill-name">build-awwwards-quality-sites</span>
+            <span class="source-badge local">SKILL only</span>
+          </div>
+          <p class="desc">Awwwards 级站点构建：原创参考启发图像，Standout Hero，GSAP 编舞，平滑滚动，Three.js 可选，无障碍与性能保障</p>
+          <div class="tag-row">
+            <span class="tag landing">落地</span>
+            <a href="agent-skills/web-design/build-awwwards-quality-sites/SKILL.md" target="_blank" class="skill-demo" style="margin-left:auto;font-size:0.75rem;color:var(--accent);text-decoration:none">SKILL.md →</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- SECTION: CSS Effects -->
+      <div class="section-label" data-section="css">CSS 特效 <span style="opacity:0.5">(10)</span></div>
+
+      <div class="demo-card" data-tags="css">
+        <div class="preview">
+          <img src="agent-skills/web-design/beautiful-shadows/demo/preview.jpg" alt="Beautiful Shadows" loading="lazy">
+          <div class="overlay">
+            <a href="agent-skills/web-design/beautiful-shadows/demo/index.html" target="_blank" class="btn-demo">打开 Demo</a>
+            <a href="agent-skills/web-design/beautiful-shadows/demo/PROMPT.md" target="_blank" class="btn-prompt">Prompt</a>
+          </div>
+        </div>
+        <div class="info">
+          <div class="top">
+            <span class="skill-name">beautiful-shadows</span>
+            <span class="source-badge neuform">Neuform #1</span>
+          </div>
+          <p class="desc">精致 CSS 阴影：多层 box-shadow、彩色阴影、内阴影</p>
+          <div class="tag-row"><span class="tag css">CSS</span></div>
+        </div>
+      </div>
+
+      <div class="demo-card" data-tags="css">
+        <div class="preview">
+          <img src="agent-skills/web-design/progressive-blur/demo/preview.jpg" alt="Progressive Blur" loading="lazy">
+          <div class="overlay">
+            <a href="agent-skills/web-design/progressive-blur/demo/index.html" target="_blank" class="btn-demo">打开 Demo</a>
+            <a href="agent-skills/web-design/progressive-blur/demo/PROMPT.md" target="_blank" class="btn-prompt">Prompt</a>
+          </div>
+        </div>
+        <div class="info">
+          <div class="top">
+            <span class="skill-name">progressive-blur</span>
+            <span class="source-badge neuform">Neuform #1</span>
+          </div>
+          <p class="desc">渐进模糊，backdrop-filter 模糊渐变效果</p>
+          <div class="tag-row"><span class="tag css">CSS</span></div>
+        </div>
+      </div>
+
+      <div class="demo-card" data-tags="css">
+        <div class="preview">
+          <img src="agent-skills/web-design/css-border-gradient/demo/preview.jpg" alt="CSS Border Gradient" loading="lazy">
+          <div class="overlay">
+            <a href="agent-skills/web-design/css-border-gradient/demo/index.html" target="_blank" class="btn-demo">打开 Demo</a>
+            <a href="agent-skills/web-design/css-border-gradient/demo/PROMPT.md" target="_blank" class="btn-prompt">Prompt</a>
+          </div>
+        </div>
+        <div class="info">
+          <div class="top">
+            <span class="skill-name">css-border-gradient</span>
+            <span class="source-badge neuform">Neuform #1</span>
+          </div>
+          <p class="desc">渐变边框，使用 mask pseudo-element 实现</p>
+          <div class="tag-row"><span class="tag css">CSS</span></div>
+        </div>
+      </div>
+
+      <div class="demo-card" data-tags="css">
+        <div class="preview">
+          <img src="agent-skills/web-design/css-alpha-masking/demo/preview.jpg" alt="CSS Alpha Masking" loading="lazy">
+          <div class="overlay">
+            <a href="agent-skills/web-design/css-alpha-masking/demo/index.html" target="_blank" class="btn-demo">打开 Demo</a>
+            <a href="agent-skills/web-design/css-alpha-masking/demo/PROMPT.md" target="_blank" class="btn-prompt">Prompt</a>
+          </div>
+        </div>
+        <div class="info">
+          <div class="top">
+            <span class="skill-name">css-alpha-masking</span>
+            <span class="source-badge local">Local</span>
+          </div>
+          <p class="desc">Alpha 遮罩，mask-image 渐变边缘淡化</p>
+          <div class="tag-row"><span class="tag css">CSS</span></div>
+        </div>
+      </div>
+
+      <div class="demo-card" data-tags="css">
+        <div class="preview">
+          <img src="agent-skills/web-design/gooey-blob-system/demo/preview.jpg" alt="Gooey Blob" loading="lazy">
+          <div class="overlay">
+            <a href="agent-skills/web-design/gooey-blob-system/demo/index.html" target="_blank" class="btn-demo">打开 Demo</a>
+            <a href="agent-skills/web-design/gooey-blob-system/demo/PROMPT.md" target="_blank" class="btn-prompt">Prompt</a>
+          </div>
+        </div>
+        <div class="info">
+          <div class="top">
+            <span class="skill-name">gooey-blob-system</span>
+            <span class="source-badge neuform">Neuform #1</span>
+          </div>
+          <p class="desc">果冻 Blob 动画，SVG filter 果冻效果</p>
+          <div class="tag-row"><span class="tag css">CSS</span></div>
+        </div>
+      </div>
+
+      <div class="demo-card" data-tags="css">
+        <div class="preview">
+          <img src="agent-skills/web-design/container-lines/demo/preview.jpg" alt="Container Lines" loading="lazy">
+          <div class="overlay">
+            <a href="agent-skills/web-design/container-lines/demo/index.html" target="_blank" class="btn-demo">打开 Demo</a>
+            <a href="agent-skills/web-design/container-lines/demo/PROMPT.md" target="_blank" class="btn-prompt">Prompt</a>
+          </div>
+        </div>
+        <div class="info">
+          <div class="top">
+            <span class="skill-name">container-lines</span>
+            <span class="source-badge neuform">Neuform #1</span>
+          </div>
+          <p class="desc">容器线条装饰，背景网格/分割线</p>
+          <div class="tag-row"><span class="tag css">CSS</span></div>
+        </div>
+      </div>
+
+      <div class="demo-card" data-tags="css">
+        <div class="preview">
+          <img src="agent-skills/web-design/corner-diagonals/demo/preview.jpg" alt="Corner Diagonals" loading="lazy">
+          <div class="overlay">
+            <a href="agent-skills/web-design/corner-diagonals/demo/index.html" target="_blank" class="btn-demo">打开 Demo</a>
+            <a href="agent-skills/web-design/corner-diagonals/demo/PROMPT.md" target="_blank" class="btn-prompt">Prompt</a>
+          </div>
+        </div>
+        <div class="info">
+          <div class="top">
+            <span class="skill-name">corner-diagonals</span>
+            <span class="source-badge neuform">Neuform #1</span>
+          </div>
+          <p class="desc">角落对角线装饰，斜切角背景</p>
+          <div class="tag-row"><span class="tag css">CSS</span></div>
+        </div>
+      </div>
+
+      <div class="demo-card" data-tags="css">
+        <div class="preview">
+          <img src="agent-skills/web-design/corner-lasers/demo/preview.jpg" alt="Corner Lasers" loading="lazy">
+          <div class="overlay">
+            <a href="agent-skills/web-design/corner-lasers/demo/index.html" target="_blank" class="btn-demo">打开 Demo</a>
+            <a href="agent-skills/web-design/corner-lasers/demo/PROMPT.md" target="_blank" class="btn-prompt">Prompt</a>
+          </div>
+        </div>
+        <div class="info">
+          <div class="top">
+            <span class="skill-name">corner-lasers</span>
+            <span class="source-badge neuform">Neuform #1</span>
+          </div>
+          <p class="desc">角落激光效果，角落发射的光线装饰</p>
+          <div class="tag-row"><span class="tag css">CSS</span></div>
+        </div>
+      </div>
+
+      <div class="demo-card" data-tags="css">
+        <div class="preview">
+          <img src="agent-skills/web-design/number-details/demo/preview.jpg" alt="Number Details" loading="lazy">
+          <div class="overlay">
+            <a href="agent-skills/web-design/number-details/demo/index.html" target="_blank" class="btn-demo">打开 Demo</a>
+            <a href="agent-skills/web-design/number-details/demo/PROMPT.md" target="_blank" class="btn-prompt">Prompt</a>
+          </div>
+        </div>
+        <div class="info">
+          <div class="top">
+            <span class="skill-name">number-details</span>
+            <span class="source-badge neuform">Neuform #1</span>
+          </div>
+          <p class="desc">数字装饰细节，大号数字作为设计元素</p>
+          <div class="tag-row"><span class="tag css">CSS</span></div>
+        </div>
+      </div>
+
+      <div class="demo-card" data-tags="css">
+        <div class="preview">
+          <img src="agent-skills/web-design/ambient-section-particles/demo/preview.jpg" alt="Ambient Particles" loading="lazy">
+          <div class="overlay">
+            <a href="agent-skills/web-design/ambient-section-particles/demo/index.html" target="_blank" class="btn-demo">打开 Demo</a>
+            <a href="agent-skills/web-design/ambient-section-particles/demo/PROMPT.md" target="_blank" class="btn-prompt">Prompt</a>
+          </div>
+        </div>
+        <div class="info">
+          <div class="top">
+            <span class="skill-name">ambient-section-particles</span>
+            <span class="source-badge local">Local</span>
+          </div>
+          <p class="desc">环境粒子效果，漂浮微粒背景装饰</p>
+          <div class="tag-row"><span class="tag css">CSS</span></div>
+        </div>
+      </div>
+
+      <!-- SECTION: Visual Styles -->
+      <div class="section-label" data-section="visual">视觉风格 <span style="opacity:0.5">(22)</span></div>
+
+      <div class="demo-card" data-tags="visual">
+        <div class="preview">
+          <img src="agent-skills/web-design/dark-glass-clean-layout/demo/preview.jpg" alt="Dark Glass" loading="lazy">
+          <div class="overlay">
+            <a href="agent-skills/web-design/dark-glass-clean-layout/demo/index.html" target="_blank" class="btn-demo">打开 Demo</a>
+            <a href="agent-skills/web-design/dark-glass-clean-layout/demo/PROMPT.md" target="_blank" class="btn-prompt">Prompt</a>
+          </div>
+        </div>
+        <div class="info">
+          <div class="top">
+            <span class="skill-name">dark-glass-clean-layout</span>
+            <span class="source-badge local">Local</span>
+          </div>
+          <p class="desc">深色玻璃拟态，backdrop-filter 毛玻璃效果</p>
+          <div class="tag-row"><span class="tag visual">视觉</span></div>
+        </div>
+      </div>
+
+      <div class="demo-card" data-tags="visual">
+        <div class="preview">
+          <img src="agent-skills/web-design/blue-laser-clean-glass-layout/demo/preview.jpg" alt="Blue Laser Glass" loading="lazy">
+          <div class="overlay">
+            <a href="agent-skills/web-design/blue-laser-clean-glass-layout/demo/index.html" target="_blank" class="btn-demo">打开 Demo</a>
+            <a href="agent-skills/web-design/blue-laser-clean-glass-layout/demo/PROMPT.md" target="_blank" class="btn-prompt">Prompt</a>
+          </div>
+        </div>
+        <div class="info">
+          <div class="top">
+            <span class="skill-name">blue-laser-clean-glass-layout</span>
+            <span class="source-badge local">Local</span>
+          </div>
+          <p class="desc">蓝色激光玻璃布局，蓝光 + 玻璃质感</p>
+          <div class="tag-row"><span class="tag visual">视觉</span></div>
+        </div>
+      </div>
+
+      <div class="demo-card" data-tags="visual">
+        <div class="preview">
+          <img src="agent-skills/web-design/skeuomorphic-ui/demo/preview.jpg" alt="Skeuomorphic UI" loading="lazy">
+          <div class="overlay">
+            <a href="agent-skills/web-design/skeuomorphic-ui/demo/index.html" target="_blank" class="btn-demo">打开 Demo</a>
+            <a href="agent-skills/web-design/skeuomorphic-ui/demo/PROMPT.md" target="_blank" class="btn-prompt">Prompt</a>
+          </div>
+        </div>
+        <div class="info">
+          <div class="top">
+            <span class="skill-name">skeuomorphic-ui</span>
+            <span class="source-badge neuform">Neuform #1</span>
+          </div>
+          <p class="desc">拟物 UI 风格，纹理材质感设计</p>
+          <div class="tag-row"><span class="tag visual">视觉</span></div>
+        </div>
+      </div>
+
+      <div class="demo-card" data-tags="visual">
+        <div class="preview">
+          <img src="agent-skills/web-design/glass-dark-mode-clock/demo/preview.jpg" alt="Glass Clock" loading="lazy">
+          <div class="overlay">
+            <a href="agent-skills/web-design/glass-dark-mode-clock/demo/index.html" target="_blank" class="btn-demo">打开 Demo</a>
+            <a href="agent-skills/web-design/glass-dark-mode-clock/demo/PROMPT.md" target="_blank" class="btn-prompt">Prompt</a>
+          </div>
+        </div>
+        <div class="info">
+          <div class="top">
+            <span class="skill-name">glass-dark-mode-clock</span>
+            <span class="source-badge neuform">Neuform #1</span>
+          </div>
+          <p class="desc">玻璃暗色时钟，glassmorphism 时间展示</p>
+          <div class="tag-row"><span class="tag visual">视觉</span></div>
+        </div>
+      </div>
+
+      <div class="demo-card" data-tags="visual">
+        <div class="preview">
+          <img src="agent-skills/web-design/dither-laser-dark-mode/demo/preview.jpg" alt="Dither Laser" loading="lazy">
+          <div class="overlay">
+            <a href="agent-skills/web-design/dither-laser-dark-mode/demo/index.html" target="_blank" class="btn-demo">打开 Demo</a>
+            <a href="agent-skills/web-design/dither-laser-dark-mode/demo/PROMPT.md" target="_blank" class="btn-prompt">Prompt</a>
+          </div>
+        </div>
+        <div class="info">
+          <div class="top">
+            <span class="skill-name">dither-laser-dark-mode</span>
+            <span class="source-badge neuform">Neuform #1</span>
+          </div>
+          <p class="desc">抖动激光暗色模式，Noise 纹理 + 激光线</p>
+          <div class="tag-row"><span class="tag visual">视觉</span></div>
+        </div>
+      </div>
+
+      <div class="demo-card" data-tags="visual">
+        <div class="preview">
+          <img src="agent-skills/web-design/mesh-gradient-dark-blue-clean/demo/preview.jpg" alt="Mesh Gradient" loading="lazy">
+          <div class="overlay">
+            <a href="agent-skills/web-design/mesh-gradient-dark-blue-clean/demo/index.html" target="_blank" class="btn-demo">打开 Demo</a>
+            <a href="agent-skills/web-design/mesh-gradient-dark-blue-clean/demo/PROMPT.md" target="_blank" class="btn-prompt">Prompt</a>
+          </div>
+        </div>
+        <div class="info">
+          <div class="top">
+            <span class="skill-name">mesh-gradient-dark-blue-clean</span>
+            <span class="source-badge neuform">Neuform #1</span>
+          </div>
+          <p class="desc">网格渐变深蓝，色彩渐变混合背景</p>
+          <div class="tag-row"><span class="tag visual">视觉</span></div>
+        </div>
+      </div>
+
+      <div class="demo-card" data-tags="visual">
+        <div class="preview">
+          <img src="agent-skills/web-design/orange-clean-paper-saas/demo/preview.jpg" alt="Orange Paper SaaS" loading="lazy">
+          <div class="overlay">
+            <a href="agent-skills/web-design/orange-clean-paper-saas/demo/index.html" target="_blank" class="btn-demo">打开 Demo</a>
+            <a href="agent-skills/web-design/orange-clean-paper-saas/demo/PROMPT.md" target="_blank" class="btn-prompt">Prompt</a>
+          </div>
+        </div>
+        <div class="info">
+          <div class="top">
+            <span class="skill-name">orange-clean-paper-saas</span>
+            <span class="source-badge neuform">Neuform #1</span>
+          </div>
+          <p class="desc">橙色纸张 SaaS 风格，暖色 + 纸张质感</p>
+          <div class="tag-row"><span class="tag visual">视觉</span></div>
+        </div>
+      </div>
+
+      <div class="demo-card" data-tags="visual">
+        <div class="preview">
+          <img src="agent-skills/web-design/blue-cloudy-clean-modern/demo/preview.jpg" alt="Blue Cloudy" loading="lazy">
+          <div class="overlay">
+            <a href="agent-skills/web-design/blue-cloudy-clean-modern/demo/index.html" target="_blank" class="btn-demo">打开 Demo</a>
+            <a href="agent-skills/web-design/blue-cloudy-clean-modern/demo/PROMPT.md" target="_blank" class="btn-prompt">Prompt</a>
+          </div>
+        </div>
+        <div class="info">
+          <div class="top">
+            <span class="skill-name">blue-cloudy-clean-modern</span>
+            <span class="source-badge neuform">Neuform #1</span>
+          </div>
+          <p class="desc">蓝色云感现代风格，柔和渐变背景</p>
+          <div class="tag-row"><span class="tag visual">视觉</span></div>
+        </div>
+      </div>
+
+      <div class="demo-card" data-tags="visual">
+        <div class="preview">
+          <img src="agent-skills/web-design/clean-minimal-beige-light-mode/demo/preview.jpg" alt="Beige Light" loading="lazy">
+          <div class="overlay">
+            <a href="agent-skills/web-design/clean-minimal-beige-light-mode/demo/index.html" target="_blank" class="btn-demo">打开 Demo</a>
+            <a href="agent-skills/web-design/clean-minimal-beige-light-mode/demo/PROMPT.md" target="_blank" class="btn-prompt">Prompt</a>
+          </div>
+        </div>
+        <div class="info">
+          <div class="top">
+            <span class="skill-name">clean-minimal-beige-light-mode</span>
+            <span class="source-badge neuform">Neuform #1</span>
+          </div>
+          <p class="desc">浅米色极简亮色，温暖柔和色调</p>
+          <div class="tag-row"><span class="tag visual">视觉</span></div>
+        </div>
+      </div>
+
+      <div class="demo-card" data-tags="visual">
+        <div class="preview">
+          <img src="agent-skills/web-design/dither-background/demo/preview.jpg" alt="Dither Background" loading="lazy">
+          <div class="overlay">
+            <a href="agent-skills/web-design/dither-background/demo/index.html" target="_blank" class="btn-demo">打开 Demo</a>
+            <a href="agent-skills/web-design/dither-background/demo/PROMPT.md" target="_blank" class="btn-prompt">Prompt</a>
+          </div>
+        </div>
+        <div class="info">
+          <div class="top">
+            <span class="skill-name">dither-background</span>
+            <span class="source-badge neuform">Neuform #1</span>
+          </div>
+          <p class="desc">抖动背景，Noise 纹理感背景</p>
+          <div class="tag-row"><span class="tag visual">视觉</span></div>
+        </div>
+      </div>
+
+      <div class="demo-card" data-tags="visual">
+        <div class="preview">
+          <img src="agent-skills/web-design/solar-duotone-bold/demo/preview.jpg" alt="Solar Duotone" loading="lazy">
+          <div class="overlay">
+            <a href="agent-skills/web-design/solar-duotone-bold/demo/index.html" target="_blank" class="btn-demo">打开 Demo</a>
+            <a href="agent-skills/web-design/solar-duotone-bold/demo/PROMPT.md" target="_blank" class="btn-prompt">Prompt</a>
+          </div>
+        </div>
+        <div class="info">
+          <div class="top">
+            <span class="skill-name">solar-duotone-bold</span>
+            <span class="source-badge neuform">Neuform #1</span>
+          </div>
+          <p class="desc">太阳双色调，强烈对比双色系统</p>
+          <div class="tag-row"><span class="tag visual">视觉</span></div>
+        </div>
+      </div>
+
+      <div class="demo-card" data-tags="visual">
+        <div class="preview">
+          <img src="agent-skills/web-design/high-contrast-skeuomorphic-clean/demo/preview.jpg" alt="High Contrast Skeuo" loading="lazy">
+          <div class="overlay">
+            <a href="agent-skills/web-design/high-contrast-skeuomorphic-clean/demo/index.html" target="_blank" class="btn-demo">打开 Demo</a>
+            <a href="agent-skills/web-design/high-contrast-skeuomorphic-clean/demo/PROMPT.md" target="_blank" class="btn-prompt">Prompt</a>
+          </div>
+        </div>
+        <div class="info">
+          <div class="top">
+            <span class="skill-name">high-contrast-skeuomorphic-clean</span>
+            <span class="source-badge neuform">Neuform #1</span>
+          </div>
+          <p class="desc">高对比拟物干净，明暗强烈质感</p>
+          <div class="tag-row"><span class="tag visual">视觉</span></div>
+        </div>
+      </div>
+
+      <div class="demo-card" data-tags="visual">
+        <div class="preview">
+          <img src="agent-skills/web-design/tech-green-dark-mode-modern/demo/preview.jpg" alt="Tech Green Dark" loading="lazy">
+          <div class="overlay">
+            <a href="agent-skills/web-design/tech-green-dark-mode-modern/demo/index.html" target="_blank" class="btn-demo">打开 Demo</a>
+            <a href="agent-skills/web-design/tech-green-dark-mode-modern/demo/PROMPT.md" target="_blank" class="btn-prompt">Prompt</a>
+          </div>
+        </div>
+        <div class="info">
+          <div class="top">
+            <span class="skill-name">tech-green-dark-mode-modern</span>
+            <span class="source-badge local">Local</span>
+          </div>
+          <p class="desc">科技绿暗色现代，绿色 + 暗色科技风</p>
+          <div class="tag-row"><span class="tag visual">视觉</span></div>
+        </div>
+      </div>
+
+      <div class="demo-card" data-tags="visual">
+        <div class="preview">
+          <img src="agent-skills/web-design/light-mode-paper-technical/demo/preview.jpg" alt="Paper Technical" loading="lazy">
+          <div class="overlay">
+            <a href="agent-skills/web-design/light-mode-paper-technical/demo/index.html" target="_blank" class="btn-demo">打开 Demo</a>
+            <a href="agent-skills/web-design/light-mode-paper-technical/demo/PROMPT.md" target="_blank" class="btn-prompt">Prompt</a>
+          </div>
+        </div>
+        <div class="info">
+          <div class="top">
+            <span class="skill-name">light-mode-paper-technical</span>
+            <span class="source-badge neuform">Neuform #1</span>
+          </div>
+          <p class="desc">亮色纸张技术风，纸张 + 技术线框混合</p>
+          <div class="tag-row"><span class="tag visual">视觉</span></div>
+        </div>
+      </div>
+
+      <div class="demo-card" data-tags="visual">
+        <div class="preview">
+          <img src="agent-skills/web-design/dark-blue-contrasting-clean/demo/preview.jpg" alt="Dark Blue Contrasting" loading="lazy">
+          <div class="overlay">
+            <a href="agent-skills/web-design/dark-blue-contrasting-clean/demo/index.html" target="_blank" class="btn-demo">打开 Demo</a>
+            <a href="agent-skills/web-design/dark-blue-contrasting-clean/demo/PROMPT.md" target="_blank" class="btn-prompt">Prompt</a>
+          </div>
+        </div>
+        <div class="info">
+          <div class="top">
+            <span class="skill-name">dark-blue-contrasting-clean</span>
+            <span class="source-badge local">Local</span>
+          </div>
+          <p class="desc">深蓝对比干净，深蓝为主强对比</p>
+          <div class="tag-row"><span class="tag visual">视觉</span></div>
+        </div>
+      </div>
+
+      <div class="demo-card" data-tags="visual">
+        <div class="preview">
+          <img src="agent-skills/web-design/glass-dark-ui/demo/preview.jpg" alt="Glass Dark UI" loading="lazy">
+          <div class="overlay">
+            <a href="agent-skills/web-design/glass-dark-ui/demo/index.html" target="_blank" class="btn-demo">打开 Demo</a>
+            <a href="agent-skills/web-design/glass-dark-ui/demo/PROMPT.md" target="_blank" class="btn-prompt">Prompt</a>
+          </div>
+        </div>
+        <div class="info">
+          <div class="top">
+            <span class="skill-name">glass-dark-ui</span>
+            <span class="source-badge local">Local</span>
+          </div>
+          <p class="desc">玻璃暗色 UI，玻璃拟态组件</p>
+          <div class="tag-row"><span class="tag visual">视觉</span></div>
+        </div>
+      </div>
+
+      <div class="demo-card" data-tags="visual">
+        <div class="preview">
+          <img src="agent-skills/web-design/framed-tech-dark-border-gradient/demo/preview.jpg" alt="Framed Tech Dark" loading="lazy">
+          <div class="overlay">
+            <a href="agent-skills/web-design/framed-tech-dark-border-gradient/demo/index.html" target="_blank" class="btn-demo">打开 Demo</a>
+            <a href="agent-skills/web-design/framed-tech-dark-border-gradient/demo/PROMPT.md" target="_blank" class="btn-prompt">Prompt</a>
+          </div>
+        </div>
+        <div class="info">
+          <div class="top">
+            <span class="skill-name">framed-tech-dark-border-gradient</span>
+            <span class="source-badge local">Local</span>
+          </div>
+          <p class="desc">框架科技暗色渐变，边框渐变 + 科技感</p>
+          <div class="tag-row"><span class="tag visual">视觉</span></div>
+        </div>
+      </div>
+
+      <div class="demo-card" data-tags="visual">
+        <div class="preview">
+          <img src="agent-skills/web-design/funky-purple-container-tech/demo/preview.jpg" alt="Funky Purple" loading="lazy">
+          <div class="overlay">
+            <a href="agent-skills/web-design/funky-purple-container-tech/demo/index.html" target="_blank" class="btn-demo">打开 Demo</a>
+            <a href="agent-skills/web-design/funky-purple-container-tech/demo/PROMPT.md" target="_blank" class="btn-prompt">Prompt</a>
+          </div>
+        </div>
+        <div class="info">
+          <div class="top">
+            <span class="skill-name">funky-purple-container-tech</span>
+            <span class="source-badge local">Local</span>
+          </div>
+          <p class="desc">迷幻紫容器科技，紫色大胆设计</p>
+          <div class="tag-row"><span class="tag visual">视觉</span></div>
+        </div>
+      </div>
+
+      <div class="demo-card" data-tags="visual">
+        <div class="preview">
+          <img src="agent-skills/web-design/company-logos/demo/preview.jpg" alt="Company Logos" loading="lazy">
+          <div class="overlay">
+            <a href="agent-skills/web-design/company-logos/demo/index.html" target="_blank" class="btn-demo">打开 Demo</a>
+            <a href="agent-skills/web-design/company-logos/demo/PROMPT.md" target="_blank" class="btn-prompt">Prompt</a>
+          </div>
+        </div>
+        <div class="info">
+          <div class="top">
+            <span class="skill-name">company-logos</span>
+            <span class="source-badge neuform">Neuform #1</span>
+          </div>
+          <p class="desc">公司 Logo 展示墙，Logo 网格布局</p>
+          <div class="tag-row"><span class="tag visual">视觉</span></div>
+        </div>
+      </div>
+
+      <div class="demo-card" data-tags="visual">
+        <div class="preview">
+          <img src="agent-skills/web-design/atmosphere-background/demo/preview.jpg" alt="Atmosphere Background" loading="lazy">
+          <div class="overlay">
+            <a href="agent-skills/web-design/atmosphere-background/demo/index.html" target="_blank" class="btn-demo">打开 Demo</a>
+            <a href="agent-skills/web-design/atmosphere-background/demo/PROMPT.md" target="_blank" class="btn-prompt">Prompt</a>
+          </div>
+        </div>
+        <div class="info">
+          <div class="top">
+            <span class="skill-name">atmosphere-background</span>
+            <span class="source-badge local">Local</span>
+          </div>
+          <p class="desc">氛围背景，大气感背景设计</p>
+          <div class="tag-row"><span class="tag visual">视觉</span></div>
+        </div>
+      </div>
+
+      <div class="demo-card" data-tags="visual">
+        <div class="preview">
+          <img src="agent-skills/web-design/reveal-hover-effect/demo/preview.jpg" alt="Reveal Hover" loading="lazy">
+          <div class="overlay">
+            <a href="agent-skills/web-design/reveal-hover-effect/demo/index.html" target="_blank" class="btn-demo">打开 Demo</a>
+            <a href="agent-skills/web-design/reveal-hover-effect/demo/PROMPT.md" target="_blank" class="btn-prompt">Prompt</a>
+          </div>
+        </div>
+        <div class="info">
+          <div class="top">
+            <span class="skill-name">reveal-hover-effect</span>
+            <span class="source-badge local">Local</span>
+          </div>
+          <p class="desc">悬停显示效果，Hover 触发动画</p>
+          <div class="tag-row"><span class="tag visual">视觉</span></div>
+        </div>
+      </div>
+
+      <!-- SECTION: Layout Systems -->
+      <div class="section-label" data-section="layout">布局系统 <span style="opacity:0.5">(13)</span></div>
+
+      <div class="demo-card" data-tags="layout">
+        <div class="preview">
+          <img src="agent-skills/web-design/agency-grid-layout-minimal/demo/preview.jpg" alt="Agency Grid" loading="lazy">
+          <div class="overlay">
+            <a href="agent-skills/web-design/agency-grid-layout-minimal/demo/index.html" target="_blank" class="btn-demo">打开 Demo</a>
+            <a href="agent-skills/web-design/agency-grid-layout-minimal/demo/PROMPT.md" target="_blank" class="btn-prompt">Prompt</a>
+          </div>
+        </div>
+        <div class="info">
+          <div class="top">
+            <span class="skill-name">agency-grid-layout-minimal</span>
+            <span class="source-badge neuform">Neuform #1</span>
+          </div>
+          <p class="desc">代理网格极简布局，经典agency风格网格</p>
+          <div class="tag-row"><span class="tag layout">布局</span></div>
+        </div>
+      </div>
+
+      <div class="demo-card" data-tags="layout">
+        <div class="preview">
+          <img src="agent-skills/web-design/framed-grid-layout/demo/preview.jpg" alt="Framed Grid" loading="lazy">
+          <div class="overlay">
+            <a href="agent-skills/web-design/framed-grid-layout/demo/index.html" target="_blank" class="btn-demo">打开 Demo</a>
+            <a href="agent-skills/web-design/framed-grid-layout/demo/PROMPT.md" target="_blank" class="btn-prompt">Prompt</a>
+          </div>
+        </div>
+        <div class="info">
+          <div class="top">
+            <span class="skill-name">framed-grid-layout</span>
+            <span class="source-badge neuform">Neuform #1</span>
+          </div>
+          <p class="desc">框架网格布局，带边框框架的网格</p>
+          <div class="tag-row"><span class="tag layout">布局</span></div>
+        </div>
+      </div>
+
+      <div class="demo-card" data-tags="layout">
+        <div class="preview">
+          <img src="agent-skills/web-design/nested-container-frames/demo/preview.jpg" alt="Nested Frames" loading="lazy">
+          <div class="overlay">
+            <a href="agent-skills/web-design/nested-container-frames/demo/index.html" target="_blank" class="btn-demo">打开 Demo</a>
+            <a href="agent-skills/web-design/nested-container-frames/demo/PROMPT.md" target="_blank" class="btn-prompt">Prompt</a>
+          </div>
+        </div>
+        <div class="info">
+          <div class="top">
+            <span class="skill-name">nested-container-frames</span>
+            <span class="source-badge neuform">Neuform #1</span>
+          </div>
+          <p class="desc">嵌套容器框架，多层嵌套布局容器</p>
+          <div class="tag-row"><span class="tag layout">布局</span></div>
+        </div>
+      </div>
+
+      <div class="demo-card" data-tags="layout">
+        <div class="preview">
+          <img src="agent-skills/web-design/nested-container-clean-agency/demo/preview.jpg" alt="Nested Clean Agency" loading="lazy">
+          <div class="overlay">
+            <a href="agent-skills/web-design/nested-container-clean-agency/demo/index.html" target="_blank" class="btn-demo">打开 Demo</a>
+            <a href="agent-skills/web-design/nested-container-clean-agency/demo/PROMPT.md" target="_blank" class="btn-prompt">Prompt</a>
+          </div>
+        </div>
+        <div class="info">
+          <div class="top">
+            <span class="skill-name">nested-container-clean-agency</span>
+            <span class="source-badge neuform">Neuform #1</span>
+          </div>
+          <p class="desc">嵌套容器干净代理，嵌套 + 干净代理风</p>
+          <div class="tag-row"><span class="tag layout">布局</span></div>
+        </div>
+      </div>
+
+      <div class="demo-card" data-tags="layout">
+        <div class="preview">
+          <img src="agent-skills/web-design/split-layout-technical/demo/preview.jpg" alt="Split Layout Technical" loading="lazy">
+          <div class="overlay">
+            <a href="agent-skills/web-design/split-layout-technical/demo/index.html" target="_blank" class="btn-demo">打开 Demo</a>
+            <a href="agent-skills/web-design/split-layout-technical/demo/PROMPT.md" target="_blank" class="btn-prompt">Prompt</a>
+          </div>
+        </div>
+        <div class="info">
+          <div class="top">
+            <span class="skill-name">split-layout-technical</span>
+            <span class="source-badge neuform">Neuform #1</span>
+          </div>
+          <p class="desc">分屏技术布局，左右/上下分屏</p>
+          <div class="tag-row"><span class="tag layout">布局</span></div>
+        </div>
+      </div>
+
+      <div class="demo-card" data-tags="layout">
+        <div class="preview">
+          <img src="agent-skills/web-design/technical-wireframe-info-layout/demo/preview.jpg" alt="Technical Wireframe" loading="lazy">
+          <div class="overlay">
+            <a href="agent-skills/web-design/technical-wireframe-info-layout/demo/index.html" target="_blank" class="btn-demo">打开 Demo</a>
+            <a href="agent-skills/web-design/technical-wireframe-info-layout/demo/PROMPT.md" target="_blank" class="btn-prompt">Prompt</a>
+          </div>
+        </div>
+        <div class="info">
+          <div class="top">
+            <span class="skill-name">technical-wireframe-info-layout</span>
+            <span class="source-badge neuform">Neuform #1</span>
+          </div>
+          <p class="desc">技术线框信息布局，线框风格信息展示</p>
+          <div class="tag-row"><span class="tag layout">布局</span></div>
+        </div>
+      </div>
+
+      <div class="demo-card" data-tags="layout">
+        <div class="preview">
+          <img src="agent-skills/web-design/image-first-grid-layout/demo/preview.jpg" alt="Image First Grid" loading="lazy">
+          <div class="overlay">
+            <a href="agent-skills/web-design/image-first-grid-layout/demo/index.html" target="_blank" class="btn-demo">打开 Demo</a>
+            <a href="agent-skills/web-design/image-first-grid-layout/demo/PROMPT.md" target="_blank" class="btn-prompt">Prompt</a>
+          </div>
+        </div>
+        <div class="info">
+          <div class="top">
+            <span class="skill-name">image-first-grid-layout</span>
+            <span class="source-badge neuform">Neuform #1</span>
+          </div>
+          <p class="desc">图片优先网格布局，图片主导的网格</p>
+          <div class="tag-row"><span class="tag layout">布局</span></div>
+        </div>
+      </div>
+
+      <div class="demo-card" data-tags="layout">
+        <div class="preview">
+          <img src="agent-skills/web-design/editorial-tech/demo/preview.jpg" alt="Editorial Tech" loading="lazy">
+          <div class="overlay">
+            <a href="agent-skills/web-design/editorial-tech/demo/index.html" target="_blank" class="btn-demo">打开 Demo</a>
+            <a href="agent-skills/web-design/editorial-tech/demo/PROMPT.md" target="_blank" class="btn-prompt">Prompt</a>
+          </div>
+        </div>
+        <div class="info">
+          <div class="top">
+            <span class="skill-name">editorial-tech</span>
+            <span class="source-badge neuform">Neuform #1</span>
+          </div>
+          <p class="desc">编辑技术风，Editorial + 技术感混合</p>
+          <div class="tag-row"><span class="tag layout">布局</span></div>
+        </div>
+      </div>
+
+      <div class="demo-card" data-tags="layout">
+        <div class="preview">
+          <img src="agent-skills/web-design/editorial-portfolio-chapters/demo/preview.jpg" alt="Editorial Portfolio" loading="lazy">
+          <div class="overlay">
+            <a href="agent-skills/web-design/editorial-portfolio-chapters/demo/index.html" target="_blank" class="btn-demo">打开 Demo</a>
+            <a href="agent-skills/web-design/editorial-portfolio-chapters/demo/PROMPT.md" target="_blank" class="btn-prompt">Prompt</a>
+          </div>
+        </div>
+        <div class="info">
+          <div class="top">
+            <span class="skill-name">editorial-portfolio-chapters</span>
+            <span class="source-badge local">Local</span>
+          </div>
+          <p class="desc">编辑作品集章节，章节式作品集布局</p>
+          <div class="tag-row"><span class="tag layout">布局</span></div>
+        </div>
+      </div>
+
+      <div class="demo-card" data-tags="layout">
+        <div class="preview">
+          <img src="agent-skills/web-design/editorial-service-booking/demo/preview.jpg" alt="Editorial Service Booking" loading="lazy">
+          <div class="overlay">
+            <a href="agent-skills/web-design/editorial-service-booking/demo/index.html" target="_blank" class="btn-demo">打开 Demo</a>
+            <a href="agent-skills/web-design/editorial-service-booking/demo/PROMPT.md" target="_blank" class="btn-prompt">Prompt</a>
+          </div>
+        </div>
+        <div class="info">
+          <div class="top">
+            <span class="skill-name">editorial-service-booking</span>
+            <span class="source-badge local">Local</span>
+          </div>
+          <p class="desc">编辑服务预订，服务型编辑布局</p>
+          <div class="tag-row"><span class="tag layout">布局</span></div>
+        </div>
+      </div>
+
+      <div class="demo-card" data-tags="layout">
+        <div class="preview">
+          <img src="agent-skills/web-design/documentary-brutalist-agency/demo/preview.jpg" alt="Documentary Brutalist" loading="lazy">
+          <div class="overlay">
+            <a href="agent-skills/web-design/documentary-brutalist-agency/demo/index.html" target="_blank" class="btn-demo">打开 Demo</a>
+            <a href="agent-skills/web-design/documentary-brutalist-agency/demo/PROMPT.md" target="_blank" class="btn-prompt">Prompt</a>
+          </div>
+        </div>
+        <div class="info">
+          <div class="top">
+            <span class="skill-name">documentary-brutalist-agency</span>
+            <span class="source-badge local">Local</span>
+          </div>
+          <p class="desc">纪录 Brutalist 代理，粗野主义布局</p>
+          <div class="tag-row"><span class="tag layout">布局</span></div>
+        </div>
+      </div>
+
+      <div class="demo-card" data-tags="layout">
+        <div class="preview">
+          <img src="agent-skills/web-design/book-serif-index/demo/preview.jpg" alt="Book Serif Index" loading="lazy">
+          <div class="overlay">
+            <a href="agent-skills/web-design/book-serif-index/demo/index.html" target="_blank" class="btn-demo">打开 Demo</a>
+            <a href="agent-skills/web-design/book-serif-index/demo/PROMPT.md" target="_blank" class="btn-prompt">Prompt</a>
+          </div>
+        </div>
+        <div class="info">
+          <div class="top">
+            <span class="skill-name">book-serif-index</span>
+            <span class="source-badge neuform">Neuform #1</span>
+          </div>
+          <p class="desc">书籍衬线索引，书籍排版风格索引页</p>
+          <div class="tag-row"><span class="tag layout">布局</span></div>
+        </div>
+      </div>
+
+      <!-- SECTION: Landing & Conversion -->
+      <div class="section-label" data-section="landing">落地与转化 <span style="opacity:0.5">(9)</span></div>
+
+      <div class="demo-card" data-tags="landing">
+        <div class="preview">
+          <img src="agent-skills/web-design/landing-page/demo/preview.jpg" alt="Landing Page" loading="lazy">
+          <div class="overlay">
+            <a href="agent-skills/web-design/landing-page/demo/index.html" target="_blank" class="btn-demo">打开 Demo</a>
+            <a href="agent-skills/web-design/landing-page/demo/PROMPT.md" target="_blank" class="btn-prompt">Prompt</a>
+          </div>
+        </div>
+        <div class="info">
+          <div class="top">
+            <span class="skill-name">landing-page</span>
+            <span class="source-badge local">Local</span>
+          </div>
+          <p class="desc">高转化落地页：结构/文案/转化策略/8个常见陷阱</p>
+          <div class="tag-row"><span class="tag landing">落地</span></div>
+        </div>
+      </div>
+
+      <div class="demo-card" data-tags="landing">
+        <div class="preview">
+          <img src="agent-skills/web-design/pricing-page/demo/preview.jpg" alt="Pricing Page" loading="lazy">
+          <div class="overlay">
+            <a href="agent-skills/web-design/pricing-page/demo/index.html" target="_blank" class="btn-demo">打开 Demo</a>
+            <a href="agent-skills/web-design/pricing-page/demo/PROMPT.md" target="_blank" class="btn-prompt">Prompt</a>
+          </div>
+        </div>
+        <div class="info">
+          <div class="top">
+            <span class="skill-name">pricing-page</span>
+            <span class="source-badge local">Local</span>
+          </div>
+          <p class="desc">定价页：定价策略/对比表/FAQ/CTA 设计</p>
+          <div class="tag-row"><span class="tag landing">落地</span></div>
+        </div>
+      </div>
+
+      <div class="demo-card" data-tags="landing">
+        <div class="preview">
+          <img src="agent-skills/web-design/product-proof-saas/demo/preview.jpg" alt="Product Proof SaaS" loading="lazy">
+          <div class="overlay">
+            <a href="agent-skills/web-design/product-proof-saas/demo/index.html" target="_blank" class="btn-demo">打开 Demo</a>
+            <a href="agent-skills/web-design/product-proof-saas/demo/PROMPT.md" target="_blank" class="btn-prompt">Prompt</a>
+          </div>
+        </div>
+        <div class="info">
+          <div class="top">
+            <span class="skill-name">product-proof-saas</span>
+            <span class="source-badge local">Local</span>
+          </div>
+          <p class="desc">产品证明 SaaS，社会证明元素设计</p>
+          <div class="tag-row"><span class="tag landing">落地</span></div>
+        </div>
+      </div>
+
+      <div class="demo-card" data-tags="landing">
+        <div class="preview">
+          <img src="agent-skills/web-design/tailwindcss/demo/preview.jpg" alt="Tailwind CSS" loading="lazy">
+          <div class="overlay">
+            <a href="agent-skills/web-design/tailwindcss/demo/index.html" target="_blank" class="btn-demo">打开 Demo</a>
+            <a href="agent-skills/web-design/tailwindcss/demo/PROMPT.md" target="_blank" class="btn-prompt">Prompt</a>
+          </div>
+        </div>
+        <div class="info">
+          <div class="top">
+            <span class="skill-name">tailwindcss</span>
+            <span class="source-badge local">Local</span>
+          </div>
+          <p class="desc">Tailwind CSS 工具优先模式、设计系统、clsx/cva</p>
+          <div class="tag-row"><span class="tag landing">工具</span></div>
+        </div>
+      </div>
+
+      <div class="demo-card" data-tags="landing">
+        <div class="preview">
+          <img src="agent-skills/web-design/operational-enterprise-ai/demo/preview.jpg" alt="Operational Enterprise AI" loading="lazy">
+          <div class="overlay">
+            <a href="agent-skills/web-design/operational-enterprise-ai/demo/index.html" target="_blank" class="btn-demo">打开 Demo</a>
+            <a href="agent-skills/web-design/operational-enterprise-ai/demo/PROMPT.md" target="_blank" class="btn-prompt">Prompt</a>
+          </div>
+        </div>
+        <div class="info">
+          <div class="top">
+            <span class="skill-name">operational-enterprise-ai</span>
+            <span class="source-badge local">Local</span>
+          </div>
+          <p class="desc">企业 AI 运营页，B2B SaaS 落地页</p>
+          <div class="tag-row"><span class="tag landing">落地</span></div>
+        </div>
+      </div>
+
+      <!-- SECTION: Codex Workflows -->
+      <div class="section-label" data-section="codex">Codex 工作流 <span style="opacity:0.5">(11)</span></div>
+
+      <div class="demo-card" data-tags="codex">
+        <div class="preview">
+          <img src="agent-skills/codex/video-to-superprompt/demo/preview.jpg" alt="Video to Superprompt" loading="lazy">
+          <div class="overlay">
+            <a href="agent-skills/codex/video-to-superprompt/demo/index.html" target="_blank" class="btn-demo">打开 Demo</a>
+            <a href="agent-skills/codex/video-to-superprompt/demo/PROMPT.md" target="_blank" class="btn-prompt">Prompt</a>
+          </div>
+        </div>
+        <div class="info">
+          <div class="top">
+            <span class="skill-name">video-to-superprompt</span>
+            <span class="source-badge local">Local</span>
+          </div>
+          <p class="desc">视频 → 超级提示词：ffprobe分析 + 6层拆解 + 资产地图</p>
+          <div class="tag-row"><span class="tag codex">工作流</span></div>
+        </div>
+      </div>
+
+      <div class="demo-card" data-tags="codex">
+        <div class="preview">
+          <img src="agent-skills/codex/html-to-interaction-prompts/demo/preview.jpg" alt="HTML to Interaction" loading="lazy">
+          <div class="overlay">
+            <a href="agent-skills/codex/html-to-interaction-prompts/demo/index.html" target="_blank" class="btn-demo">打开 Demo</a>
+            <a href="agent-skills/codex/html-to-interaction-prompts/demo/PROMPT.md" target="_blank" class="btn-prompt">Prompt</a>
+          </div>
+        </div>
+        <div class="info">
+          <div class="top">
+            <span class="skill-name">html-to-interaction-prompts</span>
+            <span class="source-badge local">Local</span>
+          </div>
+          <p class="desc">HTML → 交互提示词组：每个交互 = 一个可复用提示词</p>
+          <div class="tag-row"><span class="tag codex">工作流</span></div>
+        </div>
+      </div>
+
+      <div class="demo-card" data-tags="codex">
+        <div class="preview">
+          <img src="agent-skills/codex/stitched-full-page-capture/demo/preview.jpg" alt="Stitched Full Page" loading="lazy">
+          <div class="overlay">
+            <a href="agent-skills/codex/stitched-full-page-capture/demo/index.html" target="_blank" class="btn-demo">打开 Demo</a>
+            <a href="agent-skills/codex/stitched-full-page-capture/demo/PROMPT.md" target="_blank" class="btn-prompt">Prompt</a>
+          </div>
+        </div>
+        <div class="info">
+          <div class="top">
+            <span class="skill-name">stitched-full-page-capture</span>
+            <span class="source-badge local">Local</span>
+          </div>
+          <p class="desc">全页截图捕获：解决懒加载/WebGL/动画页截图为空白问题</p>
+          <div class="tag-row"><span class="tag codex">工作流</span></div>
+        </div>
+      </div>
+
+      <div class="demo-card" data-tags="codex">
+        <div class="preview">
+          <img src="agent-skills/codex/daily-ui-inspiration-capture/demo/preview.jpg" alt="Daily UI Inspiration" loading="lazy">
+          <div class="overlay">
+            <a href="agent-skills/codex/daily-ui-inspiration-capture/demo/index.html" target="_blank" class="btn-demo">打开 Demo</a>
+            <a href="agent-skills/codex/daily-ui-inspiration-capture/demo/PROMPT.md" target="_blank" class="btn-prompt">Prompt</a>
+          </div>
+        </div>
+        <div class="info">
+          <div class="top">
+            <span class="skill-name">daily-ui-inspiration-capture</span>
+            <span class="source-badge local">Local</span>
+          </div>
+          <p class="desc">每日 UI 灵感捕获：5个灵感包/天，含截图+视频+提示词</p>
+          <div class="tag-row"><span class="tag codex">工作流</span></div>
+        </div>
+      </div>
+
+      <div class="demo-card" data-tags="codex">
+        <div class="preview">
+          <img src="agent-skills/codex/optimize-web-animations/demo/preview.jpg" alt="Optimize Web Animations" loading="lazy">
+          <div class="overlay">
+            <a href="agent-skills/codex/optimize-web-animations/demo/index.html" target="_blank" class="btn-demo">打开 Demo</a>
+            <a href="agent-skills/codex/optimize-web-animations/demo/PROMPT.md" target="_blank" class="btn-prompt">Prompt</a>
+          </div>
+        </div>
+        <div class="info">
+          <div class="top">
+            <span class="skill-name">optimize-web-animations</span>
+            <span class="source-badge local">Local</span>
+          </div>
+          <p class="desc">动画性能优化：内存泄漏/帧时间/Canvas/WebGL剖析</p>
+          <div class="tag-row"><span class="tag codex">工作流</span></div>
+        </div>
+      </div>
+
+      <div class="demo-card" data-tags="codex">
+        <div class="preview">
+          <img src="agent-skills/codex/audit-verify-explain-grade-5/demo/preview.jpg" alt="Audit Grade 5" loading="lazy">
+          <div class="overlay">
+            <a href="agent-skills/codex/audit-verify-explain-grade-5/demo/index.html" target="_blank" class="btn-demo">打开 Demo</a>
+            <a href="agent-skills/codex/audit-verify-explain-grade-5/demo/PROMPT.md" target="_blank" class="btn-prompt">Prompt</a>
+          </div>
+        </div>
+        <div class="info">
+          <div class="top">
+            <span class="skill-name">audit-verify-explain-grade-5</span>
+            <span class="source-badge local">Local</span>
+          </div>
+          <p class="desc">审计 + 五年级语言解释：技术结果 → 非技术人员也能懂</p>
+          <div class="tag-row"><span class="tag codex">工作流</span></div>
+        </div>
+      </div>
+
+      <div class="demo-card" data-tags="codex">
+        <div class="preview">
+          <img src="agent-skills/codex/elevenlabs-tts/demo/preview.jpg" alt="ElevenLabs TTS" loading="lazy">
+          <div class="overlay">
+            <a href="agent-skills/codex/elevenlabs-tts/demo/index.html" target="_blank" class="btn-demo">打开 Demo</a>
+            <a href="agent-skills/codex/elevenlabs-tts/demo/PROMPT.md" target="_blank" class="btn-prompt">Prompt</a>
+          </div>
+        </div>
+        <div class="info">
+          <div class="top">
+            <span class="skill-name">elevenlabs-tts</span>
+            <span class="source-badge local">Local</span>
+          </div>
+          <p class="desc">ElevenLabs TTS 语音合成，提示词 → 语音旁白</p>
+          <div class="tag-row"><span class="tag codex">工作流</span></div>
+        </div>
+      </div>
+
+      <div class="demo-card" data-tags="codex">
+        <div class="preview">
+          <img src="agent-skills/codex/browser-video-recording/demo/preview.jpg" alt="Browser Video Recording" loading="lazy">
+          <div class="overlay">
+            <a href="agent-skills/codex/browser-video-recording/demo/index.html" target="_blank" class="btn-demo">打开 Demo</a>
+            <a href="agent-skills/codex/browser-video-recording/demo/PROMPT.md" target="_blank" class="btn-prompt">Prompt</a>
+          </div>
+        </div>
+        <div class="info">
+          <div class="top">
+            <span class="skill-name">browser-video-recording</span>
+            <span class="source-badge local">Local</span>
+          </div>
+          <p class="desc">60fps 4K 浏览器录屏：macOS光标/缩放跟随/点击编排</p>
+          <div class="tag-row"><span class="tag codex">工作流</span></div>
+        </div>
+      </div>
+
+      <div class="demo-card" data-tags="codex">
+        <div class="preview">
+          <img src="agent-skills/codex/performance-profiling/demo/preview.jpg" alt="Performance Profiling" loading="lazy">
+          <div class="overlay">
+            <a href="agent-skills/codex/performance-profiling/demo/index.html" target="_blank" class="btn-demo">打开 Demo</a>
+            <a href="agent-skills/codex/performance-profiling/demo/PROMPT.md" target="_blank" class="btn-prompt">Prompt</a>
+          </div>
+        </div>
+        <div class="info">
+          <div class="top">
+            <span class="skill-name">performance-profiling</span>
+            <span class="source-badge local">Local</span>
+          </div>
+          <p class="desc">Apple 性能分析：Instruments/Xcode诊断/MetricKit</p>
+          <div class="tag-row"><span class="tag codex">工作流</span></div>
+        </div>
+      </div>
+
+      <div class="demo-card" data-tags="codex">
+        <div class="preview">
+          <img src="agent-skills/codex/article-prompts-to-skills/demo/preview.jpg" alt="Article to Skills" loading="lazy">
+          <div class="overlay">
+            <a href="agent-skills/codex/article-prompts-to-skills/demo/index.html" target="_blank" class="btn-demo">打开 Demo</a>
+            <a href="agent-skills/codex/article-prompts-to-skills/demo/PROMPT.md" target="_blank" class="btn-prompt">Prompt</a>
+          </div>
+        </div>
+        <div class="info">
+          <div class="top">
+            <span class="skill-name">article-prompts-to-skills</span>
+            <span class="source-badge local">Local</span>
+          </div>
+          <p class="desc">文章 → 可复用技能包：文章/提示词 → 完整 SKILL.md</p>
+          <div class="tag-row"><span class="tag codex">工作流</span></div>
+        </div>
+      </div>
+
+      <div class="demo-card" data-tags="codex">
+        <div class="preview">
+          <img src="agent-skills/codex/x-bookmark-quote-posts/demo/preview.jpg" alt="X Bookmark Quote Posts" loading="lazy">
+          <div class="overlay">
+            <a href="agent-skills/codex/x-bookmark-quote-posts/demo/index.html" target="_blank" class="btn-demo">打开 Demo</a>
+            <a href="agent-skills/codex/x-bookmark-quote-posts/demo/PROMPT.md" target="_blank" class="btn-prompt">Prompt</a>
+          </div>
+        </div>
+        <div class="info">
+          <div class="top">
+            <span class="skill-name">x-bookmark-quote-posts</span>
+            <span class="source-badge local">Local</span>
+          </div>
+          <p class="desc">X 书签 → 引用帖：推文书签 → 带来源的引用帖草稿</p>
+          <div class="tag-row"><span class="tag codex">工作流</span></div>
+        </div>
+      </div>
+
+      <!-- SECTION: Missing Codex (exist in repo but no demo folder) -->
+      <div class="section-label" data-section="codex">Codex 工作流 <span style="opacity:0.5">(6 · 无 Demo · 仅 SKILL.md)</span></div>
+
+      <div class="demo-card" data-tags="codex">
+        <div class="info" style="padding:1rem">
+          <div class="top">
+            <span class="skill-name">audit-reference-originality</span>
+            <span class="source-badge local">SKILL only</span>
+          </div>
+          <p class="desc">网站 originality 审计：对比参考页面，识别抄袭风险，区分通用视觉语法与实质性复制</p>
+          <div class="tag-row">
+            <span class="tag codex">审计</span>
+            <a href="agent-skills/codex/audit-reference-originality/SKILL.md" target="_blank" class="skill-demo" style="margin-left:auto;font-size:0.75rem;color:var(--accent);text-decoration:none">SKILL.md →</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="demo-card" data-tags="codex">
+        <div class="info" style="padding:1rem">
+          <div class="top">
+            <span class="skill-name">build-daily-inspiration-sites</span>
+            <span class="source-badge local">SKILL only</span>
+          </div>
+          <p class="desc">每日灵感 → 5 个落地页构建：将 UI 灵感参考转化为独立 landing page，换品牌/名称/文案</p>
+          <div class="tag-row">
+            <span class="tag codex">工作流</span>
+            <a href="agent-skills/codex/build-daily-inspiration-sites/SKILL.md" target="_blank" class="skill-demo" style="margin-left:auto;font-size:0.75rem;color:var(--accent);text-decoration:none">SKILL.md →</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="demo-card" data-tags="codex">
+        <div class="info" style="padding:1rem">
+          <div class="top">
+            <span class="skill-name">generate-reference-inspired-brand-worlds</span>
+            <span class="source-badge local">SKILL only</span>
+          </div>
+          <p class="desc">参考 → 原创品牌世界：从视觉参考生成多个原创品牌活动，控制相似度，避开保护性签名元素</p>
+          <div class="tag-row">
+            <span class="tag codex">品牌</span>
+            <a href="agent-skills/codex/generate-reference-inspired-brand-worlds/SKILL.md" target="_blank" class="skill-demo" style="margin-left:auto;font-size:0.75rem;color:var(--accent);text-decoration:none">SKILL.md →</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="demo-card" data-tags="codex">
+        <div class="info" style="padding:1rem">
+          <div class="top">
+            <span class="skill-name">implement-fog-of-war</span>
+            <span class="source-badge local">SKILL only</span>
+          </div>
+          <p class="desc">战争迷雾实现：Three.js 动作游戏软墙感知战争迷雾，正交/等距可见性遮罩，敌人视野范围</p>
+          <div class="tag-row">
+            <span class="tag codex">游戏</span>
+            <a href="agent-skills/codex/implement-fog-of-war/SKILL.md" target="_blank" class="skill-demo" style="margin-left:auto;font-size:0.75rem;color:var(--accent);text-decoration:none">SKILL.md →</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="demo-card" data-tags="codex">
+        <div class="info" style="padding:1rem">
+          <div class="top">
+            <span class="skill-name">iterate-until-verified</span>
+            <span class="source-badge local">SKILL only</span>
+          </div>
+          <p class="desc">迭代直到验证：子 agent 展开，基准对比，严格批评，循环直到质量门通过</p>
+          <div class="tag-row">
+            <span class="tag codex">工作流</span>
+            <a href="agent-skills/codex/iterate-until-verified/SKILL.md" target="_blank" class="skill-demo" style="margin-left:auto;font-size:0.75rem;color:var(--accent);text-decoration:none">SKILL.md →</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="demo-card" data-tags="codex">
+        <div class="info" style="padding:1rem">
+          <div class="top">
+            <span class="skill-name">write-like-meng-on-x</span>
+            <span class="source-badge local">SKILL only</span>
+          </div>
+          <p class="desc">X/Twitter Meng 风格写作：基于去重帖子语料库，用 Meng To 当前语气撰写推文、线程、资源分享</p>
+          <div class="tag-row">
+            <span class="tag codex">写作</span>
+            <a href="agent-skills/codex/write-like-meng-on-x/SKILL.md" target="_blank" class="skill-demo" style="margin-left:auto;font-size:0.75rem;color:var(--accent);text-decoration:none">SKILL.md →</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- SECTION: UI -->
+      <div class="section-label" data-section="ui">UI <span style="opacity:0.5">(1)</span></div>
+
+      <div class="demo-card" data-tags="ui">
+        <div class="preview">
+          <img src="agent-skills/ui/design-first-ui-prompting/demo/preview.jpg" alt="Design First UI" loading="lazy">
+          <div class="overlay">
+            <a href="agent-skills/ui/design-first-ui-prompting/demo/index.html" target="_blank" class="btn-demo">打开 Demo</a>
+            <a href="agent-skills/ui/design-first-ui-prompting/demo/PROMPT.md" target="_blank" class="btn-prompt">Prompt</a>
+          </div>
+        </div>
+        <div class="info">
+          <div class="top">
+            <span class="skill-name">design-first-ui-prompting</span>
+            <span class="source-badge local">Local</span>
+          </div>
+          <p class="desc">设计优先 UI 提示词：6段式模板 + 变体迭代 + 2-pass字体流程</p>
+          <div class="tag-row"><span class="tag ui">UI</span></div>
+        </div>
+      </div>
+
+      <!-- SECTION: Media -->
+      <div class="section-label" data-section="media">Media <span style="opacity:0.5">(2)</span></div>
+
+      <div class="demo-card" data-tags="media">
+        <div class="preview">
+          <img src="agent-skills/media/aura-asset-images/demo/preview.jpg" alt="Aura Asset Images" loading="lazy">
+          <div class="overlay">
+            <a href="agent-skills/media/aura-asset-images/demo/index.html" target="_blank" class="btn-demo">打开 Demo</a>
+            <a href="agent-skills/media/aura-asset-images/demo/PROMPT.md" target="_blank" class="btn-prompt">Prompt</a>
+          </div>
+        </div>
+        <div class="info">
+          <div class="top">
+            <span class="skill-name">aura-asset-images</span>
+            <span class="source-badge neuform">Neuform #1</span>
+          </div>
+          <p class="desc">Aura Assets 商业图库：按用途/裁剪/比例选取</p>
+          <div class="tag-row"><span class="tag media">Media</span></div>
+        </div>
+      </div>
+
+      <div class="demo-card" data-tags="media">
+        <div class="preview">
+          <img src="agent-skills/media/unsplash-asset-images/demo/preview.jpg" alt="Unsplash Asset Images" loading="lazy">
+          <div class="overlay">
+            <a href="agent-skills/media/unsplash-asset-images/demo/index.html" target="_blank" class="btn-demo">打开 Demo</a>
+            <a href="agent-skills/media/unsplash-asset-images/demo/PROMPT.md" target="_blank" class="btn-prompt">Prompt</a>
+          </div>
+        </div>
+        <div class="info">
+          <div class="top">
+            <span class="skill-name">unsplash-asset-images</span>
+            <span class="source-badge local">Local</span>
+          </div>
+          <p class="desc">Unsplash 免费图库：CC0 免版权高质量图片选取</p>
+          <div class="tag-row"><span class="tag media">Media</span></div>
+        </div>
+      </div>
+
+      <!-- SECTION: Game Development -->
+      <div class="section-label" data-section="game">Game Development <span style="opacity:0.5">(19 · 无 Demo · 仅 SKILL.md)</span></div>
+
+      <!-- Game Dev cards: no preview images, only SKILL.md links -->
+
+      <div class="demo-card" data-tags="game">
+        <div class="info" style="padding:1rem">
+          <div class="top">
+            <span class="skill-name">build-isometric-arpg</span>
+            <span class="source-badge local">SKILL only</span>
+          </div>
+          <p class="desc">等距 ARPG 垂直切片开发：游戏循环/相机/战斗/敌人/奖励/存档，按垂直切片交付可玩路线</p>
+          <div class="tag-row">
+            <span class="tag motion">游戏</span>
+            <a href="agent-skills/game-development/build-isometric-arpg/SKILL.md" target="_blank" class="skill-demo" style="margin-left:auto;font-size:0.75rem;color:var(--accent);text-decoration:none">SKILL.md →</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="demo-card" data-tags="game">
+        <div class="info" style="padding:1rem">
+          <div class="top">
+            <span class="skill-name">author-game-levels</span>
+            <span class="source-badge local">SKILL only</span>
+          </div>
+          <p class="desc">关卡设计：路径创作 + 分离式碰撞/导航/视觉层 + 光照设计</p>
+          <div class="tag-row">
+            <span class="tag motion">游戏</span>
+            <a href="agent-skills/game-development/author-game-levels/SKILL.md" target="_blank" class="skill-demo" style="margin-left:auto;font-size:0.75rem;color:var(--accent);text-decoration:none">SKILL.md →</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="demo-card" data-tags="game">
+        <div class="info" style="padding:1rem">
+          <div class="top">
+            <span class="skill-name">build-game-camera-controls</span>
+            <span class="source-badge local">SKILL only</span>
+          </div>
+          <p class="desc">相机控制：等距跟随/锁定/遮挡/震动/触摸手势</p>
+          <div class="tag-row">
+            <span class="tag motion">游戏</span>
+            <a href="agent-skills/game-development/build-game-camera-controls/SKILL.md" target="_blank" class="skill-demo" style="margin-left:auto;font-size:0.75rem;color:var(--accent);text-decoration:none">SKILL.md →</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="demo-card" data-tags="game">
+        <div class="info" style="padding:1rem">
+          <div class="top">
+            <span class="skill-name">design-action-combat</span>
+            <span class="source-badge local">SKILL only</span>
+          </div>
+          <p class="desc">动作战斗：起手帧/命中帧/恢复帧/接触判定/防御/打断/确定性验证</p>
+          <div class="tag-row">
+            <span class="tag motion">战斗</span>
+            <a href="agent-skills/game-development/design-action-combat/SKILL.md" target="_blank" class="skill-demo" style="margin-left:auto;font-size:0.75rem;color:var(--accent);text-decoration:none">SKILL.md →</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="demo-card" data-tags="game">
+        <div class="info" style="padding:1rem">
+          <div class="top">
+            <span class="skill-name">build-threejs-enemy-systems</span>
+            <span class="source-badge local">SKILL only</span>
+          </div>
+          <p class="desc">Three.js 敌人系统：敌人原型/moveset/模型规范/Runtime hooks/测试夹具</p>
+          <div class="tag-row">
+            <span class="tag motion">敌人</span>
+            <a href="agent-skills/game-development/build-threejs-enemy-systems/SKILL.md" target="_blank" class="skill-demo" style="margin-left:auto;font-size:0.75rem;color:var(--accent);text-decoration:none">SKILL.md →</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="demo-card" data-tags="game">
+        <div class="info" style="padding:1rem">
+          <div class="top">
+            <span class="skill-name">build-game-monster-system</span>
+            <span class="source-badge local">SKILL only</span>
+          </div>
+          <p class="desc">怪物系统：Rig/关节/插槽/碰撞器/动画状态/LOD/确定性审查合约</p>
+          <div class="tag-row">
+            <span class="tag motion">怪物</span>
+            <a href="agent-skills/game-development/build-game-monster-system/SKILL.md" target="_blank" class="skill-demo" style="margin-left:auto;font-size:0.75rem;color:var(--accent);text-decoration:none">SKILL.md →</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="demo-card" data-tags="game">
+        <div class="info" style="padding:1rem">
+          <div class="top">
+            <span class="skill-name">tune-enemy-ai</span>
+            <span class="source-badge local">SKILL only</span>
+          </div>
+          <p class="desc">敌人 AI 调优：感知/意图/导航/间距/攻击决策，公平有界可复现</p>
+          <div class="tag-row">
+            <span class="tag motion">AI</span>
+            <a href="agent-skills/game-development/tune-enemy-ai/SKILL.md" target="_blank" class="skill-demo" style="margin-left:auto;font-size:0.75rem;color:var(--accent);text-decoration:none">SKILL.md →</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="demo-card" data-tags="game">
+        <div class="info" style="padding:1rem">
+          <div class="top">
+            <span class="skill-name">design-game-encounters</span>
+            <span class="source-badge local">SKILL only</span>
+          </div>
+          <p class="desc">游戏遭遇战设计：竞技场/波次/目标/Boss阶段/失败恢复/奖励</p>
+          <div class="tag-row">
+            <span class="tag motion">关卡</span>
+            <a href="agent-skills/game-development/design-game-encounters/SKILL.md" target="_blank" class="skill-demo" style="margin-left:auto;font-size:0.75rem;color:var(--accent);text-decoration:none">SKILL.md →</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="demo-card" data-tags="game">
+        <div class="info" style="padding:1rem">
+          <div class="top">
+            <span class="skill-name">build-game-inventory</span>
+            <span class="source-badge local">SKILL only</span>
+          </div>
+          <p class="desc">背包/装备系统：原子化库存/战利品/拖放/迁移/不丢失持久化</p>
+          <div class="tag-row">
+            <span class="tag motion">系统</span>
+            <a href="agent-skills/game-development/build-game-inventory/SKILL.md" target="_blank" class="skill-demo" style="margin-left:auto;font-size:0.75rem;color:var(--accent);text-decoration:none">SKILL.md →</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="demo-card" data-tags="game">
+        <div class="info" style="padding:1rem">
+          <div class="top">
+            <span class="skill-name">create-game-vfx</span>
+            <span class="source-badge local">SKILL only</span>
+          </div>
+          <p class="desc">游戏视觉特效：可见/有界/对象池化/prefers-reduced-motion感知</p>
+          <div class="tag-row">
+            <span class="tag motion">VFX</span>
+            <a href="agent-skills/game-development/create-game-vfx/SKILL.md" target="_blank" class="skill-demo" style="margin-left:auto;font-size:0.75rem;color:var(--accent);text-decoration:none">SKILL.md →</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="demo-card" data-tags="game">
+        <div class="info" style="padding:1rem">
+          <div class="top">
+            <span class="skill-name">build-game-audio-feedback</span>
+            <span class="source-badge local">SKILL only</span>
+          </div>
+          <p class="desc">游戏音效反馈：玩家意图/战斗状态 → 优先级音频提示，无障碍友好</p>
+          <div class="tag-row">
+            <span class="tag motion">音效</span>
+            <a href="agent-skills/game-development/build-game-audio-feedback/SKILL.md" target="_blank" class="skill-demo" style="margin-left:auto;font-size:0.75rem;color:var(--accent);text-decoration:none">SKILL.md →</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="demo-card" data-tags="game">
+        <div class="info" style="padding:1rem">
+          <div class="top">
+            <span class="skill-name">build-mobile-threejs-games</span>
+            <span class="source-badge local">SKILL only</span>
+          </div>
+          <p class="desc">移动端 Three.js 游戏：触屏控制/安全区域/响应式 HUD/方向/性能</p>
+          <div class="tag-row">
+            <span class="tag motion">移动</span>
+            <a href="agent-skills/game-development/build-mobile-threejs-games/SKILL.md" target="_blank" class="skill-demo" style="margin-left:auto;font-size:0.75rem;color:var(--accent);text-decoration:none">SKILL.md →</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="demo-card" data-tags="game">
+        <div class="info" style="padding:1rem">
+          <div class="top">
+            <span class="skill-name">build-hybrid-game-assets</span>
+            <span class="source-badge local">SKILL only</span>
+          </div>
+          <p class="desc">混合游戏资产：运行时表示选择，保留溯源/缩放/插槽/碰撞/预算</p>
+          <div class="tag-row">
+            <span class="tag motion">资产</span>
+            <a href="agent-skills/game-development/build-hybrid-game-assets/SKILL.md" target="_blank" class="skill-demo" style="margin-left:auto;font-size:0.75rem;color:var(--accent);text-decoration:none">SKILL.md →</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="demo-card" data-tags="game">
+        <div class="info" style="padding:1rem">
+          <div class="top">
+            <span class="skill-name">build-vesperfall-review-assets</span>
+            <span class="source-badge local">SKILL only</span>
+          </div>
+          <p class="desc">Vesperfall 资产审查：目录 PNG + 真实模型预览 + 溯源 + 确定性审查路线</p>
+          <div class="tag-row">
+            <span class="tag motion">资产</span>
+            <a href="agent-skills/game-development/build-vesperfall-review-assets/SKILL.md" target="_blank" class="skill-demo" style="margin-left:auto;font-size:0.75rem;color:var(--accent);text-decoration:none">SKILL.md →</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="demo-card" data-tags="game">
+        <div class="info" style="padding:1rem">
+          <div class="top">
+            <span class="skill-name">optimize-threejs-games</span>
+            <span class="source-badge local">SKILL only</span>
+          </div>
+          <p class="desc">Three.js 游戏优化：帧时间/绘制调用/内存/质量诊断，不牺牲操作可读性</p>
+          <div class="tag-row">
+            <span class="tag motion">性能</span>
+            <a href="agent-skills/game-development/optimize-threejs-games/SKILL.md" target="_blank" class="skill-demo" style="margin-left:auto;font-size:0.75rem;color:var(--accent);text-decoration:none">SKILL.md →</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="demo-card" data-tags="game">
+        <div class="info" style="padding:1rem">
+          <div class="top">
+            <span class="skill-name">test-playable-web-games</span>
+            <span class="source-badge local">SKILL only</span>
+          </div>
+          <p class="desc">游戏 QA 测试：确定性测试夹具 + 真实浏览器验证，"绿 build ≠ 游戏验证"</p>
+          <div class="tag-row">
+            <span class="tag motion">QA</span>
+            <a href="agent-skills/game-development/test-playable-web-games/SKILL.md" target="_blank" class="skill-demo" style="margin-left:auto;font-size:0.75rem;color:var(--accent);text-decoration:none">SKILL.md →</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="demo-card" data-tags="game">
+        <div class="info" style="padding:1rem">
+          <div class="top">
+            <span class="skill-name">ship-web-games</span>
+            <span class="source-badge local">SKILL only</span>
+          </div>
+          <p class="desc">Web 游戏发布：精确验证的 commit，部署版本与本地分离验证</p>
+          <div class="tag-row">
+            <span class="tag motion">发布</span>
+            <a href="agent-skills/game-development/ship-web-games/SKILL.md" target="_blank" class="skill-demo" style="margin-left:auto;font-size:0.75rem;color:var(--accent);text-decoration:none">SKILL.md →</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- NO RESULTS -->
+      <div class="no-results" id="no-results" style="display:none">
+        <h3>该分类暂无 Demo</h3>
+        <p>试试切换到其他分类</p>
+      </div>
+
+    </div>
+  </main>
+
+  <footer>
+    <p>Demo Gallery · MengTo/Skills · <a href="https://github.com/MengTo/Skills">上游仓库</a> · MIT License</p>
+  </footer>
+
+  <script>
+    const filterBtns = document.querySelectorAll('.filter-btn');
+    const cards = document.querySelectorAll('.demo-card');
+    const sections = document.querySelectorAll('.section-label');
+    const noResults = document.getElementById('no-results');
+
+    filterBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        filterBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+
+        const filter = btn.dataset.filter;
+        let visibleCount = 0;
+
+        cards.forEach(card => {
+          const tags = card.dataset.tags.split(',');
+          const show = filter === 'all' || tags.includes(filter);
+          card.classList.toggle('hidden', !show);
+          if (show) visibleCount++;
+        });
+
+        // Show/hide section labels based on whether they have visible cards
+        const sectionMap = {
+          'motion': 'motion', '3d': '3d', 'css': 'css', 'visual': 'visual',
+          'layout': 'layout', 'landing': 'landing', 'codex': 'codex',
+          'ui': 'ui', 'media': 'media', 'all': 'all'
+        };
+
+        if (filter === 'all') {
+          sections.forEach(s => s.classList.remove('hidden'));
+        } else {
+          sections.forEach(s => {
+            const sectionTag = s.dataset.section;
+            s.classList.toggle('hidden', sectionTag !== filter);
+          });
+        }
+
+        noResults.style.display = visibleCount === 0 ? 'block' : 'none';
+      });
+    });
+  </script>
+</body>
+</html>

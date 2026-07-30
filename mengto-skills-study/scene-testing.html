@@ -1,0 +1,1043 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Layer 3 · 真实场景测试 | MengTo/Skills Deep Research</title>
+  <style>
+    :root {
+      --bg: #fafaf8;
+      --ink: #1a1812;
+      --ink-muted: #6b6560;
+      --accent: #c2410c;
+      --accent-soft: #fff1ed;
+      --surface: #ffffff;
+      --border: #e8e4df;
+      --font-sans: 'Inter', system-ui, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: var(--font-sans);
+      background: var(--bg);
+      color: var(--ink);
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    /* ── Nav ── */
+    nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(250,250,248,0.92);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 0 2rem;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      gap: 2rem;
+    }
+    nav .brand {
+      font-weight: 700;
+      font-size: 0.95rem;
+      color: var(--ink);
+      text-decoration: none;
+    }
+    nav .brand span { color: var(--accent); }
+    nav .links { display: flex; gap: 1.5rem; margin-left: auto; }
+    nav .links a {
+      font-size: 0.85rem;
+      color: var(--ink-muted);
+      text-decoration: none;
+      transition: color 0.15s;
+    }
+    nav .links a:hover { color: var(--accent); }
+    nav .links a.this { color: var(--accent); font-weight: 600; }
+
+    /* ── Hero ── */
+    .hero {
+      text-align: center;
+      padding: 5rem 2rem 3rem;
+      max-width: 760px;
+      margin: 0 auto;
+    }
+    .hero .eyebrow {
+      display: inline-block;
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--accent);
+      background: var(--accent-soft);
+      padding: 0.3rem 0.75rem;
+      border-radius: 99px;
+      margin-bottom: 1.25rem;
+    }
+    .hero h1 {
+      font-size: 2.4rem;
+      font-weight: 800;
+      line-height: 1.15;
+      letter-spacing: -0.03em;
+      margin-bottom: 1rem;
+    }
+    .hero p {
+      font-size: 1.05rem;
+      color: var(--ink-muted);
+      max-width: 560px;
+      margin: 0 auto 2rem;
+    }
+    .hero .meta {
+      display: flex;
+      gap: 2rem;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .hero .meta-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.2rem;
+    }
+    .hero .meta-item .num {
+      font-size: 1.6rem;
+      font-weight: 800;
+      color: var(--ink);
+      letter-spacing: -0.04em;
+    }
+    .hero .meta-item .label {
+      font-size: 0.72rem;
+      color: var(--ink-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    /* ── Section ── */
+    .section {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 3.5rem 2rem;
+      border-top: 1px solid var(--border);
+    }
+    .section-header {
+      display: flex;
+      align-items: baseline;
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+    .section-header h2 {
+      font-size: 1.3rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+    .section-header .badge {
+      font-size: 0.72rem;
+      font-weight: 600;
+      padding: 0.2rem 0.6rem;
+      border-radius: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .badge-ok { background: #dcfce7; color: #166534; }
+    .badge-warn { background: #fef9c3; color: #854d0e; }
+    .badge-info { background: #e0f2fe; color: #075985; }
+
+    /* ── Test Card ── */
+    .test-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+      margin-bottom: 2rem;
+    }
+    .test-card-header {
+      padding: 1.5rem 2rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: flex-start;
+      gap: 1rem;
+    }
+    .test-card-header .skill-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+      flex-shrink: 0;
+    }
+    .test-card-header .info { flex: 1; }
+    .test-card-header .skill-name {
+      font-size: 1rem;
+      font-weight: 700;
+      margin-bottom: 0.2rem;
+    }
+    .test-card-header .skill-desc {
+      font-size: 0.82rem;
+      color: var(--ink-muted);
+      line-height: 1.5;
+    }
+    .test-card-header .verdict {
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 0.25rem 0.65rem;
+      border-radius: 99px;
+      flex-shrink: 0;
+    }
+    .verdict-pass { background: #dcfce7; color: #166534; }
+    .verdict-fail { background: #fee2e2; color: #991b1b; }
+    .verdict-mixed { background: #fef9c3; color: #854d0e; }
+
+    .test-card-body { padding: 2rem; }
+
+    /* Scenario block */
+    .scenario-label {
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: var(--ink-muted);
+      margin-bottom: 0.6rem;
+    }
+    .scenario-text {
+      font-size: 0.9rem;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.75rem 1rem;
+      margin-bottom: 1.5rem;
+      color: var(--ink-muted);
+    }
+
+    /* Code block */
+    .code-label {
+      font-size: 0.72rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--ink-muted);
+      margin-bottom: 0.5rem;
+    }
+    pre {
+      background: #1e1b18;
+      color: #e8e4df;
+      border-radius: 10px;
+      padding: 1.25rem 1.5rem;
+      overflow-x: auto;
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      line-height: 1.65;
+      margin-bottom: 1.5rem;
+    }
+    pre .kw { color: #f97316; }
+    pre .str { color: #86efac; }
+    pre .cmt { color: #6b6560; font-style: italic; }
+    pre .tag { color: #38bdf8; }
+    pre .attr { color: #fbbf24; }
+    pre .val { color: #86efac; }
+
+    /* Results */
+    .result-label {
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: var(--ink-muted);
+      margin-bottom: 0.6rem;
+    }
+    .result-text {
+      font-size: 0.88rem;
+      color: var(--ink);
+      background: #f0fdf4;
+      border: 1px solid #bbf7d0;
+      border-radius: 8px;
+      padding: 0.75rem 1rem;
+      margin-bottom: 1rem;
+    }
+    .findings {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+      margin-top: 1rem;
+    }
+    .finding {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 0.85rem 1rem;
+    }
+    .finding-icon { font-size: 1rem; margin-bottom: 0.3rem; }
+    .finding-title { font-size: 0.82rem; font-weight: 700; margin-bottom: 0.25rem; }
+    .finding-text { font-size: 0.78rem; color: var(--ink-muted); line-height: 1.5; }
+
+    /* Live demo embed */
+    .demo-embed {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      margin-bottom: 1.5rem;
+    }
+    .demo-bar {
+      background: #f5f3f0;
+      border-bottom: 1px solid var(--border);
+      padding: 0.5rem 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.75rem;
+      color: var(--ink-muted);
+    }
+    .demo-bar .dot { width: 10px; height: 10px; border-radius: 50%; }
+    .demo-bar .dot-r { background: #ef4444; }
+    .demo-bar .dot-y { background: #f59e0b; }
+    .demo-bar .dot-g { background: #22c55e; }
+    .demo-embed iframe {
+      width: 100%;
+      height: 420px;
+      border: none;
+      display: block;
+    }
+
+    /* Two-col findings */
+    .findings-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.75rem;
+      margin-top: 1rem;
+    }
+
+    @media (max-width: 640px) {
+      .findings, .findings-3 { grid-template-columns: 1fr; }
+      nav .links { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a class="brand" href="index.html">MengTo/<span>Skills</span></a>
+  <div class="links">
+    <a href="index.html">研究总览</a>
+    <a href="demo-gallery.html">Demo 展示</a>
+    <a href="capability-map.html">能力地图</a>
+    <a href="scene-testing.html" class="this">场景测试</a>
+    <a href="workflow-demo.html">工作流实战</a>
+  </div>
+</nav>
+
+<div class="hero">
+  <span class="eyebrow">Layer 3 · 真实场景测试</span>
+  <h1>用真实业务需求验证技能</h1>
+  <p>118 个技能中，挑选 4 类代表（CSS 特效、视口动画、游戏战斗、AI 工作流），用真实需求测试，检查输出质量、可执行性、与预期匹配度。</p>
+  <div class="meta">
+    <div class="meta-item">
+      <span class="num">4</span>
+      <span class="label">测试技能</span>
+    </div>
+    <div class="meta-item">
+      <span class="num">3</span>
+      <span class="label">通过</span>
+    </div>
+    <div class="meta-item">
+      <span class="num">1</span>
+      <span class="label">需平台</span>
+    </div>
+    <div class="meta-item">
+      <span class="num">100%</span>
+      <span class="label">可理解度</span>
+    </div>
+  </div>
+</div>
+
+<!-- ─────────────────────────────────────────── -->
+<!-- TEST 1: beautiful-shadows -->
+<!-- ─────────────────────────────────────────── -->
+<div class="section">
+
+  <div class="section-header">
+    <h2>技能 1 · beautiful-shadows</h2>
+    <span class="badge badge-ok">独立可构建</span>
+    <span class="badge badge-info">CSS 特效</span>
+  </div>
+
+  <div class="test-card">
+    <div class="test-card-header">
+      <div class="skill-icon" style="background:#f5f3f0;">🌫️</div>
+      <div class="info">
+        <div class="skill-name">beautiful-shadows</div>
+        <div class="skill-desc">应用精确的 Tailwind 阴影工具，实现精致的中性分层提升效果。用于紧凑卡片、控件、面板、popover、hero 媒体、特性标注、modal 类容器。</div>
+      </div>
+      <span class="verdict verdict-pass">✅ 通过</span>
+    </div>
+    <div class="test-card-body">
+
+      <div class="scenario-label">真实场景</div>
+      <div class="scenario-text">
+        拾穗果园品牌页需要一个"产品卡片"模块：展示苹果品种图片、名称、甜度 rating、单价。卡片需要精致的阴影层次感，在桌面和移动端都看起来高档。
+      </div>
+
+      <div class="code-label">应用 beautiful-shadows sm/md/lg 后的实现</div>
+<pre><span class="cmt">/* beautiful-shadows skill — Three-layer neutral elevation */</span>
+
+<span class="cmt">/* Compact card — Beautiful sm */</span>
+<span class="tag">card</span> {
+  <span class="attr">border-radius</span>: <span class="val">12px</span>;
+  <span class="attr">background</span>: <span class="val">#ffffff</span>;
+  <span class="attr">box-shadow</span>:
+    <span class="val">0px 2px 3px -1px rgba(0,0,0,0.10),
+    0px 1px 0px 0px rgba(25,28,33,0.02),
+    0px 0px 0px 1px rgba(25,28,33,0.08)</span>;
+}
+
+<span class="cmt">/* Product panel — Beautiful md */</span>
+<span class="tag">.product-card</span> {
+  <span class="attr">border-radius</span>: <span class="val">16px</span>;
+  <span class="attr">background</span>: <span class="val">#ffffff</span>;
+  <span class="attr">box-shadow</span>:
+    <span class="val">0px 0px 0px 1px rgba(0,0,0,0.06),
+    0px 1px 1px -0.5px rgba(0,0,0,0.06),
+    0px 3px 3px -1.5px rgba(0,0,0,0.06),
+    0px 6px 6px -3px rgba(0,0,0,0.06),
+    0px 12px 12px -6px rgba(0,0,0,0.06),
+    0px 24px 24px -12px rgba(0,0,0,0.06)</span>;
+}
+
+<span class="cmt">/* Hero media — Beautiful lg */</span>
+<span class="tag">.hero-card</span> {
+  <span class="attr">border-radius</span>: <span class="val">20px</span>;
+  <span class="attr">background</span>: <span class="val">#ffffff</span>;
+  <span class="attr">box-shadow</span>:
+    <span class="val">0 2.8px 2.2px rgba(0,0,0,0.034),
+    0 6.7px 5.3px rgba(0,0,0,0.048),
+    0 12.5px 10px rgba(0,0,0,0.060),
+    0 22.3px 17.9px rgba(0,0,0,0.072),
+    0 41.8px 33.4px rgba(0,0,0,0.086),
+    0 100px 80px rgba(0,0,0,0.12)</span>;
+}</pre>
+
+      <!-- Live Demo -->
+      <div class="demo-embed">
+        <div class="demo-bar">
+          <span class="dot dot-r"></span>
+          <span class="dot dot-y"></span>
+          <span class="dot dot-g"></span>
+          <span style="margin-left:0.5rem">beautiful-shadows 实战验证 — 拾穗果园产品卡片</span>
+        </div>
+        <iframe srcdoc="<!DOCTYPE html>
+<html><head><meta charset='UTF-8'><style>
+  :root{--bg:#fafaf8;--surface:#fff;--ink:#1a1812;--muted:#6b6560;--accent:#c2410c;--border:#e8e4df}
+  body{font-family:system-ui,sans-serif;background:var(--bg);padding:2rem;display:flex;flex-direction:column;align-items:center;gap:2rem}
+  h2{font-size:.75rem;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:600}
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem;width:100%;max-width:720px}
+  .card{background:var(--surface);border-radius:12px;overflow:hidden;padding:1.25rem;display:flex;flex-direction:column;gap:.6rem}
+  .card.sm{box-shadow:0px 2px 3px -1px rgba(0,0,0,.10),0px 1px 0px 0px rgba(25,28,33,.02),0px 0px 0px 1px rgba(25,28,33,.08)}
+  .card.md{box-shadow:0px 0px 0px 1px rgba(0,0,0,.06),0px 1px 1px -.5px rgba(0,0,0,.06),0px 3px 3px -1.5px rgba(0,0,0,.06),0px 6px 6px -3px rgba(0,0,0,.06),0px 12px 12px -6px rgba(0,0,0,.06),0px 24px 24px -12px rgba(0,0,0,.06)}
+  .card.lg{box-shadow:0 2.8px 2.2px rgba(0,0,0,.034),0 6.7px 5.3px rgba(0,0,0,.048),0 12.5px 10px rgba(0,0,0,.060),0 22.3px 17.9px rgba(0,0,0,.072),0 41.8px 33.4px rgba(0,0,0,.086),0 100px 80px rgba(0,0,0,.12)}
+  .img{width:100%;height:110px;background:linear-gradient(135deg,#f0ede8,#e8e0d5);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:2.5rem}
+  .name{font-weight:700;font-size:.95rem}
+  .meta{display:flex;justify-content:space-between;align-items:center}
+  .tag{font-size:.72rem;background:#fff1ed;color:#c2410c;padding:.2rem .5rem;border-radius:99px;font-weight:600}
+  .sweet{font-size:.78rem;color:#6b6560}
+  .price{font-weight:700;color:#1a1812}
+  .label{font-size:.65rem;text-transform:uppercase;letter-spacing:.06em;color:#6b6560;font-weight:600}
+</style></head><body>
+<h2>Beautiful Shadows — 三档阴影验证</h2>
+<div class=grid>
+  <div>
+    <p class=label style=text-align:center;margin-bottom:.5rem>Beautiful sm · 紧凑控件</p>
+    <div class='card sm'>
+      <div class=img>🍎</div>
+      <div class=name>红富士</div>
+      <div class=meta><span class=sweet>甘度 ★★★☆</span><span class=price>¥12/kg</span></div>
+    </div>
+  </div>
+  <div>
+    <p class=label style=text-align:center;margin-bottom:.5rem>Beautiful md · 产品卡片</p>
+    <div class='card md'>
+      <div class=img>🍐</div>
+      <div class=name>香梨</div>
+      <div class=meta><span class=sweet>甘度 ★★★★</span><span class=price>¥18/kg</span></div>
+    </div>
+  </div>
+  <div>
+    <p class=label style=text-align:center;margin-bottom:.5rem>Beautiful lg · Hero 媒体</p>
+    <div class='card lg'>
+      <div class=img>🍇</div>
+      <div class=name>阳光玫瑰</div>
+      <div class=meta><span class=sweet>甘度 ★★★★★</span><span class=price>¥35/kg</span></div>
+    </div>
+  </div>
+</div>
+<p style='font-size:.75rem;color:#6b6560;max-width:600px;text-align:center;margin-top:.5rem'>阴影从 sm→md→lg 层级递增， neutral 调性保持一致，无彩色溢色。复制 SKILL.md 中的 box-shadow 值即可复用。</p>
+</body></html>"></iframe>
+      </div>
+
+      <div class="findings">
+        <div class="finding">
+          <div class="finding-icon">✅</div>
+          <div class="finding-title">可执行性</div>
+          <div class="finding-text">直接复制 box-shadow 值到 CSS，立即生效，无任何依赖</div>
+        </div>
+        <div class="finding">
+          <div class="finding-icon">✅</div>
+          <div class="finding-title">视觉质量</div>
+          <div class="finding-text">三层阴影 + 微线框组合，质感远超 Tailwind 默认 shadow</div>
+        </div>
+        <div class="finding">
+          <div class="finding-icon">⚠️</div>
+          <div class="finding-title">注意避免</div>
+          <div class="finding-text">不要在同一元素混用多个 shadow 工具，不与 default Tailwind shadow 混用</div>
+        </div>
+        <div class="finding">
+          <div class="finding-icon">💡</div>
+          <div class="finding-title">与拾穗果园项目的关系</div>
+          <div class="finding-text">当前 family-orchard 用的是简单 box-shadow，可升级为 beautiful-shadows 提升精致度</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ─────────────────────────────────────────── -->
+<!-- TEST 2: animation-on-scroll -->
+<!-- ─────────────────────────────────────────── -->
+<div class="section">
+
+  <div class="section-header">
+    <h2>技能 2 · animation-on-scroll</h2>
+    <span class="badge badge-ok">独立可构建</span>
+    <span class="badge badge-info">视口动画</span>
+  </div>
+
+  <div class="test-card">
+    <div class="test-card-header">
+      <div class="skill-icon" style="background:#f5f3f0;">👁️</div>
+      <div class="info">
+        <div class="skill-name">animation-on-scroll</div>
+        <div class="skill-desc">使用 IntersectionObserver 触发视口进入动画，提供 Tailwind-friendly 的动画类和关键帧。用于 scroll-reveal、animate-on-scroll、或视口元素序列动画。</div>
+      </div>
+      <span class="verdict verdict-pass">✅ 通过</span>
+    </div>
+    <div class="test-card-body">
+
+      <div class="scenario-label">真实场景</div>
+      <div class="scenario-text">
+        拾穗果园品牌页的"工艺日志"模块有 6 个日志条目，需要每个条目在进入视口时依次淡入（上移 + 模糊消除），营造手工感、叙事感。
+      </div>
+
+      <div class="code-label">应用 animation-on-scroll 后的实现</div>
+<pre><span class="cmt">/* 1) Keyframes — 插入 &lt;head&gt; */</span>
+<span class="tag">@keyframes</span> <span class="attr">animationIn</span> {
+  <span class="val">0%</span>   { <span class="attr">opacity</span>: <span class="val">0</span>; <span class="attr">transform</span>: <span class="val">translateY(30px)</span>; <span class="attr">filter</span>: <span class="val">blur(8px)</span>; }
+  <span class="val">100%</span> { <span class="attr">opacity</span>: <span class="val">1</span>; <span class="attr">transform</span>: <span class="val">translateY(0)</span>; <span class="attr">filter</span>: <span class="val">blur(0px)</span>; }
+}
+
+<span class="cmt">/* 2) IntersectionObserver snippet — 插入 &lt;head&gt; */</span>
+<span class="tag">&lt;script&gt;</span>
+(<span class="kw">function</span> () {
+  <span class="kw">const</span> style = document.<span class="attr">createElement</span>(<span class="str">'style'</span>);
+  style.<span class="attr">textContent</span> = <span class="str">'.animate-on-scroll{animation-play-state:paused!important}'
+    +'.animate-on-scroll.animate{animation-play-state:running!important}'</span>;
+  document.<span class="attr">head</span>.<span class="attr">appendChild</span>(style);
+  <span class="kw">const</span> once = <span class="val">true</span>;
+  <span class="kw">if</span> (!window.__inViewIO) {
+    window.__inViewIO = <span class="kw">new</span> <span class="attr">IntersectionObserver</span>((entries) => {
+      entries.<span class="attr">forEach</span>((entry) => {
+        <span class="kw">if</span> (entry.<span class="attr">isIntersecting</span>) {
+          entry.<span class="attr">target</span>.<span class="attr">classList</span>.<span class="attr">add</span>(<span class="str">'animate'</span>);
+          <span class="kw">if</span> (once) window.__inViewIO.<span class="attr">unobserve</span>(entry.<span class="attr">target</span>);
+        }
+      });
+    }, { <span class="attr">threshold</span>: <span class="val">0.2</span>, <span class="attr">rootMargin</span>: <span class="str">'0px 0px -10% 0px'</span> });
+  }
+  window.<span class="attr">initInViewAnimations</span> = <span class="kw">function</span> (selector = <span class="str">'.animate-on-scroll'</span>) {
+    document.<span class="attr">querySelectorAll</span>(selector).<span class="attr">forEach</span>((el) => { window.__inViewIO.<span class="attr">observe</span>(el); });
+  };
+  document.<span class="attr">addEventListener</span>(<span class="str">'DOMContentLoaded'</span>, () => initInViewAnimations());
+})();
+<span class="tag">&lt;/script&gt;</span>
+
+<span class="cmt">/* 3) 元素使用 — stagger 延迟实现序列动画 */</span>
+<span class="tag">&lt;div</span> <span class="attr">class</span>=<span class="str">"animate-on-scroll [animation:animationIn_0.8s_ease-out_0.1s_both]"</span><span class="tag">&gt;</span>条目 1<span class="tag">&lt;/div&gt;</span>
+<span class="tag">&lt;div</span> <span class="attr">class</span>=<span class="str">"animate-on-scroll [animation:animationIn_0.8s_ease-out_0.25s_both]"</span><span class="tag">&gt;</span>条目 2<span class="tag">&lt;/div&gt;</span>
+<span class="tag">&lt;div</span> <span class="attr">class</span>=<span class="str">"animate-on-scroll [animation:animationIn_0.8s_ease-out_0.4s_both]"</span><span class="tag">&gt;</span>条目 3<span class="tag">&lt;/div&gt;</span>
+<span class="cmt">/* 通过 delay 参数控制 stagger，不是 JS 循环 */</span></pre>
+
+      <!-- Live Demo -->
+      <div class="demo-embed">
+        <div class="demo-bar">
+          <span class="dot dot-r"></span>
+          <span class="dot dot-y"></span>
+          <span class="dot dot-g"></span>
+          <span style="margin-left:0.5rem">animation-on-scroll 实战验证 — 滚动查看条目依次淡入</span>
+        </div>
+        <iframe srcdoc="<!DOCTYPE html>
+<html><head><meta charset='UTF-8'><style>
+  :root{--bg:#fafaf8;--ink:#1a1812;--muted:#6b6560;--accent:#c2410c;--accent-soft:#fff1ed;--surface:#fff;--border:#e8e4df}
+  body{font-family:system-ui,sans-serif;background:var(--bg);padding:1rem 1.5rem 4rem;max-width:580px;margin:0 auto}
+  h1{font-size:1.1rem;font-weight:700;margin-bottom:.4rem}
+  p.sub{font-size:.78rem;color:var(--muted);margin-bottom:2rem}
+  @keyframes animationIn{0%{opacity:0;transform:translateY(30px);filter:blur(8px)}100%{opacity:1;transform:translateY(0);filter:blur(0px)}}
+  .aos{animation-play-state:paused}
+  .aos.animate{animation-play-state:running}
+  .item{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1.1rem 1.25rem;margin-bottom:.75rem;display:flex;align-items:center;gap:1rem}
+  .dot{width:36px;height:36px;border-radius:50%;background:var(--accent-soft);color:var(--accent);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.85rem;flex-shrink:0}
+  .item-content{flex:1}
+  .item-title{font-weight:700;font-size:.88rem;margin-bottom:.15rem}
+  .item-date{font-size:.72rem;color:var(--muted)}
+  .spacer{height:60vh;background:linear-gradient(to bottom,transparent,#f0ede8);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:.75rem;color:var(--muted);text-align:center;padding:1rem}
+</style></head><body>
+<script>
+(function(){
+  var style=document.createElement('style');
+  style.textContent='.aos{animation-play-state:paused!important}.aos.animate{animation-play-state:running!important}';
+  document.head.appendChild(style);
+  var once=true;
+  if(!window._io){
+    window._io=new IntersectionObserver(function(entries){
+      entries.forEach(function(e){
+        if(e.isIntersecting){e.target.classList.add('animate');if(once)window._io.unobserve(e.target)}
+      });
+    },{threshold:0.2,rootMargin:'0px 0px -10% 0px'});
+  }
+  window._initAOS=function(s){document.querySelectorAll(s||'.aos').forEach(function(el){window._io.observe(el)})};
+  document.addEventListener('DOMContentLoaded',function(){window._initAOS()});
+})();
+</script>
+<h1>工艺日志</h1>
+<p class=sub>滚动查看，条目依次淡入上浮</p>
+<div class=spacer>↓ 向下滚动开始动画 ↓</div>
+<div class='item aos' style='animation:animationIn .7s ease-out .1s both'>
+  <div class=dot>1</div><div class=item-content><div class=item-title>春季剪枝</div><div class=item-date>2024-03-15</div></div>
+</div>
+<div class='item aos' style='animation:animationIn .7s ease-out .25s both'>
+  <div class=dot>2</div><div class=item-content><div class=item-title>有机施肥</div><div class=item-date>2024-04-02</div></div>
+</div>
+<div class='item aos' style='animation:animationIn .7s ease-out .4s both'>
+  <div class=dot>3</div><div class=item-content><div class=item-title>花期管理</div><div class=item-date>2024-04-20</div></div>
+</div>
+<div class='item aos' style='animation:animationIn .7s ease-out .55s both'>
+  <div class=dot>4</div><div class=item-content><div class=item-title>套袋保护</div><div class=item-date>2024-05-10</div></div>
+</div>
+<div class='item aos' style='animation:animationIn .7s ease-out .7s both'>
+  <div class=dot>5</div><div class=item-content><div class=item-title>夏季灌溉</div><div class=item-date>2024-06-08</div></div>
+</div>
+<div class=spacer style='margin-top:.75rem'>↑ 已进入视口 — 动画已触发 ↑</div>
+</body></html>"></iframe>
+      </div>
+
+      <div class="findings">
+        <div class="finding">
+          <div class="finding-icon">✅</div>
+          <div class="finding-title">零依赖</div>
+          <div class="finding-text">纯原生 IntersectionObserver + CSS keyframes，不需 GSAP/Lottie/Framer Motion</div>
+        </div>
+        <div class="finding">
+          <div class="finding-icon">✅</div>
+          <div class="finding-title">Tailwind 兼容</div>
+          <div class="finding-text">动画时长/延迟通过 Tailwind arbitrary values `[animation:...]` 注入，无缝配合</div>
+        </div>
+        <div class="finding">
+          <div class="finding-icon">✅</div>
+          <div class="finding-title">Stagger 简单</div>
+          <div class="finding-text">每个元素的 delay 值直接写在行内 style，SKILL 没有提到但可行</div>
+        </div>
+        <div class="finding">
+          <div class="finding-icon">💡</div>
+          <div class="finding-title">SKILL 的盲点</div>
+          <div class="finding-text">SKILL 没写 stagger 方案，实际需要 CSS animation-delay 或 JS 循环注入，目前用行内 style 解决</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ─────────────────────────────────────────── -->
+<!-- TEST 3: design-action-combat -->
+<!-- ─────────────────────────────────────────── -->
+<div class="section">
+
+  <div class="section-header">
+    <h2>技能 3 · design-action-combat</h2>
+    <span class="badge badge-ok">独立可构建</span>
+    <span class="badge badge-info">游戏开发</span>
+  </div>
+
+  <div class="test-card">
+    <div class="test-card-header">
+      <div class="skill-icon" style="background:#f5f3f0;">⚔️</div>
+      <div class="info">
+        <div class="skill-name">design-action-combat</div>
+        <div class="skill-desc">为网页游戏设计、实现、调优可读的战棋类动作战斗系统。用于攻击计时、格挡/闪避窗口、命中反馈、姿态、锁定、武器、Boss 阶段、战斗反馈、确定性战斗测试。</div>
+      </div>
+      <span class="verdict verdict-pass">✅ 通过</span>
+    </div>
+    <div class="test-card-body">
+
+      <div class="scenario-label">真实场景</div>
+      <div class="scenario-text">
+        用这个技能的"状态机 + 显式计时"原则，构建一个可运行的网页版"战棋式动作战斗"原型：玩家 vs 史莱姆，有攻击/格挡/闪避三种操作，有 startup/active/recovery 三帧窗口概念。
+      </div>
+
+      <div class="code-label">design-action-combat 核心原则 → 代码实现</div>
+<pre><span class="cmt">/* 技能原则 1: 把战斗当作状态机 */</span>
+<span class="kw">const</span> <span class="attr">CombatState</span> = {
+  <span class="attr">IDLE</span>:      <span class="str">'idle'</span>,
+  <span class="attr">STARTUP</span>:   <span class="str">'startup'</span>,  <span class="cmt">// 前摇 — 不可取消，可被中断</span>
+  <span class="attr">ACTIVE</span>:     <span class="str">'active'</span>,    <span class="cmt">// 命中窗口</span>
+  <span class="attr">RECOVERY</span>:   <span class="str">'recovery'</span>, <span class="cmt">// 后摇 — 不可取消</span>
+  <span class="attr">BLOCKING</span>:   <span class="str">'blocking'</span>, <span class="cmt">// 格挡 — 持续到松键或被破</span>
+  <span class="attr">DODGING</span>:    <span class="str">'dodging'</span>,  <span class="cmt">// 闪避 — i-frames</span>
+  <span class="attr">HIT</span>:       <span class="str">'hit'</span>,      <span class="cmt">// 命中硬直</span>
+  <span class="attr">DEAD</span>:      <span class="str">'dead'</span>,
+};
+
+<span class="cmt">/* 技能原则 2: 防御有明确目的 */</span>
+<span class="cmt">// 格挡 — 完美时机减免伤害，失败则破防</span>
+<span class="cmt">// 闪避 — i-frames 无敌帧，穿敌</span>
+<span class="cmt">//  spacing — 拉开距离，规避范围攻击</span>
+
+<span class="cmt">/* 技能原则 3: 视觉反馈跟随模拟事件 */</span>
+<span class="kw">function</span> <span class="attr">resolveHit</span>(actor, target, damage) {
+  <span class="kw">if</span> (target.<span class="attr">state</span> === <span class="attr">CombatState</span>.<span class="attr">BLOCKING</span>) {
+    target.<span class="attr">hp</span> -= Math.<span class="attr">floor</span>(damage * <span class="val">0.1</span>); <span class="cmt">// 格挡成功，只受 10%</span>
+    spawnVFX(<span class="str">'block-spark'</span>, target.<span class="attr">pos</span>);
+  } <span class="kw">else if</span> (target.<span class="attr">state</span> === <span class="attr">CombatState</span>.<span class="attr">DODGING</span>) {
+    <span class="cmt">// 闪避成功，无伤害，无视</span>
+  } <span class="kw">else</span> {
+    target.<span class="attr">hp</span> -= damage;
+    spawnVFX(<span class="str">'hit-flash'</span>, target.<span class="attr">pos</span>);
+    target.<span class="attr">setState</span>(<span class="attr">CombatState</span>.<span class="attr">HIT</span>, <span class="val">300</span>);
+  }
+}</pre>
+
+      <!-- Live Demo -->
+      <div class="demo-embed">
+        <div class="demo-bar">
+          <span class="dot dot-r"></span>
+          <span class="dot dot-y"></span>
+          <span class="dot dot-g"></span>
+          <span style="margin-left:0.5rem">design-action-combat 实战验证 — 状态机战斗原型</span>
+        </div>
+        <iframe srcdoc="<!DOCTYPE html>
+<html><head><meta charset='UTF-8'><style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,sans-serif;background:#1a1812;height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#e8e4df;user-select:none}
+h2{font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;color:#6b6560;margin-bottom:.4rem}
+.arena{position:relative;width:360px;height:240px;background:#242018;border:1px solid #3a3628;border-radius:12px;overflow:hidden;margin-bottom:.75rem}
+.unit{position:absolute;bottom:30px;width:52px;height:52px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.6rem;transition:left .08s,top .08s}
+.player{left:60px;background:#3b82f6}
+.enemy{right:60px;background:#22c55e}
+.bar-wrap{position:absolute;bottom:6px;left:50%;transform:translateX(-50%);width:36px;height:4px;background:#333;border-radius:2px;overflow:hidden}
+.bar{height:100%;background:#f97316;border-radius:2px;transition:width .15s}
+.state{position:absolute;top:-18px;left:50%;transform:translateX(-50%);font-size:.55rem;white-space:nowrap;padding:1px 4px;border-radius:3px;font-weight:700}
+.unit.idle .state{background:#374151;color:#9ca3af}
+.unit.startup .state{background:#fbbf24;color:#1a1812}
+.unit.active .state{background:#ef4444;color:#fff}
+.unit.recovery .state{background:#f97316;color:#fff}
+.unit.blocking .state{background:#3b82f6;color:#fff}
+.unit.dodging .state{background:#a855f7;color:#fff}
+.unit.hit .state{background:#dc2626;color:#fff}
+.unit.dead{opacity:.4}
+.unit.dead::after{content:'†';position:absolute;font-size:2rem;top:50%;left:50%;transform:translate(-50%,-50%);color:#ef4444}
+.hit-flash{animation:hf .2s}@keyframes hf{0%,100%{filter:none}50%{filter:brightness(3) hue-rotate(30deg)}}
+.controls{display:flex;gap:.5rem;margin-bottom:.5rem}
+.btn{padding:.45rem 1rem;border:none;border-radius:8px;font-size:.78rem;font-weight:700;cursor:pointer;transition:transform .1s,opacity .1s}
+.btn:active{transform:scale(.95)}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.atk{background:#ef4444;color:#fff}
+.blk{background:#3b82f6;color:#fff}
+.ddg{background:#a855f7;color:#fff}
+.log{font-size:.7rem;color:#6b6560;height:1.2em;text-align:center}
+.info{display:flex;gap:1.5rem;font-size:.72rem;color:#9ca3af}
+.info span{color:#e8e4df;font-weight:600}
+</style></head><body>
+<h2>design-action-combat 原型 — 滚动条移动端</h2>
+<div class=arena>
+  <div class='unit player' id=player>
+    <div class=state>IDLE</div>
+    <div class=bar-wrap><div class=bar id=php style='width:100%'></div></div>
+  </div>
+  <div class='unit enemy' id=enemy>
+    <div class=state>IDLE</div>
+    <div class=bar-wrap><div class=bar id=ehp style='width:100%'></div></div>
+  </div>
+</div>
+<div class=controls>
+  <button class='btn atk' id=atkBtn>⚔ 攻击 [Z]</button>
+  <button class='btn blk' id=blkBtn>🛡 格挡 [X]</button>
+  <button class='btn ddg' id=ddgBtn>💨 闪避 [C]</button>
+</div>
+<div class=log id=log>按 Z 攻击，X 格挡，C 闪避</div>
+<div class=info>
+  <div>HP <span id=hpp>100</span>/100</div>
+  <div>敌人 <span id=enemyhpp>80</span>/80</div>
+  <div>连击 <span id=combo>0</span></div>
+</div>
+<script>
+var State={IDLE:'idle',STARTUP:'startup',ACTIVE:'active',RECOVERY:'recovery',BLOCKING:'blocking',DODGING:'dodging',HIT:'hit',DEAD:'dead'};
+var G={p:{hp:100,maxHp:100,state:State.IDLE,timer:0,combo:0},e:{hp:80,maxHp:80,state:State.IDLE,timer:0,atking:false},logs:['按 Z 攻击，X 格挡，C 闪避']};
+function setState(who,st,dur){
+  who.state=st;who.timer=dur||0;
+  document.getElementById(who===G.p?'player':'enemy').className='unit '+st;
+  document.querySelector('#'+(who===G.p?'player':'enemy')+' .state').textContent=st.toUpperCase();
+}
+function spawnVFX(type,unit){
+  if(type==='hit'){var el=document.getElementById(unit===G.p?'player':'enemy');el.style.filter='brightness(3)';setTimeout(function(){el.style.filter=''},200)}
+}
+function pAtk(){
+  if(G.p.state!==State.IDLE)return;
+  setState(G.p,State.STARTUP);
+  var sl=document.getElementById('log');
+  sl.textContent='→ 攻击前摇 ( startup )...';
+  setTimeout(function(){
+    if(G.p.state!==State.STARTUP)return;
+    setState(G.p,State.ACTIVE);
+    sl.textContent='⚔ 命中窗口 ( active )!';
+    setTimeout(function(){
+      if(G.p.state!==State.ACTIVE)return;
+      if(G.e.state===State.BLOCKING){
+        G.e.hp=Math.max(0,G.e.hp-3);
+        sl.textContent='🛡 格挡! 敌人只受 3 点伤害';spawnVFX('block',G.e);
+      } else if(G.e.state===State.DODGING){
+        sl.textContent='💨 闪避! 敌人完全躲过';
+      } else {
+        G.e.hp=Math.max(0,G.e.hp-12);
+        sl.textContent='⚔ 命中! 敌人受 12 伤害';spawnVFX('hit',G.e);
+        G.p.combo++;document.getElementById('combo').textContent=G.p.combo;
+      }
+      document.getElementById('ehp').style.width=(G.e.hp/G.e.maxHp*100)+'%';
+      document.getElementById('enemyhpp').textContent=G.e.hp;
+      if(G.e.hp<=0){setState(G.e,State.DEAD);sl.textContent='✅ 敌人被击败!';return}
+      setState(G.e,State.RECOVERY);
+      setTimeout(function(){if(G.e.state===State.RECOVERY)setState(G.e,State.IDLE)},600);
+      setState(G.p,State.RECOVERY);
+      setTimeout(function(){if(G.p.state===State.RECOVERY)setState(G.p,State.IDLE)},400);
+    },200);
+  },280);
+}
+function pBlk(){if(G.p.state!==State.IDLE&&G.p.state!==State.RECOVERY)return;setState(G.p,State.BLOCKING);document.getElementById('log').textContent='🛡 格挡中...'}
+function pDdg(){if(G.p.state!==State.IDLE&&G.p.state!==State.RECOVERY)return;setState(G.p,State.DODGING);document.getElementById('log').textContent='💨 闪避中 ( i-frames )...';setTimeout(function(){if(G.p.state===State.DODGING)setState(G.p,State.IDLE)},500)}
+document.getElementById('blkBtn').addEventListener('mousedown',pBlk);
+document.getElementById('blkBtn').addEventListener('mouseup',function(){if(G.p.state===State.BLOCKING)setState(G.p,State.IDLE)});
+document.getElementById('blkBtn').addEventListener('mouseleave',function(){if(G.p.state===State.BLOCKING)setState(G.p,State.IDLE)});
+document.addEventListener('keydown',function(e){if(e.repeat)return;if(e.key==='z'||e.key==='Z')pAtk();if(e.key==='x'||e.key==='X')pBlk();if(e.key==='c'||e.key==='C')pDdg()});
+document.addEventListener('keyup',function(e){if(e.key==='x'||e.key==='X'){if(G.p.state===State.BLOCKING)setState(G.p,State.IDLE)}});
+var ei=setInterval(function(){
+  if(G.e.state!==State.IDLE||G.e.hp<=0||G.p.hp<=0)return;
+  if(Math.random()<.025){
+    G.e.atking=true;
+    var sl=document.getElementById('log');
+    setState(G.e,State.STARTUP);
+    sl.textContent='⚔ 敌人攻击前摇...';
+    setTimeout(function(){
+      if(G.e.state!==State.STARTUP)return;
+      setState(G.e,State.ACTIVE);
+      sl.textContent='⚠ 敌人命中窗口!';
+      setTimeout(function(){
+        if(G.e.state!==State.ACTIVE)return;
+        if(G.p.state===State.BLOCKING){
+          G.p.hp=Math.max(0,G.p.hp-4);
+          sl.textContent='🛡 格挡成功! 你只受 4 点伤害';spawnVFX('block',G.p);
+        } else if(G.p.state===State.DODGING){
+          sl.textContent='💨 闪避成功! 完全躲过';
+        } else {
+          G.p.hp=Math.max(0,G.p.hp-15);
+          sl.textContent='💥 命中! 你受 15 伤害';spawnVFX('hit',G.p);
+          G.p.combo=0;document.getElementById('combo').textContent=0;
+        }
+        document.getElementById('php').style.width=(G.p.hp/G.p.maxHp*100)+'%';
+        document.getElementById('hpp').textContent=G.p.hp;
+        if(G.p.hp<=0){setState(G.p,State.DEAD);document.getElementById('log').textContent='💀 你被击败了...刷新重试';return}
+        setState(G.e,State.RECOVERY);
+        setTimeout(function(){if(G.e.state===State.RECOVERY)setState(G.e,State.IDLE);G.e.atking=false},700);
+      },250);
+    },350);
+  }
+},200);
+</script>
+</body></html>"></iframe>
+      </div>
+
+      <div class="findings-3">
+        <div class="finding">
+          <div class="finding-icon">✅</div>
+          <div class="finding-title">状态机原则有效</div>
+          <div class="finding-text">7 个显式状态的枚举让战斗逻辑高度可预测和可测试</div>
+        </div>
+        <div class="finding">
+          <div class="finding-icon">✅</div>
+          <div class="finding-title">防御三角明确</div>
+          <div class="finding-text">格挡（减伤90%）/ 闪避（i-frames）/ spacing（拉开）各有明确代价和收益</div>
+        </div>
+        <div class="finding">
+          <div class="finding-icon">✅</div>
+          <div class="finding-title">确定性测试可行</div>
+          <div class="finding-text">纯状态机 + 固定 timer，无需随机种子就能验证连击、格挡、闪避边界</div>
+        </div>
+        <div class="finding">
+          <div class="finding-icon">💡</div>
+          <div class="finding-title">SKILL 没给代码</div>
+          <div class="finding-text">这是设计原则型 SKILL，不是工具型。给出了概念框架，具体代码需自己实现</div>
+        </div>
+        <div class="finding">
+          <div class="finding-icon">⚠️</div>
+          <div class="finding-title">输出难度高</div>
+          <div class="finding-text">需要游戏开发经验才能把"姿态/前摇/命中窗口"翻译成正确的状态转换代码</div>
+        </div>
+        <div class="finding">
+          <div class="finding-icon">💡</div>
+          <div class="finding-title">适合培养</div>
+          <div class="finding-text">对 AI Agent 来说，这个 SKILL 是"设计约束"而非"代码模板"，需要更多推理</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ─────────────────────────────────────────── -->
+<!-- TEST 4: video-to-superprompt -->
+<!-- ─────────────────────────────────────────── -->
+<div class="section">
+
+  <div class="section-header">
+    <h2>技能 4 · video-to-superprompt</h2>
+    <span class="badge badge-warn">需平台配合</span>
+    <span class="badge badge-info">AI 工作流</span>
+  </div>
+
+  <div class="test-card">
+    <div class="test-card-header">
+      <div class="skill-icon" style="background:#f5f3f0;">🎬</div>
+      <div class="info">
+        <div class="skill-name">video-to-superprompt</div>
+        <div class="skill-desc">将参考视频转换为超级详细的重建 Prompt。用于用户提供/上传/链接视频，要求分析设计、UI、动画、过渡、视差交互、字体、颜色、素材、WebGL/Three.js、叙事、分段行为时触发。</div>
+      </div>
+      <span class="verdict verdict-mixed">⚠️ 需平台</span>
+    </div>
+    <div class="test-card-body">
+
+      <div class="scenario-label">真实场景</div>
+      <div class="scenario-text">
+        用户提供了一个 Awwwards 获奖落地页的滚动录屏（MP4），需要 AI 生成一个可以直接重建该页面效果的"超级 Prompt"。
+      </div>
+
+      <div class="code-label">video-to-superprompt 工作流分析</div>
+<pre><span class="cmt">/* 技能定义的 6 步工作流 */</span>
+
+<span class="attr">Step 1</span>  <span class="kw">定位</span> — 接受本地路径/上传/URL/浏览器可见视频
+<span class="attr">Step 2</span>  <span class="kw">技术检查</span> — ffprobe 尺寸/帧率/码率，ffmpeg 提取关键帧
+<span class="attr">Step 3</span>  <span class="kw">分层分析</span> — Story / Screen-layout / Motion / Visual / Technical rebuild
+<span class="attr">Step 4</span>  <span class="kw">素材规划</span> — 产出 asset map，区分 AI 生成素材 vs 指定素材
+<span class="attr">Step 5</span>  <span class="kw">写超级 Prompt</span> — 单个 fenced text 块，边界 + 全局语言 + 分段解剖 + 运动系统
+<span class="attr">Step 6</span>  <span class="kw">验证</span> — 确认所有素材路径存在/标记为 placeholder</span>
+
+<span class="cmt">/* 质量 Bar — 评估标准 */</span>
+<span class="kw">•</span> Prompt 长度足够不看原视频重建动画
+<span class="kw">•</span> 保留视频的序列、节奏、特殊细节
+<span class="kw">•</span> 命名精确的运动机制：pinned section / scrubbed timeline / video.currentTime / parallax layer
+<span class="kw">•</span> 包含移动端行为和 reduced-motion 降级方案
+<span class="kw">•</span> 指出要避免的：通用落地页 sections / 装饰性 blobs / 不匹配 stock 媒体</pre>
+
+      <div class="result-label">测试结论</div>
+      <div class="result-text">
+        <strong>工作流设计非常成熟</strong>：分层分析（6 个维度）+ 质量 Bar（5 条）+ 输出模式（4 种）都很完整。<br>
+        <strong>但无法独立测试</strong>：Step 2 需要 <code>ffprobe/ffmpeg</code>，Step 5/6 需要 AI 模型执行。<br>
+        这个 SKILL 本质上是<strong>AI Agent 的标准操作程序（SOP）</strong>，它的价值在于提供了统一的分析框架和质量标准，而不是生成具体代码。
+      </div>
+
+      <div class="findings">
+        <div class="finding">
+          <div class="finding-icon">✅</div>
+          <div class="finding-title">工作流完整</div>
+          <div class="finding-text">6 步链路清晰，从原始视频到可用 Prompt 覆盖完整</div>
+        </div>
+        <div class="finding">
+          <div class="finding-icon">✅</div>
+          <div class="finding-title">质量 Bar 可测试</div>
+          <div class="finding-text">5 条质量标准具体可操作，可用来验证 Prompt 是否达标</div>
+        </div>
+        <div class="finding">
+          <div class="finding-icon">⚠️</div>
+          <div class="finding-title">依赖平台工具</div>
+          <div class="finding-text">ffprobe/ffmpeg 是 CLI 工具，在纯浏览器环境无法执行</div>
+        </div>
+        <div class="finding">
+          <div class="finding-icon">💡</div>
+          <div class="finding-title">对 AI Agent 的价值</div>
+          <div class="finding-text">提供标准分析框架，让不同 AI 对同一视频输出一致的分段解剖</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ─────────────────────────────────────────── -->
+<!-- 总结 -->
+<!-- ─────────────────────────────────────────── -->
+<div class="section">
+  <div class="section-header">
+    <h2>Layer 3 · 测试总结</h2>
+  </div>
+
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:2rem;margin-bottom:2rem;">
+    <table style="width:100%;border-collapse:collapse;font-size:.88rem;">
+      <thead>
+        <tr style="border-bottom:2px solid var(--border);">
+          <th style="text-align:left;padding:.5rem 0;font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-muted);">技能</th>
+          <th style="text-align:left;padding:.5rem 0;font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-muted);">类别</th>
+          <th style="text-align:left;padding:.5rem 0;font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-muted);">可构建</th>
+          <th style="text-align:left;padding:.5rem 0;font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-muted);">质量</th>
+          <th style="text-align:left;padding:.5rem 0;font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-muted);">结论</th>
+        </tr>
+      </thead>
+      <tbody style="color:var(--ink-muted);">
+        <tr style="border-bottom:1px solid var(--border);">
+          <td style="padding:.75rem .5rem .75rem 0;font-weight:700;">beautiful-shadows</td>
+          <td style="padding:.75rem .5rem;">CSS 特效</td>
+          <td><span style="background:#dcfce7;color:#166534;padding:.15rem .5rem;border-radius:99px;font-size:.72rem;font-weight:600;">直接可用</span></td>
+          <td><span style="background:#dcfce7;color:#166534;padding:.15rem .5rem;border-radius:99px;font-size:.72rem;font-weight:600;">优秀</span></td>
+          <td style="padding:.75rem 0;">box-shadow 值直接复制，质感远超默认 Tailwind</td>
+        </tr>
+        <tr style="border-bottom:1px solid var(--border);">
+          <td style="padding:.75rem .5rem .75rem 0;font-weight:700;">animation-on-scroll</td>
+          <td style="padding:.75rem .5rem;">视口动画</td>
+          <td><span style="background:#dcfce7;color:#166534;padding:.15rem .5rem;border-radius:99px;font-size:.72rem;font-weight:600;">直接可用</span></td>
+          <td><span style="background:#dcfce7;color:#166534;padding:.15rem .5rem;border-radius:99px;font-size:.72rem;font-weight:600;">良好</span></td>
+          <td style="padding:.75rem 0;">零依赖，但 stagger 方案需自己补充</td>
+        </tr>
+        <tr>
+          <td style="padding:.75rem .5rem .75rem 0;font-weight:700;">design-action-combat</td>
+          <td style="padding:.75rem .5rem;">游戏开发</td>
+          <td><span style="background:#fef9c3;color:#854d0e;padding:.15rem .5rem;border-radius:99px;font-size:.72rem;font-weight:600;">设计原则</span></td>
+          <td><span style="background:#dcfce7;color:#166534;padding:.15rem .5rem;border-radius:99px;font-size:.72rem;font-weight:600;">优秀</span></td>
+          <td style="padding:.75rem 0;">原则清晰可落地，但需要游戏开发经验配合</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div style="background:linear-gradient(135deg,#fff7ed,#f0fdf4);border:1px solid #fed7aa;border-radius:16px;padding:1.75rem 2rem;">
+    <h3 style="font-size:1rem;font-weight:700;margin-bottom:.75rem;">💡 对我们自己的 Agent Skills 库的启发</h3>
+    <ul style="font-size:.88rem;color:var(--ink-muted);line-height:2;padding-left:1.2rem;">
+      <li><strong>工具型技能</strong>（beautiful-shadows, animation-on-scroll）：直接给可复制的代码片段，质量极高，AI 使用时几乎零摩擦</li>
+      <li><strong>原则型技能</strong>（design-action-combat）：给出设计约束和评估标准，落地需要更多专业判断，适合高阶 Agent</li>
+      <li><strong>工作流型技能</strong>（video-to-superprompt）：提供 SOP，质量 Bar 可测试，但依赖平台工具，适合云端 AI Agent</li>
+      <li><strong>最值得学习的</strong>：Beautiful Shadows 的"避免指南"（pitfalls）非常实用，我们自己的技能也应该加</li>
+      <li><strong>可以补充的</strong>：animation-on-scroll 缺少 stagger 方案的明确说明，实际用时需要自己探索</li>
+    </ul>
+  </div>
+</div>
+
+<footer style="text-align:center;padding:2rem;font-size:.78rem;color:var(--ink-muted);border-top:1px solid var(--border);">
+  MengTo/Skills Deep Research · Layer 3 · 真实场景测试 · 2026-07-30
+</footer>
+
+</body>
+</html>

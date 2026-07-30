@@ -1,0 +1,2037 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>能力地图 · MengTo/Skills</title>
+  <style>
+    :root {
+      --bg: #0a0a0f;
+      --surface: #13131a;
+      --surface2: #1c1c26;
+      --border: #2a2a38;
+      --text: #e8e8f0;
+      --text-dim: #8888a0;
+      --accent: #7c6fff;
+      --accent-glow: rgba(124, 111, 255, 0.2);
+      --green: #34d399;
+      --orange: #f0a07a;
+      --pink: #f472b6;
+      --blue: #60a5fa;
+      --yellow: #fbbf24;
+      --purple: #c084fc;
+      --red: #f87171;
+      --font: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      --font-mono: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+      --radius: 12px;
+      --transition: 0.18s ease;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    /* NAV */
+    nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(10, 10, 15, 0.9);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+      padding: 0 2rem;
+    }
+    nav .inner {
+      max-width: 1100px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      height: 58px;
+      gap: 2rem;
+    }
+    nav .logo {
+      font-weight: 700;
+      font-size: 0.95rem;
+      color: var(--accent);
+      text-decoration: none;
+    }
+    nav .back-link {
+      margin-left: auto;
+      color: var(--text-dim);
+      text-decoration: none;
+      font-size: 0.8rem;
+      transition: color var(--transition);
+    }
+    nav .back-link:hover { color: var(--text); }
+
+    /* HEADER */
+    .header {
+      padding: 3rem 2rem 2rem;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+    .header h1 {
+      font-size: clamp(2rem, 5vw, 3rem);
+      font-weight: 800;
+      letter-spacing: -0.04em;
+      margin-bottom: 0.5rem;
+    }
+    .header p {
+      color: var(--text-dim);
+      font-size: 1rem;
+      max-width: 600px;
+    }
+    .header .intro {
+      margin-top: 1.5rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.25rem 1.5rem;
+      font-size: 0.9rem;
+      color: var(--text-dim);
+      line-height: 1.7;
+    }
+    .header .intro strong { color: var(--text); }
+
+    /* SEARCH */
+    .search-bar {
+      padding: 0 2rem 1.5rem;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+    .search-bar input {
+      width: 100%;
+      max-width: 500px;
+      padding: 0.75rem 1rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--text);
+      font-size: 0.95rem;
+      font-family: var(--font);
+      outline: none;
+      transition: border-color var(--transition);
+    }
+    .search-bar input:focus { border-color: var(--accent); }
+    .search-bar input::placeholder { color: var(--text-dim); }
+
+    /* MAIN */
+    main {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 2rem 4rem;
+    }
+
+    /* SCENARIO BLOCK */
+    .scenario {
+      margin-bottom: 2.5rem;
+    }
+    .scenario-header {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.75rem 1rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius) var(--radius) 0 0;
+      cursor: pointer;
+      user-select: none;
+      transition: background var(--transition);
+    }
+    .scenario-header:hover { background: var(--surface2); }
+    .scenario-header .icon {
+      font-size: 1.2rem;
+      width: 2rem;
+      text-align: center;
+    }
+    .scenario-header h2 {
+      font-size: 1rem;
+      font-weight: 700;
+      flex: 1;
+    }
+    .scenario-header .count {
+      font-size: 0.75rem;
+      color: var(--text-dim);
+      background: var(--surface2);
+      padding: 0.15rem 0.6rem;
+      border-radius: 100px;
+      border: 1px solid var(--border);
+    }
+    .scenario-header .arrow {
+      color: var(--text-dim);
+      font-size: 0.8rem;
+      transition: transform var(--transition);
+    }
+    .scenario.open .arrow { transform: rotate(90deg); }
+    .scenario.open .scenario-header { border-radius: var(--radius) var(--radius) 0 0; border-bottom-color: transparent; }
+
+    .scenario-body {
+      border: 1px solid var(--border);
+      border-top: none;
+      border-radius: 0 0 var(--radius) var(--radius);
+      overflow: hidden;
+      display: none;
+    }
+    .scenario.open .scenario-body { display: block; }
+
+    /* SITUATION */
+    .situation {
+      border-bottom: 1px solid var(--border);
+    }
+    .situation:last-child { border-bottom: none; }
+    .situation-header {
+      padding: 0.75rem 1.25rem;
+      background: rgba(255,255,255,0.02);
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-dim);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .situation-header::before {
+      content: '→';
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    .skill-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 1rem;
+      padding: 0.85rem 1.25rem;
+      border-bottom: 1px solid rgba(42,42,56,0.5);
+      transition: background var(--transition);
+    }
+    .skill-row:last-child { border-bottom: none; }
+    .skill-row:hover { background: rgba(124,111,255,0.04); }
+    .skill-row.hidden { display: none; }
+
+    .skill-name {
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--accent);
+      white-space: nowrap;
+      min-width: 200px;
+      flex-shrink: 0;
+      padding-top: 0.1rem;
+    }
+    .skill-name a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+    .skill-name a:hover { text-decoration: underline; }
+    .skill-name .badge-demo {
+      font-family: var(--font);
+      font-size: 0.65rem;
+      background: rgba(52,211,153,0.15);
+      color: var(--green);
+      padding: 0.1rem 0.4rem;
+      border-radius: 4px;
+      margin-left: 0.4rem;
+      font-weight: 600;
+    }
+    .skill-name .badge-skill {
+      font-family: var(--font);
+      font-size: 0.65rem;
+      background: rgba(136,136,160,0.12);
+      color: var(--text-dim);
+      padding: 0.1rem 0.4rem;
+      border-radius: 4px;
+      margin-left: 0.4rem;
+      font-weight: 600;
+    }
+
+    .skill-meta {
+      flex: 1;
+    }
+    .skill-meta .desc {
+      font-size: 0.85rem;
+      color: var(--text-dim);
+      line-height: 1.5;
+    }
+    .skill-meta .pick-when {
+      font-size: 0.78rem;
+      color: var(--text-dim);
+      margin-top: 0.3rem;
+      padding: 0.4rem 0.6rem;
+      background: rgba(124,111,255,0.06);
+      border-left: 2px solid var(--accent);
+      border-radius: 0 4px 4px 0;
+      line-height: 1.5;
+    }
+    .skill-meta .pick-when strong { color: var(--text); }
+
+    .skill-tags {
+      display: flex;
+      gap: 0.3rem;
+      flex-wrap: wrap;
+      margin-top: 0.4rem;
+    }
+    .skill-tag {
+      font-size: 0.65rem;
+      padding: 0.1rem 0.5rem;
+      border-radius: 4px;
+      font-weight: 600;
+    }
+    .tag-motion { background: rgba(244,114,182,0.12); color: var(--pink); }
+    .tag-3d { background: rgba(52,211,153,0.12); color: var(--green); }
+    .tag-css { background: rgba(240,192,122,0.12); color: var(--orange); }
+    .tag-visual { background: rgba(192,132,252,0.12); color: var(--purple); }
+    .tag-layout { background: rgba(96,165,250,0.12); color: var(--blue); }
+    .tag-landing { background: rgba(96,165,250,0.12); color: var(--blue); }
+    .tag-workflow { background: rgba(130,217,200,0.12); color: #82d9c8; }
+    .tag-game { background: rgba(244,114,182,0.12); color: var(--pink); }
+    .tag-tool { background: rgba(251,191,36,0.12); color: var(--yellow); }
+    .tag-audio { background: rgba(248,113,113,0.12); color: var(--red); }
+
+    /* NO RESULTS */
+    .no-results {
+      padding: 3rem;
+      text-align: center;
+      color: var(--text-dim);
+      display: none;
+    }
+    .no-results.show { display: block; }
+
+    /* FOOTER */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 2rem;
+      text-align: center;
+      color: var(--text-dim);
+      font-size: 0.8rem;
+    }
+    footer a { color: var(--accent); text-decoration: none; }
+
+    @media (max-width: 768px) {
+      .skill-row { flex-direction: column; gap: 0.4rem; }
+      .skill-name { min-width: unset; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="inner">
+    <a href="index.html" class="logo">MengTo/Skills</a>
+    <div class="nav-links" style="display:flex;gap:1.25rem;margin-left:1.5rem;">
+      <a href="demo-gallery.html" style="color:var(--text-dim);font-size:0.875rem;">Demo 展示</a>
+      <a href="capability-map.html" style="color:var(--accent);font-weight:600;font-size:0.875rem;">能力地图</a>
+      <a href="scene-testing.html" style="color:var(--text-dim);font-size:0.875rem;">场景测试</a>
+      <a href="workflow-demo.html" style="color:var(--text-dim);font-size:0.875rem;">工作流实战</a>
+    </div>
+    <a href="../" class="back-link">← 返回主页</a>
+  </div>
+</nav>
+
+<header class="header">
+  <h1>能力地图</h1>
+  <p>「我需要 X」→「用哪个技能 Y」——按真实场景组织的能力索引</p>
+  <div class="intro">
+    <strong>怎么用这张地图：</strong>按场景找到你的需求 → 看具体的"情况"描述 → 找到最匹配的技能 → 点击技能名打开 SKILL.md 或 Demo。<br>
+    共覆盖 <strong>118 个技能</strong>，按 <strong>12 个真实场景</strong> 组织。每个技能标注了 Demo 状态（🟢 有 Demo / ⚪ 仅 SKILL.md）。
+  </div>
+</header>
+
+<div class="search-bar">
+  <input type="text" id="search" placeholder="搜索技能名或描述… 例：滚动动画、3D地球、落地页、战争迷雾">
+</div>
+
+<main id="main">
+
+  <!-- ===================== SCENARIO 1: ANIMATION ===================== -->
+  <div class="scenario open" data-scen="animation">
+    <div class="scenario-header" onclick="toggle(this.parentElement)">
+      <span class="icon">🎬</span>
+      <h2>动画与交互</h2>
+      <span class="count">13 技能</span>
+      <span class="arrow">▶</span>
+    </div>
+    <div class="scenario-body">
+
+      <div class="situation">
+        <div class="situation-header">元素进入视口时淡入 / 上浮</div>
+        <div class="skill-row" data-search="animation-on-scroll intersectionobserver scroll reveal">
+          <div class="skill-name">
+            <a href="agent-skills/web-design/animation-on-scroll/SKILL.md">animation-on-scroll</a>
+            <span class="badge-demo">🟢 Demo</span>
+          </div>
+          <div class="skill-meta">
+            <p class="desc">IntersectionObserver 滚动动画。元素进入视口时淡入/位移动画。</p>
+            <p class="pick-when"><strong>选这个：</strong>只需要简单的"滚动到元素时触发"淡入/位移动画，不需要精确时间控制。</p>
+            <div class="skill-tags">
+              <span class="skill-tag tag-motion">动画</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="situation">
+        <div class="situation-header">需要精确时间线、stagger、ScrollTrigger、复杂缓动</div>
+        <div class="skill-row" data-search="gsap timeline scrolltrigger stagger">
+          <div class="skill-name">
+            <a href="agent-skills/web-design/gsap/SKILL.md">gsap</a>
+            <span class="badge-demo">🟢 Demo</span>
+          </div>
+          <div class="skill-meta">
+            <p class="desc">GSAP 时间线、ScrollTrigger、stagger、transform 动画，含常见坑点（FOUC、布局属性动画）。</p>
+            <p class="pick-when"><strong>选这个：</strong>需要精确的时间轴编排、多元素交错动画、滚动锚点、固定section、视差层。</p>
+            <div class="skill-tags">
+              <span class="skill-tag tag-motion">动画</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="situation">
+        <div class="situation-header">滚动驱动叙事、分镜切换、电影感滚动</div>
+        <div class="skill-row" data-search="cinematic scroll storytelling gsap lenis">
+          <div class="skill-name">
+            <a href="agent-skills/web-design/cinematic-scroll-storytelling/SKILL.md">cinematic-scroll-storytelling</a>
+            <span class="badge-demo">🟢 Demo</span>
+          </div>
+          <div class="skill-meta">
+            <p class="desc">滚动驱动叙事动画，带锚点分镜节奏控制，电影感体验。</p>
+            <p class="pick-when"><strong>选这个：</strong>需要用户在滚动过程中经历一个有节奏感的故事体验，多个分镜切换。</p>
+          </div>
+        </div>
+        <div class="skill-row" data-search="gsap scrolltrigger storytelling scroll">
+          <div class="skill-name">
+            <a href="agent-skills/web-design/gsap-scrolltrigger-storytelling/SKILL.md">gsap-scrolltrigger-storytelling</a>
+            <span class="badge-demo">🟢 Demo</span>
+          </div>
+          <div class="skill-meta">
+            <p class="desc">GSAP ScrollTrigger 滚动叙事，锚点驱动章节体验。</p>
+            <p class="pick-when"><strong>选这个：</strong>用 GSAP 的 ScrollTrigger 插件做叙事性滚动，需要 scrub 精确控制。</p>
+          </div>
+        </div>
+        <div class="skill-row" data-search="scroll world storytelling">
+          <div class="skill-name">
+            <a href="agent-skills/web-design/scroll-world-storytelling/SKILL.md">scroll-world-storytelling</a>
+            <span class="badge-demo">🟢 Demo</span>
+          </div>
+          <div class="skill-meta">
+            <p class="desc">滚动世界叙事，带场景切换的沉浸式滚动体验。</p>
+            <p class="pick-when"><strong>选这个：</strong>需要类似"世界探索"的沉浸感，每个滚动区间是一个场景。</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="situation">
+        <div class="situation-header">文字逐个淡入、单词 / 字符错落显示</div>
+        <div class="skill-row" data-search="staggered word reveal text animation">
+          <div class="skill-name">
+            <a href="agent-skills/web-design/staggered-word-reveal/SKILL.md">staggered-word-reveal</a>
+            <span class="badge-demo">🟢 Demo</span>
+          </div>
+          <div class="skill-meta">
+            <p class="desc">文字错落显示动画，单词或字符逐个淡入，交错出现。</p>
+            <p class="pick-when"><strong>选这个：</strong>需要标题文字以"打字机+淡入"方式逐个显示。</p>
+          </div>
+        </div>
+        <div class="skill-row" data-search="scroll scrubbed word reveal text scroll">
+          <div class="skill-name">
+            <a href="agent-skills/web-design/scroll-scrubbed-word-reveal/SKILL.md">scroll-scrubbed-word-reveal</a>
+            <span class="badge-demo">🟢 Demo</span>
+          </div>
+          <div class="skill-meta">
+            <p class="desc">滚动擦除文字显示，滚动精确控制文字出现。</p>
+            <p class="pick-when"><strong>选这个：</strong>需要滚动条直接控制文字出现顺序和节奏（scrub 模式）。</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="situation">
+        <div class="situation-header">无缝循环字幕 / Logo 滚动</div>
+        <div class="skill-row" data-search="marquee loop infinite scroll">
+          <div class="skill-name">
+            <a href="agent-skills/web-design/marquee-loop/SKILL.md">marquee-loop</a>
+            <span class="badge-demo">🟢 Demo</span>
+          </div>
+          <div class="skill-meta">
+            <p class="desc">无缝循环字幕动画，CSS-only + JS 增强，无拼接感。</p>
+            <p class="pick-when"><strong>选这个：</strong>需要一个无限滚动的字幕条、Logo墙或合作伙伴展示。</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="situation">
+        <div class="situation-header">遮罩显示、渐变边缘、渐入效果</div>
+        <div class="skill-row" data-search="masked reveal mask-image gradient">
+          <div class="skill-name">
+            <a href="agent-skills/web-design/masked-reveal/SKILL.md">masked-reveal</a>
+            <span class="badge-demo">🟢 Demo</span>
+          </div>
+          <div class="skill-meta">
+            <p class="desc">CSS mask-image 遮罩动画，进入时内容从遮罩后显现。</p>
+            <p class="pick-when"><strong>选这个：</strong>需要图片或元素从模糊/渐变遮罩后逐步显现的效果。</p>
+          </div>
+        </div>
+        <div class="skill-row" data-search="alpha masking gradient fade">
+          <div class="skill-name">
+            <a href="agent-skills/web-design/css-alpha-masking/SKILL.md">css-alpha-masking</a>
+            <span class="badge-demo">🟢 Demo</span>
+          </div>
+          <div class="skill-meta">
+            <p class="desc">Alpha 遮罩，水平/垂直边缘淡化，使用 mask-image 渐变。</p>
+            <p class="pick-when"><strong>选这个：</strong>需要元素边缘有渐变淡化效果（如图片边缘消失到背景）。</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="situation">
+        <div class="situation-header">视差层、平滑滚动</div>
+        <div class="skill-row" data-search="cinematic gsap lenis smooth scroll parallax">
+          <div class="skill-name">
+            <a href="agent-skills/web-design/cinematic-gsap-lenis-motion-system/SKILL.md">cinematic-gsap-lenis-motion-system</a>
+            <span class="badge-demo">🟢 Demo</span>
+          </div>
+          <div class="skill-meta">
+            <p class="desc">GSAP + Lenis 平滑滚动 + 电影感视差效果。</p>
+            <p class="pick-when"><strong>选这个：</strong>需要平滑的全局滚动体验 + 多层视差 + GSAP 时间线控制。</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="situation">
+        <div class="situation-header">滚动进度条 / 锚点时间线</div>
+        <div class="skill-row" data-search="scroll progress timeline">
+          <div class="skill-name">
+            <a href="agent-skills/web-design/scroll-progress-timeline/SKILL.md">scroll-progress-timeline</a>
+            <span class="badge-demo">🟢 Demo</span>
+          </div>
+          <div class="skill-meta">
+            <p class="desc">滚动进度条 / 时间线，跟随滚动实时更新。</p>
+            <p class="pick-when"><strong>选这个：</strong>需要显示用户阅读进度的进度条，或页面内锚点导航的时间线。</p>
+          </div>
+        </div>
+        <div class="skill-row" data-search="scroll scrubbed visual sequence">
+          <div class="skill-name">
+            <a href="agent-skills/web-design/scroll-scrubbed-visual-sequence/SKILL.md">scroll-scrubbed-visual-sequence</a>
+            <span class="badge-demo">🟢 Demo</span>
+          </div>
+          <div class="skill-meta">
+            <p class="desc">滚动擦除视觉序列，滚动控制动画播放进度。</p>
+            <p class="pick-when"><strong>选这个：</strong>需要用户在滚动中"播放"一段视觉序列动画。</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="situation">
+        <div class="situation-header">Hover 触发动画、悬停效果</div>
+        <div class="skill-row" data-search="reveal hover effect mouse">
+          <div class="skill-name">
+            <a href="agent-skills/web-design/reveal-hover-effect/SKILL.md">reveal-hover-effect</a>
+            <span class="badge-demo">🟢 Demo</span>
+          </div>
+          <div class="skill-meta">
+            <p class="desc">Hover 触发动画，鼠标悬停时触发显示效果。</p>
+            <p class="pick-when"><strong>选这个：</strong>需要鼠标悬停卡片/按钮时触发的翻转/缩放/显示效果。</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="situation">
+        <div class="situation-header">系统性动画架构、进场 / 退场 / 状态</div>
+        <div class="skill-row" data-search="animation systems enter exit state">
+          <div class="skill-name">
+            <a href="agent-skills/web-design/animation-systems/SKILL.md">animation-systems</a>
+            <span class="badge-demo">🟢 Demo</span>
+          </div>
+          <div class="skill-meta">
+            <p class="desc">系统性动画架构：进场（entrance）、强调（emphasis）、退场（exit）、状态变化（state）。</p>
+            <p class="pick-when"><strong>选这个：</strong>需要为整个产品建立统一的动画语言和入场/退场规范。</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ===================== SCENARIO 2: 3D / WEBGL ===================== -->
+  <div class="scenario" data-scen="3d">
+    <div class="scenario-header" onclick="toggle(this.parentElement)">
+      <span class="icon">🌍</span>
+      <h2>3D / WebGL / 物理</h2>
+      <span class="count">12 技能</span>
+      <span class="arrow">▶</span>
+    </div>
+    <div class="scenario-body">
+
+      <div class="situation">
+        <div class="situation-header">交互式 3D 场景、产品展示、模型加载</div>
+        <div class="skill-row" data-search="threejs scene camera renderer gltf 3d">
+          <div class="skill-name">
+            <a href="agent-skills/web-design/threejs/SKILL.md">threejs</a>
+            <span class="badge-demo">🟢 Demo</span>
+          </div>
+          <div class="skill-meta">
+            <p class="desc">Three.js 场景/相机/渲染/GLTF 加载/OrbitControls/性能清理，含最小旋转立方体示例。</p>
+            <p class="pick-when"><strong>选这个：</strong>需要真实 3D 场景（产品展示、交互式 hero、shader 效果）而非装饰性背景。</p>
+            <div class="skill-tags">
+              <span class="skill-tag tag-3d">3D</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="situation">
+        <div class="situation-header">3D 地球数据可视化、航线、标记</div>
+        <div class="skill-row" data-search="globe globe-gl 3d visualization data">
+          <div class="skill-name">
+            <a href="agent-skills/web-design/globe-gl/SKILL.md">globe-gl</a>
+            <span class="badge-demo">🟢 Demo</span>
+          </div>
+          <div class="skill-meta">
+            <p class="desc">Globe.gl 3D 地球数据可视化，自定义标记 / 弧线 / 文本标注 / 时区层。</p>
+            <p class="pick-when"><strong>选这个：</strong>需要展示全球数据分布、航线网络、地理位置的 3D 地球。</p>
+          </div>
+        </div>
+        <div class="skill-row" data-search="globe particles flight trajectory">
+          <div class="skill-name">
+            <a href="agent-skills/web-design/globe-particles/SKILL.md">globe-particles</a>
+            <span class="badge-demo">🟢 Demo</span>
+          </div>
+          <div class="skill-meta">
+            <p class="desc">地球粒子效果，飞行的轨迹可视化，粒子系统。</p>
+            <p class="pick-when"><strong>选这个：</strong>需要在地球表面展示飞行轨迹、连接线或粒子流动。</p>
+          </div>
+        </div>
+        <div class="skill-row" data-search="cobejs lightweight globe">
+          <div class="skill-name">
+            <a href="agent-skills/web-design/cobejs/SKILL.md">cobejs</a>
+            <span class="badge-demo">🟢 Demo</span>
+          </div>
+          <div class="skill-meta">
+            <p class="desc">轻量交互地球，效果类似 Globe.gl 但更轻量。</p>
+            <p class="pick-when"><strong>选这个：</strong>需要 Globe.gl 的效果但希望依赖更轻量。</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="situation">
+        <div class="situation-header">WebGL 动画背景（森林 / 海洋 / 波浪 / 星辰）</div>
+        <div class="skill-row" data-search="vantajs webgl background">
+          <div class="skill-name">
+            <a href="agent-skills/web-design/vantajs/SKILL.md">vantajs</a>
+            <span class="badge-demo">🟢 Demo</span>
+          </div>
+          <div class="skill-meta">
+            <p class="desc">Vanta.js WebGL 动画背景：仙人掌 / 森林 / 海洋 / 波浪 / 星辰，附 cancelAnimationFrame / dispose 清理。</p>
+            <p class="pick-when"><strong>选这个：</strong>需要一个全屏的沉浸式 WebGL 动画背景，不需要复杂交互。</p>
+          </div>
+        </div>
+        <div class="skill-row" data-search="background grid webgl tech">
+          <div class="skill-name">
+            <a href="agent-skills/web-design/background-grid-webgl/SKILL.md">background-grid-webgl</a>
+            <span class="badge-demo">🟢 Demo</span>
+          </div>
+          <div class="skill-meta">
+            <p class="desc">WebGL 背景网格动画，科技感网格背景。</p>
+            <p class="pick-when"><strong>选这个：</strong>需要一个科技感的 WebGL 网格动画作为背景。</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="situation">
+        <div class="situation-header">WebGPU Shader 光标轨迹 / 涟漪效果</div>
+        <div class="skill-row" data-search="shader cursor trail halftone webgpu">
+          <div class="skill-name">
+            <a href="agent-skills/web-design/add-shader-cursor-trail/SKILL.md">add-shader-cursor-trail</a>
+            <span class="badge-skill">⚪ SKILL</span>
+          </div>
+          <div class="skill-meta">
+            <p class="desc">WebGPU 白色闪烁半色调光标轨迹，ChromaFlow 驱动，DotGrid 遮罩，带色差涟漪。</p>
+            <p class="pick-when"><strong>选这个：</strong>需要高端的 WebGPU Shader 鼠标跟随特效，用于 hero 区域。</p>
+          </div>
+        </div>
+        <div class="skill-row" data-search="shader cursor ripples water distortion webgpu">
+          <div class="skill-name">
+            <a href="agent-skills/web-design/shaders-cursor-ripples/SKILL.md">shaders-cursor-ripples</a>
+            <span class="badge-skill">⚪ SKILL</span>
+          </div>
+          <div class="skill-meta">
+            <p class="desc">WebGPU 光标涟漪，流体扭曲覆盖现有图片，Shaders 库 ImageTexture + CursorRipples。</p>
+            <p class="pick-behavior"><strong>选这个：</strong>需要鼠标经过时图片产生水波纹扭曲效果。</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="situation">
+        <div class="situation-header">2D 物理引擎（碰撞 / 布料 / 粒子）</div>
+        <div class="skill-row" data-search="matterjs physics engine 2d collision">
+          <div class="skill-name">
+            <a href="agent-skills/web-design/matterjs/SKILL.md">matterjs</a>
+            <span class="badge-demo">🟢 Demo</span>
+          </div>
+          <div class="skill-meta">
+            <p class="desc">Matter.js 2D 物理引擎：碰撞检测、布料模拟、粒子效果、刚体约束。</p>
+            <p class="pick-when"><strong>选这个：</strong>需要真实的 2D 物理模拟（游戏、交互展示、数据可视化）。</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="situation">
+        <div class="situation-header">液态金属边框 / 金属质感</div>
+        <div class="skill-row" data-search="liquid metal border react metal-fx">
+          <div class="skill-name">
+            <a href="agent-skills/web-design/liquid-metal-border/SKILL.md">liquid-metal-border</a>
+            <span class="badge-skill">⚪ SKILL</span>
+          </div>
+          <div class="skill-meta">
+            <p class="desc">React metal-fx 包，金属流动边框动画，适用于按钮/卡片/标签的 active/hover 状态。</p>
+            <p class="pick-when"><strong>选这个：</strong>需要高级的液态金属质感边框动画，用于 premium 产品界面。</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="situation">
+        <div class="situation-header">WebGL 激光效果 / 3D 对象展示</div>
+        <div class="skill-row" data-search="webgl laser light beam">
+          <div class="skill-name">
+            <a href="agent-skills/web-design/webgl-laser/SKILL.md">webgl-laser</a>
+            <span class="badge-demo">🟢 Demo</span>
+          </div>
+          <div class="skill-meta">
+            <p class="desc">WebGL 激光效果，动态光线渲染。</p>
+            <p class="pick-when"><strong>选这个：</strong>需要激光、光线扫描、能量光束等特效。</p>
+          </div>
+        </div>
+        <div class="skill-row" data-search="webgl 3d object model display">
+          <div class="skill-name">
+            <a href="agent-skills/web-design/webgl-3d-object/SKILL.md">webgl-3d-object</a>
+            <span class="badge-demo">🟢 Demo</span>
+          </div>
+          <div class="skill-meta">
+            <p class="desc">WebGL 3D 对象展示，模型加载与材质处理。</p>
+            <p class="pick-when"><strong>选这个：</strong>需要在网页中嵌入可交互的 3D 对象展示（旋转/缩放）。</p>
+          </div>
+        </div>
+        <div class="skill-row" data-search="webgl landing steering mouse interaction">
+          <div class="skill-name">
+            <a href="agent-skills/web-design/webgl-landing-steering/SKILL.md">webgl-landing-steering</a>
+            <span class="badge-demo">🟢 Demo</span>
+          </div>
+          <div class="skill-meta">
+            <p class="desc">WebGL 落地页引导动画，鼠标交互控制。</p>
+            <p class="pick-when"><strong>选这个：</strong>需要鼠标交互引导的 WebGL 落地页体验。</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="situation">
+        <div class="situation-header">Unicorn Studio 嵌入式交互设计</div>
+        <div class="skill-row" data-search="unicorn studio embed interactive">
+          <div class="skill-name">
+            <a href="agent-skills/web-design/unicorn-studio/SKILL.md">unicorn-studio</a>
+            <span class="badge-demo">🟢 Demo</span>
+          </div>
+          <div class="skill-meta">
+            <p class="desc">Unicorn Studio 嵌入式交互设计工具，嵌入模式和性能调优。</p>
+            <p class="pick-when"><strong>选这个：</strong>需要在页面中嵌入 Unicorn Studio 设计的交互内容。</p>
+          </div>
+        </div>
+        <div class="skill-row" data-search="bright green tech webgl system">
+          <div class="skill-name">
+            <a href="agent-skills/web-design/bright-green-tech-system-webgl/SKILL.md">bright-green-tech-system-webgl</a>
+            <span class="badge-demo">🟢 Demo</span>
+          </div>
+          <div class="skill-meta">
+            <p class="desc">亮绿科技风 WebGL 效果。</p>
+            <p class="pick-when"><strong>选这个：</strong>需要赛博/科技风格的绿色 WebGL 特效。</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ===================== SCENARIO 3: CSS EFFECTS ===================== -->
+  <div class="scenario" data-scen="css">
+    <div class="scenario-header" onclick="toggle(this.parentElement)">
+      <span class="icon">✨</span>
+      <h2>CSS 特效 / 细节装饰</h2>
+      <span class="count">10 技能</span>
+      <span class="arrow">▶</span>
+    </div>
+    <div class="scenario-body">
+
+      <div class="situation">
+        <div class="situation-header">精致阴影 / 多层阴影 / 彩色阴影</div>
+        <div class="skill-row" data-search="beautiful shadows box-shadow layered">
+          <div class="skill-name">
+            <a href="agent-skills/web-design/beautiful-shadows/SKILL.md">beautiful-shadows</a>
+            <span class="badge-demo">🟢 Demo</span>
+          </div>
+          <div class="skill-meta">
+            <p class="desc">精致 CSS 阴影：多层 box-shadow、彩色阴影、内阴影、等高线阴影、扩散光。</p>
+            <p class="pick-when"><strong>选这个：</strong>需要比系统默认阴影更好看的精致阴影效果。</p>
+            <div class="skill-tags">
+              <span class="skill-tag tag-css">CSS</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="situation">
+        <div class="situation-header">渐进模糊 / 毛玻璃模糊</div>
+        <div class="skill-row" data-search="progressive blur backdrop-filter">
+          <div class="skill-name">
+            <a href="agent-skills/web-design/progressive-blur/SKILL.md">progressive-blur</a>
+            <span class="badge-demo">🟢 Demo</span>
+          </div>
+          <div class="skill-meta">
+            <p class="desc">渐进模糊，backdrop-filter 多层模糊渐变（从顶部/底部）。</p>
+            <p class="pick-when"><strong>选这个：</strong>需要从清晰到模糊渐变的背景效果（如导航栏滚动渐变模糊）。</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="situation">
+        <div class="situation-header">渐变边框</div>
+        <div class="skill-row" data-search="css border gradient">
+          <div class="skill-name">
+            <a href="agent-skills/web-design/css-border-gradient/SKILL.md">css-border-gradient</a>
+            <span class="badge-demo">🟢 Demo</span>
+          </div>
+          <div class="skill-meta">
+            <p class="desc">渐变边框，使用 mask pseudo-element 实现，突破 background-clip 限制。</p>
+            <p class="pick-when"><strong>选这个：</strong>需要给卡片/按钮加渐变色边框。</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="situation">
+        <div class="situation-header">果冻 Blob / SVG 滤镜动画</div>
+        <div class="skill-row" data-search="gooey blob svg filter">
+          <div class="skill-name">
+            <a href="agent-skills/web-design/gooey-blob-system/SKILL.md">gooey-blob-system</a>
+            <span class="badge-demo">🟢 Demo</span>
+          </div>
+          <div class="skill-meta">
+            <p class="desc">果冻 Blob 动画，SVG filter 实现果冻质感效果。</p>
+            <p class="pick-when"><strong>选这个：</strong>需要流动的果冻形状动画效果。</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="situation">
+        <div class="situation-header">角落装饰（对角线 / 激光）</div>
+        <div class="skill-row" data-search="corner diagonals slash background">
+          <div class="skill-name">
+            <a href="agent-skills/web-design/corner-diagonals/SKILL.md">corner-diagonals</a>
+            <span class="badge-demo">🟢 Demo</span>
+          </div>
+          <div class="skill-meta">
+            <p class="desc">角落对角线装饰，斜切角背景效果。</p>
+            <p class="pick-when"><strong>选这个：</strong>需要卡片/区域的斜切角或对角线分割背景。</p>
+          </div>
+        </div>
+        <div class="skill-row" data-search="corner lasers light beam corner">
+          <div class="skill-name">
+            <a href="agent-skills/web-design/corner-lasers/SKILL.md">corner-lasers</a>
+            <span class="badge-demo">🟢 Demo</span>
+          </div>
+          <div class="skill-meta">
+            <p class="desc">角落激光效果，从角落发射的光线装饰。</p>
+            <p class="pick-when"><strong>选这个：</strong>需要科技感的角落光线装饰效果。</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="situation">
+        <div class="situation-header">容器线条 / 网格背景</div>
+        <div class="skill-row" data-search="container lines grid background">
+          <div class="skill-name">
+            <a href="agent-skills/web-design/container-lines/SKILL.md">container-lines</a>
+            <span class="badge-demo">🟢 Demo</span>
+          </div>
+          <div class="skill-meta">
+            <p class="desc">容器线条装饰，背景网格/分割线系统。</p>
+            <p class="pick-when"><strong>选这个：</strong>需要精细的线条网格或分割线装饰背景。</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="situation">
+        <div class="situation-header">大号数字作为设计元素</div>
+        <div class="skill-row" data-search="number details typography big numbers">
+          <div class="skill-name">
+            <a href="agent-skills/web-design/number-details/SKILL.md">number-details</a>
+            <span class="badge-demo">🟢 Demo</span>
+          </div>
+          <div class="skill-meta">
+            <p class="desc">数字细节装饰，大号数字作为设计元素（如统计卡片）。</p>
+            <p class="pick-when"><strong>选这个：</strong>需要在页面中用大数字作为视觉焦点（如数据看板、数字展示）。</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="situation">
+        <div class="situation-header">边框光束状态（loading / selected / focus）</div>
+        <div class="skill-row" data-search="beam glow states border beam react">
+          <div class="skill-name">
+            <a href="agent-skills/web-design/beam-glow-states/SKILL.md">beam-glow-states</a>
+            <span class="badge-skill">⚪ SKILL</span>
+          </div>
+          <div class="skill-meta">
+            <p class="desc">React 边框光束状态：loading/processing/selected/focus/pressed 动画，border-beam 包。</p>
+            <p class="pick-when"><strong>选这个：</strong>需要按钮/卡片有traveling或breathing光束动画状态。</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="situation">
+        <div class="situation-header">漂浮粒子 / 环境微粒背景</div>
+        <div class="skill-row" data-search="ambient section particles floating">
+          <div class="skill-name">
+            <a href="agent-skills/web-design/ambient-section-particles/SKILL.md">ambient-section-particles</a>
+            <span class="badge-demo">🟢 Demo</span>
+          </div>
+          <div class="skill-meta">
+            <p class="desc">环境粒子效果，漂浮微粒背景装饰。</p>
+            <p class="pick-when"><strong>选这个：</strong>需要一个不抢焦点的轻柔漂浮粒子背景。</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ===================== SCENARIO 4: VISUAL STYLES ===================== -->
+  <div class="scenario" data-scen="visual">
+    <div class="scenario-header" onclick="toggle(this.parentElement)">
+      <span class="icon">🎨</span>
+      <h2>视觉风格 / 审美方向</h2>
+      <span class="count">22 技能</span>
+      <span class="arrow">▶</span>
+    </div>
+    <div class="scenario-body">
+
+      <div class="situation">
+        <div class="situation-header">Glassmorphism / 毛玻璃 / 透明质感</div>
+        <div class="skill-row" data-search="dark glass clean layout glassmorphism">
+          <div class="skill-name">
+            <a href="agent-skills/web-design/dark-glass-clean-layout/SKILL.md">dark-glass-clean-layout</a>
+            <span class="badge-demo">🟢 Demo</span>
+          </div>
+          <div class="skill-meta">
+            <p class="desc">深色玻璃干净布局，backdrop-filter 毛玻璃效果，微妙边框。</p>
+            <p class="pick-when"><strong>选这个：</strong>深色模式下的 glassmorphism 风格。</p>
+            <div class="skill-tags">
+              <span class="skill-tag tag-visual">视觉</span>
+            </div>
+          </div>
+        </div>
+        <div class="skill-row" data-search="blue laser clean glass layout glassmorphism">
+          <div class="skill-name">
+            <a href="agent-skills/web-design/blue-laser-clean-glass-layout/SKILL.md">blue-laser-clean-glass-layout</a>
+            <span class="badge-demo">🟢 Demo</span>
+          </div>
+          <div class="skill-meta">
+            <p class="desc">蓝色激光玻璃布局，蓝光 + 玻璃质感。</p>
+            <p class="pick-when"><strong>选这个：</strong>科技感 + 玻璃质感 + 蓝色主调。</p>
+          </div>
+        </div>
+        <div class="skill-row" data-search="glass dark ui glassmorphism">
+          <div class="skill-name">
+            <a href="agent-skills/web-design/glass-dark-ui/SKILL.md">glass-dark-ui</a>
+            <span class="badge-demo">🟢 Demo</span>
+          </div>
+          <div class="skill-meta">
+            <p class="desc">玻璃暗色 UI 组件，glassmorphism 组件设计。</p>
+            <p class="pick-when"><strong>选这个：</strong>需要 glassmorphism 风格的具体 UI 组件。</p>
+          </div>
+        </div>
+        <div class="skill-row" data-search="glass dark mode clock time display">
+          <div class="skill-name">
+            <a href="agent-skills/web-design/glass-dark-mode-clock/SKILL.md">glass-dark-mode-clock</a>
+            <span class="badge-demo">🟢 Demo</span>
+          </div>
+          <div class="skill-meta">
+            <p class="desc">玻璃暗色时钟，glassmorphism 时间展示设计。</p>
+            <p class="pick-when"><strong>选这个：</strong>需要时钟 / 时间展示场景的 glass 风格参考。</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="situation">
+        <div class="situation-header">Dither / Noise 纹理背景</div>
+        <div class="skill-row" data-search="dither background noise texture">
+          <div class="skill-name">
+            <a href="agent-skills/web-design/dither-background/SKILL.md">dither-background</a>
+            <span class="badge-demo">🟢 Demo</span>
+          </div>
+          <div class="skill-meta">
+            <p class="desc">抖动背景，Noise 纹理感背景设计。</p>
+            <p class="pick-when"><strong>选这个：</strong>需要复古/电影感/纹理感的噪点背景。</p>
+          </div>
+        </div>
+        <div class="skill-row" data-search="dither laser dark mode noise">
+          <div class="skill-name">
+            <a href="agent-skills/web-design/dither-laser-dark-mode/SKILL.md">dither-laser-dark-mode</a>
+            <span class="badge-demo">🟢 Demo</span>
+          </div>
+          <div class="skill-meta">
+            <p class="desc">抖动激光暗色模式，Noise 纹理 + 激光线效果。</p>
+            <p class="pick-when"><strong>选这个：</strong>赛博朋克/暗色科技 + 噪点 + 激光线组合。</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="situation">
+        <div class="situation-header">Sketuomorphic / 质感 / 拟物</div>
+        <div class="skill-row" data-search="skeuomorphic ui texture realistic">
+          <div class="skill-name">
+            <a href="agent-skills/web-design/skeuomorphic-ui/SKILL.md">skeuomorphic-ui</a>
+            <span class="badge-demo">🟢 Demo</span>
+          </div>
+          <div class="skill-meta">
+            <p class="desc">拟物 UI 风格，纹理材质感设计（与 flat design 相反）。</p>
+            <p class="pick-when"><strong>选这个：</strong>需要复古/真实材质感的拟物设计风格。</p>
+          </div>
+        </div>
+        <div class="skill-row" data-search="high contrast skeuomorphic clean">
+          <div class="skill-name">
+            <a href="agent-skills/web-design/high-contrast-skeuomorphic-clean/SKILL.md">high-contrast-skeuomorphic-clean</a>
+            <span class="badge-demo">🟢 Demo</span>
+          </div>
+          <div class="skill-meta">
+            <p class="desc">高对比拟物干净，明暗强烈质感 + 干净排版。</p>
+            <p class="pick-when"><strong>选这个：</strong>需要强对比 + 拟物质感 + 干净排版的组合。</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="situation">
+        <div class="situation-header">Gradient / 渐变背景</div>
+        <div class="skill-row" data-search="mesh gradient dark blue clean">
+          <div class="skill-name">
+            <a href="agent-skills/web-design/mesh-gradient-dark-blue-clean/SKILL.md">mesh-gradient-dark-blue-clean</a>
+            <span class="badge-demo">🟢 Demo</span>
+          </div>
+          <div class="skill-meta">
+            <p class="desc">网格渐变深蓝，多色彩渐变混合背景。</p>
+            <p class="pick-when"><strong>选这个：</strong>需要 mesh gradient 感的彩色渐变背景。</p>
+          </div>
+        </div>
+        <div class="skill-row" data-search="solar duotone bold gradient">
+          <div class="skill-name">
+            <a href="agent-skills/web-design/solar-duotone-bold/SKILL.md">solar-duotone-bold</a>
+            <span class="badge-demo">🟢 Demo</span>
+          </div>
+          <div class="skill-meta">
+            <p class="desc">太阳双色调，强烈对比双色系统（类似 Spotify 双色调风格）。</p>
+            <p class="pick-when"><strong>选这个：</strong>需要双色调/双色调渐变背景。</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="situation">
+        <div class="situation-header">Paper / 纸张质感</div>
+        <div class="skill-row" data-search="orange clean paper saas warm">
+          <div class="skill-name">
+            <a href="agent-skills/web-design/orange-clean-paper-saas/SKILL.md">orange-clean-paper-saas</a>
+            <span class="badge-demo">🟢 Demo</span>
+          </div>
+          <div class="skill-meta">
+            <p class="desc">橙色纸张 SaaS 风格，暖色 + 纸张质感。</p>
+            <p class="pick-when"><strong>选这个：</strong>需要温暖、柔和、纸张感的 SaaS 产品风格。</p>
+          </div>
+        </div>
+        <div class="skill-row" data-search="light mode paper technical">
+          <div class="skill-name">
+            <a href="agent-skills/web-design/light-mode-paper-technical/SKILL.md">light-mode-paper-technical</a>
+            <span class="badge-demo">🟢 Demo</span>
+          </div>
+          <div class="skill-meta">
+            <p class="desc">亮色纸张技术风，纸张 + 技术线框混合。</p>
+            <p class="pick-when"><strong>选这个：</strong>需要技术文档/工具类产品的纸张感 + 线框混合风格。</p>
+          </div>
+        </div>
+        <div class="skill-row" data-search="clean minimal beige light mode">
+          <div class="skill-name">
+            <a href="agent-skills/web-design/clean-minimal-beige-light-mode/SKILL.md">clean-minimal-beige-light-mode</a>
+            <span class="badge-demo">🟢 Demo</span>
+          </div>
+          <div class="skill-meta">
+            <p class="desc">浅米色极简亮色，温暖柔和色调。</p>
+            <p class="pick-when"><strong>选这个：</strong>需要极简/温暖的米色系亮色模式。</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="situation">
+        <div class="situation-header">Tech / 科技风格</div>
+        <div class="skill-row" data-search="tech green dark mode modern">
+          <div class="skill-name">
+            <a href="agent-skills/web-design/tech-green-dark-mode-modern/SKILL.md">tech-green-dark-mode-modern</a>
+            <span class="badge-demo">🟢 Demo</span>
+          </div>
+          <div class="skill-meta">
+            <p class="desc">科技绿暗色现代，绿色 + 暗色科技风。</p>
+            <p class="pick-when"><strong>选这个：</strong>暗色模式 + 绿色作为主色（终端/数据风格）。</p>
+          </div>
+        </div>
+        <div class="skill-row" data-search="framed tech dark border gradient">
+          <div class="skill-name">
+            <a href="agent-skills/web-design/framed-tech-dark-border-gradient/SKILL.md">framed-tech-dark-border-gradient</a>
+            <span class="badge-demo">🟢 Demo</span>
+          </div>
+          <div class="skill-meta">
+            <p class="desc">框架科技暗色渐变，边框渐变 + 科技感框架。</p>
+            <p class="pick-when"><strong>选这个：</strong>需要带边框渐变的科技感框架设计。</p>
+          </div>
+        </div>
+        <div class="skill-row" data-search="dark blue contrasting clean">
+          <div class="skill-name">
+            <a href="agent-skills/web-design/dark-blue-contrasting-clean/SKILL.md">dark-blue-contrasting-clean</a>
+            <span class="badge-demo">🟢 Demo</span>
+          </div>
+          <div class="skill-meta">
+            <p class="desc">深蓝对比干净，深蓝为主 + 强对比设计。</p>
+            <p class="pick-when"><strong>选这个：</strong>深蓝色系 + 干净 + 高对比的组合。</p>
+          </div>
+        </div>
+        <div class="skill-row" data-search="blue cloudy clean modern">
+          <div class="skill-name">
+            <a href="agent-skills/web-design/blue-cloudy-clean-modern/SKILL.md">blue-cloudy-clean-modern</a>
+            <span class="badge-demo">🟢 Demo</span>
+          </div>
+          <div class="skill-meta">
+            <p class="desc">蓝色云感现代风格，柔和渐变背景 + 干净排版。</p>
+            <p class="pick-when"><strong>选这个：</strong>柔和蓝色 + 云感 + 现代干净风格。</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="situation">
+        <div class="situation-header">独特 / 特殊风格</div>
+        <div class="skill-row" data-search="funky purple container tech">
+          <div class="skill-name">
+            <a href="agent-skills/web-design/funky-purple-container-tech/SKILL.md">funky-purple-container-tech</a>
+            <span class="badge-demo">🟢 Demo</span>
+          </div>
+          <div class="skill-meta">
+            <p class="desc">迷幻紫容器科技，大胆紫色设计。</p>
+            <p class="pick-when"><strong>选这个：</strong>需要独特/实验性/大胆的紫色系设计。</p>
+          </div>
+        </div>
+        <div class="skill-row" data-search="atmosphere background mood">
+          <div class="skill-name">
+            <a href="agent-skills/web-design/atmosphere-background/SKILL.md">atmosphere-background</a>
+            <span class="badge-demo">🟢 Demo</span>
+          </div>
+          <div class="skill-meta">
+            <p class="desc">氛围背景，大气感背景设计（如云层/雾气感）。</p>
+            <p class="pick-when"><strong>选这个：</strong>需要沉浸式/氛围感的大气背景。</p>
+          </div>
+        </div>
+        <div class="skill-row" data-search="company logos showcase grid">
+          <div class="skill-name">
+            <a href="agent-skills/web-design/company-logos/SKILL.md">company-logos</a>
+            <span class="badge-demo">🟢 Demo</span>
+          </div>
+          <div class="skill-meta">
+            <p class="desc">公司 Logo 展示墙，Logo 网格布局。</p>
+            <p class="pick-when"><strong>选这个：</strong>需要展示合作伙伴/客户 Logo 墙。</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ===================== SCENARIO 5: LAYOUT ===================== -->
+  <div class="scenario" data-scen="layout">
+    <div class="scenario-header" onclick="toggle(this.parentElement)">
+      <span class="icon">📐</span>
+      <h2>布局系统 / 页面结构</h2>
+      <span class="count">13 技能</span>
+      <span class="arrow">▶</span>
+    </div>
+    <div class="scenario-body">
+
+      <div class="situation">
+        <div class="situation-header">代理 / 工作室风格网格布局</div>
+        <div class="skill-row" data-search="agency grid layout minimal">
+          <div class="skill-name">
+            <a href="agent-skills/web-design/agency-grid-layout-minimal/SKILL.md">agency-grid-layout-minimal</a>
+            <span class="badge-demo">🟢 Demo</span>
+          </div>
+          <div class="skill-meta">
+            <p class="desc">代理网格极简布局，经典 agency 风格网格。</p>
+            <p class="pick-when"><strong>选这个：</strong>需要经典的代理/工作室网站网格布局。</p>
+            <div class="skill-tags">
+              <span class="skill-tag tag-layout">布局</span>
+            </div>
+          </div>
+        </div>
+        <div class="skill-row" data-search="framed grid layout bordered">
+          <div class="skill-name">
+            <a href="agent-skills/web-design/framed-grid-layout/SKILL.md">framed-grid-layout</a>
+            <span class="badge-demo">🟢 Demo</span>
+          </div>
+          <div class="skill-meta">
+            <p class="desc">框架网格布局，带边框框架的网格。</p>
+            <p class="pick-when"><strong>选这个：</strong>需要网格每个单元格有边框框架感。</p>
+          </div>
+        </div>
+        <div class="skill-row" data-search="nested container clean agency">
+          <div class="skill-name">
+            <a href="agent-skills/web-design/nested-container-clean-agency/SKILL.md">nested-container-clean-agency</a>
+            <span class="badge-demo">🟢 Demo</span>
+          </div>
+          <div class="skill-meta">
+            <p class="desc">嵌套容器干净代理，嵌套 + 干净代理风。</p>
+            <p class="pick-when"><strong>选这个：</strong>需要多层嵌套的容器布局 + agency 干净风格。</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="situation">
+        <div class="situation-header">嵌套容器 / 框架结构</div>
+        <div class="skill-row" data-search="nested container frames">
+          <div class="skill-name">
+            <a href="agent-skills/web-design/nested-container-frames/SKILL.md">nested-container-frames</a>
+            <span class="badge-demo">🟢 Demo</span>
+          </div>
+          <div class="skill-meta">
+            <p class="desc">嵌套容器框架，多层嵌套布局容器。</p>
+            <p class="pick-when"><strong>选这个：</strong>需要复杂的多层嵌套容器布局。</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="situation">
+        <div class="situation-header">分屏 / 左右对分布局</div>
+        <div class="skill-row" data-search="split layout technical">
+          <div class="skill-name">
+            <a href="agent-skills/web-design/split-layout-technical/SKILL.md">split-layout-technical</a>
+            <span class="badge-demo">🟢 Demo</span>
+          </div>
+          <div class="skill-meta">
+            <p class="desc">分屏技术布局，左右 / 上下分屏。</p>
+            <p class="pick-when"><strong>选这个：</strong>需要内容分屏展示（如图文对半）。</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="situation">
+        <div class="situation-header">Editorial / 编辑排版风格</div>
+        <div class="skill-row" data-search="editorial tech">
+          <div class="skill-name">
+            <a href="agent-skills/web-design/editorial-tech/SKILL.md">editorial-tech</a>
+            <span class="badge-demo">🟢 Demo</span>
+          </div>
+          <div class="skill-meta">
+            <p class="desc">编辑技术风，Editorial + 技术感混合。</p>
+            <p class="pick-when"><strong>选这个：</strong>需要 Editorial 排版 + 技术产品感的混合。</p>
+          </div>
+        </div>
+        <div class="skill-row" data-search="editorial portfolio chapters">
+          <div class="skill-name">
+            <a href="agent-skills/web-design/editorial-portfolio-chapters/SKILL.md">editorial-portfolio-chapters</a>
+            <span class="badge-demo">🟢 Demo</span>
+          </div>
+          <div class="skill-meta">
+            <p class="desc">编辑作品集章节，章节式作品集布局。</p>
+            <p class="pick-when"><strong>选这个：</strong>需要章节式作品集/博客展示。</p>
+          </div>
+        </div>
+        <div class="skill-row" data-search="editorial service booking">
+          <div class="skill-name">
+            <a href="agent-skills/web-design/editorial-service-booking/SKILL.md">editorial-service-booking</a>
+            <span class="badge-demo">🟢 Demo</span>
+          </div>
+          <div class="skill-meta">
+            <p class="desc">编辑服务预订，服务型编辑布局。</p>
+            <p class="pick-when"><strong>选这个：</strong>需要预订 / 预约页面的编辑风格。</p>
+          </div>
+        </div>
+        <div class="skill-row" data-search="book serif index">
+          <div class="skill-name">
+            <a href="agent-skills/web-design/book-serif-index/SKILL.md">book-serif-index</a>
+            <span class="badge-demo">🟢 Demo</span>
+          </div>
+          <div class="skill-meta">
+            <p class="desc">书籍衬线索引，书籍排版风格索引页。</p>
+            <p class="pick-when"><strong>选这个：</strong>需要类似书籍/杂志排版的索引/目录页。</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="situation">
+        <div class="situation-header">图片优先 / 图片主导网格</div>
+        <div class="skill-row" data-search="image first grid layout">
+          <div class="skill-name">
+            <a href="agent-skills/web-design/image-first-grid-layout/SKILL.md">image-first-grid-layout</a>
+            <span class="badge-demo">🟢 Demo</span>
+          </div>
+          <div class="skill-meta">
+            <p class="desc">图片优先网格布局，图片主导的网格系统。</p>
+            <p class="pick-when"><strong>选这个：</strong>需要图片为核心的瀑布流/网格布局。</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="situation">
+        <div class="situation-header">Brutalist / 粗野主义布局</div>
+        <div class="skill-row" data-search="documentary brutalist agency">
+          <div class="skill-name">
+            <a href="agent-skills/web-design/documentary-brutalist-agency/SKILL.md">documentary-brutalist-agency</a>
+            <span class="badge-demo">🟢 Demo</span>
+          </div>
+          <div class="skill-meta">
+            <p class="desc">纪录 Brutalist 代理，粗野主义布局设计。</p>
+            <p class="pick-when"><strong>选这个：</strong>需要大胆/粗野主义风格的布局（不对称/高对比/粗粝）。</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="situation">
+        <div class="situation-header">技术线框 / 信息密集布局</div>
+        <div class="skill-row" data-search="technical wireframe info layout">
+          <div class="skill-name">
+            <a href="agent-skills/web-design/technical-wireframe-info-layout/SKILL.md">technical-wireframe-info-layout</a>
+            <span class="badge-demo">🟢 Demo</span>
+          </div>
+          <div class="skill-meta">
+            <p class="desc">技术线框信息布局，线框风格信息展示。</p>
+            <p class="pick-when"><strong>选这个：</strong>需要技术文档/数据密集/线框感的信息展示布局。</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ===================== SCENARIO 6: LANDING & CONVERSION ===================== -->
+  <div class="scenario" data-scen="landing">
+    <div class="scenario-header" onclick="toggle(this.parentElement)">
+      <span class="icon">🚀</span>
+      <h2>落地页 / 转化 / 产品页</h2>
+      <span class="count">9 技能</span>
+      <span class="arrow">▶</span>
+    </div>
+    <div class="scenario-body">
+
+      <div class="situation">
+        <div class="situation-header">高转化落地页（单产品/服务）</div>
+        <div class="skill-row" data-search="landing page conversion">
+          <div class="skill-name">
+            <a href="agent-skills/web-design/landing-page/SKILL.md">landing-page</a>
+            <span class="badge-demo">🟢 Demo</span>
+          </div>
+        <div class="skill-meta">
+            <p class="desc">高转化落地页：结构/布局/转化策略/文案/SEO，覆盖 8 个常见陷阱。</p>
+            <p class="pick-when"><strong>选这个：</strong>需要构建一个高转化率的单产品/服务落地页。</p>
+            <div class="skill-tags">
+              <span class="skill-tag tag-landing">落地</span>
+            </div>
+          </div>
+        </div>
+        <div class="skill-row" data-search="awwwards quality site premium">
+          <div class="skill-name">
+            <a href="agent-skills/web-design/build-awwwards-quality-sites/SKILL.md">build-awwwards-quality-sites</a>
+            <span class="badge-skill">⚪ SKILL</span>
+          </div>
+          <div class="skill-meta">
+            <p class="desc">Awwwards 级站点：原创参考启发、Standout Hero、GSAP 编舞、平滑滚动、Three.js 可选。</p>
+            <p class="pick-when"><strong>选这个：</strong>需要冲击 Awwwards 的高品质互动落地页。</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="situation">
+        <div class="situation-header">定价页 / 套餐对比</div>
+        <div class="skill-row" data-search="pricing page plan comparison">
+          <div class="skill-name">
+            <a href="agent-skills/web-design/pricing-page/SKILL.md">pricing-page</a>
+            <span class="badge-demo">🟢 Demo</span>
+          </div>
+          <div class="skill-meta">
+            <p class="desc">定价页：定价策略/对比表/FAQ/CTA 设计。</p>
+            <p class="pick-when"><strong>选这个：</strong>需要构建 SaaS 产品的定价/套餐对比页面。</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="situation">
+        <div class="situation-header">社会证明 / 产品证明元素</div>
+        <div class="skill-row" data-search="product proof saas testimonial social">
+          <div class="skill-name">
+            <a href="agent-skills/web-design/product-proof-saas/SKILL.md">product-proof-saas</a>
+            <span class="badge-demo">🟢 Demo</span>
+          </div>
+          <div class="skill-meta">
+            <p class="desc">产品证明 SaaS，社会证明元素设计（评价/案例/数据）。</p>
+            <p class="pick-when"><strong>选这个：</strong>需要在落地页中展示可信度元素（用户评价、客户案例、数据指标）。</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="situation">
+        <div class="situation-header">B2B / 企业 AI 产品页</div>
+        <div class="skill-row" data-search="operational enterprise ai b2b">
+          <div class="skill-name">
+            <a href="agent-skills/web-design/operational-enterprise-ai/SKILL.md">operational-enterprise-ai</a>
+            <span class="badge-demo">🟢 Demo</span>
+          </div>
+          <div class="skill-meta">
+            <p class="desc">企业 AI 运营页，B2B SaaS 落地页风格。</p>
+            <p class="pick-when"><strong>选这个：</strong>需要面向企业的 AI 工具/SaaS 产品页。</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="situation">
+        <div class="situation-header">Tailwind CSS 开发</div>
+        <div class="skill-row" data-search="tailwindcss utility first css">
+          <div class="skill-name">
+            <a href="agent-skills/web-design/tailwindcss/SKILL.md">tailwindcss</a>
+            <span class="badge-demo">🟢 Demo</span>
+          </div>
+          <div class="skill-meta">
+            <p class="desc">Tailwind CSS 工具优先：响应式变体/状态变体/暗黑模式/@apply 边界/clsx/cva 组合。</p>
+            <p class="pick-when"><strong>选这个：</strong>需要使用 Tailwind CSS 构建 UI，了解最佳实践和常见陷阱。</p>
+            <div class="skill-tags">
+              <span class="skill-tag tag-tool">工具</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ===================== SCENARIO 7: GAME DEVELOPMENT ===================== -->
+  <div class="scenario" data-scen="game">
+    <div class="scenario-header" onclick="toggle(this.parentElement)">
+      <span class="icon">🎮</span>
+      <h2>游戏开发（仅 SKILL.md，无 Demo）</h2>
+      <span class="count">19 技能</span>
+      <span class="arrow">▶</span>
+    </div>
+    <div class="scenario-body">
+
+      <div class="situation">
+        <div class="situation-header">等距 ARPG / 可玩垂直切片</div>
+        <div class="skill-row" data-search="isometric arpg game threejs">
+          <div class="skill-name">
+            <a href="agent-skills/game-development/build-isometric-arpg/SKILL.md">build-isometric-arpg</a>
+            <span class="badge-skill">⚪ SKILL</span>
+          </div>
+          <div class="skill-meta">
+            <p class="desc">等距 ARPG 垂直切片：游戏循环/相机/战斗/敌人/奖励/存档，垂直切片交付可玩路线。</p>
+            <p class="pick-when"><strong>选这个：</strong>需要从零开始构建一个可玩的等距 ARPG。</p>
+            <div class="skill-tags">
+              <span class="skill-tag tag-game">游戏</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="situation">
+        <div class="situation-header">关卡设计（路径 / 光照）</div>
+        <div class="skill-row" data-search="author game levels flat world lighting">
+          <div class="skill-name">
+            <a href="agent-skills/game-development/author-game-levels/SKILL.md">author-game-levels</a>
+            <span class="badge-skill">⚪ SKILL</span>
+          </div>
+          <div class="skill-meta">
+            <p class="desc">关卡设计：路径创作 + 分离式碰撞/导航/视觉层 + 光照设计。</p>
+            <p class="pick-when"><strong>选这个：</strong>需要设计游戏的关卡路径和光照。</p>
+          </div>
+        </div>
+        <div class="skill-row" data-search="camera controls isometric follow">
+          <div class="skill-name">
+            <a href="agent-skills/game-development/build-game-camera-controls/SKILL.md">build-game-camera-controls</a>
+            <span class="badge-skill">⚪ SKILL</span>
+          </div>
+          <div class="skill-meta">
+            <p class="desc">相机控制：等距跟随/锁定/遮挡/震动/触摸手势。</p>
+            <p class="pick-when"><strong>选这个：</strong>需要实现游戏的相机系统（跟随/锁定/缩放）。</p>
+          </div>
+        </div>
+        <div class="skill-row" data-search="mobile threejs games touch">
+          <div class="skill-name">
+            <a href="agent-skills/game-development/build-mobile-threejs-games/SKILL.md">build-mobile-threejs-games</a>
+            <span class="badge-skill">⚪ SKILL</span>
+          </div>
+          <div class="skill-meta">
+            <p class="desc">移动端 Three.js 游戏：触屏控制/安全区域/响应式 HUD/方向/性能。</p>
+            <p class="pick-when"><strong>选这个：</strong>需要将 Three.js 游戏适配移动端。</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="situation">
+        <div class="situation-header">战斗系统 / 敌人AI</div>
+        <div class="skill-row" data-search="design action combat">
+          <div class="skill-name">
+            <a href="agent-skills/game-development/design-action-combat/SKILL.md">design-action-combat</a>
+            <span class="badge-skill">⚪ SKILL</span>
+          </div>
+          <div class="skill-meta">
+            <p class="desc">动作战斗：起手帧/命中帧/恢复帧/接触判定/防御/打断/确定性验证。</p>
+            <p class="pick-when"><strong>选这个：</strong>需要设计游戏的战斗机制（格斗/FPS/动作游戏核心）。</p>
+          </div>
+        </div>
+        <div class="skill-row" data-search="threejs enemy systems monster">
+          <div class="skill-name">
+            <a href="agent-skills/game-development/build-threejs-enemy-systems/SKILL.md">build-threejs-enemy-systems</a>
+            <span class="badge-skill">⚪ SKILL</span>
+          </div>
+          <div class="skill-meta">
+            <p class="desc">Three.js 敌人系统：敌人原型/moveset/模型规范/Runtime hooks。</p>
+            <p class="pick-when"><strong>选这个：</strong>需要为 Three.js 游戏设计敌人类型和行为。</p>
+          </div>
+        </div>
+        <div class="skill-row" data-search="monster system rig collider animation lod">
+          <div class="skill-name">
+            <a href="agent-skills/game-development/build-game-monster-system/SKILL.md">build-game-monster-system</a>
+            <span class="badge-skill">⚪ SKILL</span>
+          </div>
+          <div class="skill-meta">
+            <p class="desc">怪物系统：Rig/关节/插槽/碰撞器/动画状态/LOD/审查合约。</p>
+            <p class="pick-when"><strong>选这个：</strong>需要规范怪物的模型骨架和动画状态机。</p>
+          </div>
+        </div>
+        <div class="skill-row" data-search="tune enemy ai perception decision">
+          <div class="skill-name">
+            <a href="agent-skills/game-development/tune-enemy-ai/SKILL.md">tune-enemy-ai</a>
+            <span class="badge-skill">⚪ SKILL</span>
+          </div>
+          <div class="skill-meta">
+            <p class="desc">敌人 AI 调优：感知/意图/导航/间距/攻击决策。</p>
+            <p class="pick-when"><strong>选这个：</strong>需要调试敌人 AI 的感知范围和决策逻辑。</p>
+          </div>
+        </div>
+        <div class="skill-row" data-search="game encounters arena waves boss">
+          <div class="skill-name">
+            <a href="agent-skills/game-development/design-game-encounters/SKILL.md">design-game-encounters</a>
+            <span class="badge-skill">⚪ SKILL</span>
+          </div>
+          <div class="skill-meta">
+            <p class="desc">游戏遭遇战设计：竞技场/波次/目标/Boss阶段/失败恢复/奖励。</p>
+            <p class="pick-when"><strong>选这个：</strong>需要设计游戏的关卡遭遇战（波次/Boss/Raid）。</p>
+          </div>
+        </div>
+        <div class="skill-row" data-search="fog of war visibility threjs">
+          <div class="skill-name">
+            <a href="agent-skills/codex/implement-fog-of-war/SKILL.md">implement-fog-of-war</a>
+            <span class="badge-skill">⚪ SKILL</span>
+          </div>
+          <div class="skill-meta">
+            <p class="desc">战争迷雾实现：Three.js 正交/等距可见性遮罩，障碍物视线，敌人视野范围。</p>
+            <p class="pick-when"><strong>选这个：</strong>需要在动作游戏中实现战争迷雾（RTS/Fog of war）。</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="situation">
+        <div class="situation-header">背包 / 装备 / 掉落系统</div>
+        <div class="skill-row" data-search="game inventory loot equipment">
+          <div class="skill-name">
+            <a href="agent-skills/game-development/build-game-inventory/SKILL.md">build-game-inventory</a>
+            <span class="badge-skill">⚪ SKILL</span>
+          </div>
+          <div class="skill-meta">
+            <p class="desc">背包/装备系统：原子化库存/战利品/拖放/迁移/持久化。</p>
+            <p class="pick-when"><strong>选这个：</strong>需要实现游戏的背包和装备系统。</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="situation">
+        <div class="situation-header">视觉特效 / 音效反馈</div>
+        <div class="skill-row" data-search="game vfx visual effects">
+          <div class="skill-name">
+            <a href="agent-skills/game-development/create-game-vfx/SKILL.md">create-game-vfx</a>
+            <span class="badge-skill">⚪ SKILL</span>
+          </div>
+          <div class="skill-meta">
+            <p class="desc">游戏视觉特效：可见/有界/对象池化/prefers-reduced-motion感知。</p>
+            <p class="pick-when"><strong>选这个：</strong>需要为游戏添加视觉特效（爆炸/技能/击中反馈）。</p>
+          </div>
+        </div>
+        <div class="skill-row" data-search="audio feedback sound game">
+          <div class="skill-name">
+            <a href="agent-skills/game-development/build-game-audio-feedback/SKILL.md">build-game-audio-feedback</a>
+            <span class="badge-skill">⚪ SKILL</span>
+          </div>
+          <div class="skill-meta">
+            <p class="desc">游戏音效反馈：玩家意图/战斗状态 → 优先级音频提示。</p>
+            <p class="pick-when"><strong>选这个：</strong>需要为游戏添加音效反馈系统。</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="situation">
+        <div class="situation-header">资产 / 性能 / QA / 发布</div>
+        <div class="skill-row" data-search="hybrid game assets gltf sprites">
+          <div class="skill-name">
+            <a href="agent-skills/game-development/build-hybrid-game-assets/SKILL.md">build-hybrid-game-assets</a>
+            <span class="badge-skill">⚪ SKILL</span>
+          </div>
+          <div class="skill-meta">
+            <p class="desc">混合游戏资产：运行时表示选择（3D/2D/程序化），溯源/缩放/插槽/碰撞。</p>
+            <p class="pick-when"><strong>选这个：</strong>需要管理游戏中多方来源的资产（外购/自研/程序化）。</p>
+          </div>
+        </div>
+        <div class="skill-row" data-search="optimize threejs games performance">
+          <div class="skill-name">
+            <a href="agent-skills/game-development/optimize-threejs-games/SKILL.md">optimize-threejs-games</a>
+            <span class="badge-skill">⚪ SKILL</span>
+          </div>
+          <div class="skill-meta">
+            <p class="desc">Three.js 游戏优化：帧时间/绘制调用/内存/质量诊断。</p>
+            <p class="pick-when"><strong>选这个：</strong>需要诊断和优化 Three.js 游戏的性能问题。</p>
+          </div>
+        </div>
+        <div class="skill-row" data-search="test playable web games qa">
+          <div class="skill-name">
+            <a href="agent-skills/game-development/test-playable-web-games/SKILL.md">test-playable-web-games</a>
+            <span class="badge-skill">⚪ SKILL</span>
+          </div>
+          <div class="skill-meta">
+            <p class="desc">游戏 QA 测试：确定性测试夹具 + 真实浏览器验证。"绿 build ≠ 游戏验证通过"。</p>
+            <p class="pick-when"><strong>选这个：</strong>需要对游戏进行完整的手工 + 自动化 QA 测试。</p>
+          </div>
+        </div>
+        <div class="skill-row" data-search="ship web games deploy release">
+          <div class="skill-name">
+            <a href="agent-skills/game-development/ship-web-games/SKILL.md">ship-web-games</a>
+            <span class="badge-skill">⚪ SKILL</span>
+          </div>
+          <div class="skill-meta">
+            <p class="desc">Web 游戏发布：精确验证的 commit，部署版本与本地分离验证。</p>
+            <p class="pick-when"><strong>选这个：</strong>需要将游戏发布到生产环境并验证部署正确性。</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ===================== SCENARIO 8: WORKFLOW ===================== -->
+  <div class="scenario" data-scen="workflow">
+    <div class="scenario-header" onclick="toggle(this.parentElement)">
+      <span class="icon">⚙️</span>
+      <h2>AI 工作流 / 设计捕获</h2>
+      <span class="count">17 技能</span>
+      <span class="arrow">▶</span>
+    </div>
+    <div class="scenario-body">
+
+      <div class="situation">
+        <div class="situation-header">视频 → 超级提示词</div>
+        <div class="skill-row" data-search="video superprompt analyze design animation">
+          <div class="skill-name">
+            <a href="agent-skills/codex/video-to-superprompt/SKILL.md">video-to-superprompt</a>
+            <span class="badge-demo">🟢 Demo</span>
+          </div>
+          <div class="skill-meta">
+            <p class="desc">视频 → 超级提示词：ffprobe 分析 + 6 层拆解（故事/布局/运动/视觉/技术/无障碍）+ 资产地图。</p>
+            <p class="pick-when"><strong>选这个：</strong>有一个设计参考视频，想转成可让 AI 精确重建的详细提示词。</p>
+            <div class="skill-tags">
+              <span class="skill-tag tag-workflow">工作流</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="situation">
+        <div class="situation-header">HTML 页面 → 交互提示词组</div>
+        <div class="skill-row" data-search="html interaction prompts extract animation">
+          <div class="skill-name">
+            <a href="agent-skills/codex/html-to-interaction-prompts/SKILL.md">html-to-interaction-prompts</a>
+            <span class="badge-demo">🟢 Demo</span>
+          </div>
+          <div class="skill-meta">
+            <p class="desc">HTML → 交互提示词组：每个交互（hover/滚动/悬停）= 一个独立可复用提示词。</p>
+            <p class="pick-when"><strong>选这个：</strong>有一个 HTML 页面，想拆解出其中每个交互细节供 AI 复用。</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="situation">
+        <div class="situation-header">全页截图捕获（含懒加载 / WebGL / 动画页）</div>
+        <div class="skill-row" data-search="stitched full page capture screenshot">
+          <div class="skill-name">
+            <a href="agent-skills/codex/stitched-full-page-capture/SKILL.md">stitched-full-page-capture</a>
+            <span class="badge-demo">🟢 Demo</span>
+          </div>
+          <div class="skill-meta">
+            <p class="desc">全页截图捕获：解决懒加载/WebGL/动画页截图为空白/灰色问题。</p>
+            <p class="pick-when"><strong>选这个：</strong>需要捕获一个完整落地页的截图，但直接截图得到空白/不完整结果。</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="situation">
+        <div class="situation-header">每日 UI 灵感捕获循环</div>
+        <div class="skill-row" data-search="daily ui inspiration capture">
+          <div class="skill-name">
+            <a href="agent-skills/codex/daily-ui-inspiration-capture/SKILL.md">daily-ui-inspiration-capture</a>
+            <span class="badge-demo">🟢 Demo</span>
+          </div>
+          <div class="skill-meta">
+            <p class="desc">每日 UI 灵感捕获：浏览 → 捕获 → 研究 → 提示词，每天产出 5 个灵感包（含截图+视频+提示词）。</p>
+            <p class="pick-when"><strong>选这个：</strong>需要建立每日收集高质量 UI 设计灵感的自动化工作流。</p>
+          </div>
+        </div>
+        <div class="skill-row" data-search="build daily inspiration sites landing page">
+          <div class="skill-name">
+            <a href="agent-skills/codex/build-daily-inspiration-sites/SKILL.md">build-daily-inspiration-sites</a>
+            <span class="badge-skill">⚪ SKILL</span>
+          </div>
+          <div class="skill-meta">
+            <p class="desc">每日灵感 → 5 个落地页：将 5 个 UI 灵感参考转化为独立 landing page，换品牌/名称/文案。</p>
+            <p class="pick-when"><strong>选这个：</strong>需要把每日灵感捕获的参考变成实际可运行的落地页。</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="situation">
+        <div class="situation-header">动画性能分析与优化</div>
+        <div class="skill-row" data-search="optimize web animations performance profiling">
+          <div class="skill-name">
+            <a href="agent-skills/codex/optimize-web-animations/SKILL.md">optimize-web-animations</a>
+            <span class="badge-demo">🟢 Demo</span>
+          </div>
+          <div class="skill-meta">
+            <p class="desc">动画性能优化：内存泄漏/帧时间/Canvas/WebGL 剖析，滚动卡顿优化。</p>
+            <p class="pick-when"><strong>选这个：</strong>页面动画卡顿/内存泄漏/长时间运行后变慢。</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="situation">
+        <div class="situation-header">迭代直到验证 / 子 agent / 严格批评</div>
+        <div class="skill-row" data-search="iterate until verified subagent critic loop">
+          <div class="skill-name">
+            <a href="agent-skills/codex/iterate-until-verified/SKILL.md">iterate-until-verified</a>
+            <span class="badge-skill">⚪ SKILL</span>
+          </div>
+          <div class="skill-meta">
+            <p class="desc">迭代直到验证：子 agent 展开，基准对比，严格批评，循环直到质量门通过。</p>
+            <p class="pick-when"><strong>选这个：</strong>需要让 AI 反复迭代直到输出达到质量标准（提示词无关的验证循环）。</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="situation">
+        <div class="situation-header">网站 originality 审计</div>
+        <div class="skill-row" data-search="audit reference originality plagiarism">
+          <div class="skill-name">
+            <a href="agent-skills/codex/audit-reference-originality/SKILL.md">audit-reference-originality</a>
+            <span class="badge-skill">⚪ SKILL</span>
+          </div>
+          <div class="skill-meta">
+            <p class="desc">网站 originality 审计：对比参考页面，识别抄袭风险，区分通用视觉语法与实质性复制。</p>
+            <p class="pick-when"><strong>选这个：</strong>需要检查网站是否与参考来源过于相似（原创性审计）。</p>
+          </div>
+        </div>
+        <div class="skill-row" data-search="audit verify explain grade 5 technical">
+          <div class="skill-name">
+            <a href="agent-skills/codex/audit-verify-explain-grade-5/SKILL.md">audit-verify-explain-grade-5</a>
+            <span class="badge-demo">🟢 Demo</span>
+          </div>
+          <div class="skill-meta">
+            <p class="desc">审计 + 五年级语言解释：技术结果 → 非技术人员也能理解。</p>
+            <p class="pick-when"><strong>选这个：</strong>需要把技术审计/调试结果翻译成外行能懂的语言。</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="situation">
+        <div class="situation-header">浏览器录屏 / 视频制作</div>
+        <div class="skill-row" data-search="browser video recording screen capture">
+          <div class="skill-name">
+            <a href="agent-skills/codex/browser-video-recording/SKILL.md">browser-video-recording</a>
+            <span class="badge-demo">🟢 Demo</span>
+          </div>
+          <div class="skill-meta">
+            <p class="desc">60fps 4K 浏览器录屏：macOS 光标/缩放跟随/点击编排。</p>
+            <p class="pick-when"><strong>选这个：</strong>需要制作高质量的浏览器操作演示视频。</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="situation">
+        <div class="situation-header">内容创作 / 品牌生成</div>
+        <div class="skill-row" data-search="elevenlabs tts voice narration">
+          <div class="skill-name">
+            <a href="agent-skills/codex/elevenlabs-tts/SKILL.md">elevenlabs-tts</a>
+            <span class="badge-demo">🟢 Demo</span>
+          </div>
+          <div class="skill-meta">
+            <p class="desc">ElevenLabs TTS 语音合成：提示词 → 语音旁白。</p>
+            <p class="pick-when"><strong>选这个：</strong>需要生成语音旁白或配音（基于 ElevenLabs）。</p>
+          </div>
+        </div>
+        <div class="skill-row" data-search="generate brand worlds reference inspired">
+          <div class="skill-name">
+            <a href="agent-skills/codex/generate-reference-inspired-brand-worlds/SKILL.md">generate-reference-inspired-brand-worlds</a>
+            <span class="badge-skill">⚪ SKILL</span>
+          </div>
+          <div class="skill-meta">
+            <p class="desc">参考 → 原创品牌世界：从视觉参考生成多个原创品牌活动，避开保护性签名元素。</p>
+            <p class="pick-when"><strong>选这个：</strong>需要从参考图片生成多个风格相关的原创品牌方向。</p>
+          </div>
+        </div>
+        <div class="skill-row" data-search="x bookmark quote posts social media">
+          <div class="skill-name">
+            <a href="agent-skills/codex/x-bookmark-quote-posts/SKILL.md">x-bookmark-quote-posts</a>
+            <span class="badge-demo">🟢 Demo</span>
+          </div>
+          <div class="skill-meta">
+            <p class="desc">X 书签 → 引用帖：推文书签 → 带来源的引用帖草稿。</p>
+            <p class="pick-when"><strong>选这个：</strong>需要把收集的 X 推文转成引用帖格式。</p>
+          </div>
+        </div>
+        <div class="skill-row" data-search="write like meng x twitter post">
+          <div class="skill-name">
+            <a href="agent-skills/codex/write-like-meng-on-x/SKILL.md">write-like-meng-on-x</a>
+            <span class="badge-skill">⚪ SKILL</span>
+          </div>
+          <div class="skill-meta">
+            <p class="desc">X/Twitter Meng 风格写作：基于去重帖子语料库，用 Meng To 当前语气撰写推文。</p>
+            <p class="pick-when"><strong>选这个：</strong>需要模仿 Meng To 的写作风格发 X 推文。</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="situation">
+        <div class="situation-header">文章 / 提示词 → 可复用技能包</div>
+        <div class="skill-row" data-search="article prompts to skills">
+          <div class="skill-name">
+            <a href="agent-skills/codex/article-prompts-to-skills/SKILL.md">article-prompts-to-skills</a>
+            <span class="badge-demo">🟢 Demo</span>
+          </div>
+          <div class="skill-meta">
+            <p class="desc">文章/提示词 → 可复用技能包：将文章或提示词组转换为完整 SKILL.md 格式。</p>
+            <p class="pick-when"><strong>选这个：</strong>需要把学到的设计方法论封装成可复用的 AI 技能。</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ===================== SCENARIO 9: UI DESIGN ===================== -->
+  <div class="scenario" data-scen="ui">
+    <div class="scenario-header" onclick="toggle(this.parentElement)">
+      <span class="icon">🎛️</span>
+      <h2>UI 设计系统 / 组件设计</h2>
+      <span class="count">3 技能</span>
+      <span class="arrow">▶</span>
+    </div>
+    <div class="scenario-body">
+
+      <div class="situation">
+        <div class="situation-header">设计优先 UI 提示词（模板系统）</div>
+        <div class="skill-row" data-search="design first ui prompting template">
+          <div class="skill-name">
+            <a href="agent-skills/ui/design-first-ui-prompting/SKILL.md">design-first-ui-prompting</a>
+            <span class="badge-demo">🟢 Demo</span>
+          </div>
+          <div class="skill-meta">
+            <p class="desc">设计优先 UI 提示词：6 段式模板（Goal→Format→Layout→Type→Color→Constraints）+ 变体迭代 + 2-pass 字体流程。</p>
+            <p class="pick-when"><strong>选这个：</strong>需要系统化地生成 UI，AI 输出不稳定/不一致，想建立设计规范。</p>
+            <div class="skill-tags">
+              <span class="skill-tag tag-visual">视觉</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="situation">
+        <div class="situation-header">AI 活动指示器 / Loading 球</div>
+        <div class="skill-row" data-search="thinking orbs ai loading spinner agent">
+          <div class="skill-name">
+            <a href="agent-skills/web-design/thinking-orbs/SKILL.md">thinking-orbs</a>
+            <span class="badge-skill">⚪ SKILL</span>
+          </div>
+          <div class="skill-meta">
+            <p class="desc">AI 活动指示器：React thinking-orbs 库，working/searching/solving/listening 状态球动画。</p>
+            <p class="pick-when"><strong>选这个：</strong>需要为 AI 助手/Copilot 界面添加语义化的 loading 指示器。</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ===================== SCENARIO 10: MEDIA ===================== -->
+  <div class="scenario" data-scen="media">
+    <div class="scenario-header" onclick="toggle(this.parentElement)">
+      <span class="icon">🖼️</span>
+      <h2>图片素材 / 资产管理</h2>
+      <span class="count">2 技能</span>
+      <span class="arrow">▶</span>
+    </div>
+    <div class="scenario-body">
+
+      <div class="situation">
+        <div class="situation-header">商业图库（付费 / 高质量）</div>
+        <div class="skill-row" data-search="aura asset images stock">
+          <div class="skill-name">
+            <a href="agent-skills/media/aura-asset-images/SKILL.md">aura-asset-images</a>
+            <span class="badge-demo">🟢 Demo</span>
+          </div>
+          <div class="skill-meta">
+            <p class="desc">Aura Assets 商业图库：按用途/裁剪/比例选取高质量设计/营销图像。</p>
+            <p class="pick-when"><strong>选这个：</strong>需要高质量商业图库素材（付费）。</p>
+            <div class="skill-tags">
+              <span class="skill-tag tag-tool">工具</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="situation">
+        <div class="situation-header">免费图库（CC0）</div>
+        <div class="skill-row" data-search="unsplash asset images free stock">
+          <div class="skill-name">
+            <a href="agent-skills/media/unsplash-asset-images/SKILL.md">unsplash-asset-images</a>
+            <span class="badge-demo">🟢 Demo</span>
+          </div>
+          <div class="skill-meta">
+            <p class="desc">Unsplash 免费图库：CC0 免版权高质量图片，按用途/裁剪/比例选取。</p>
+            <p class="pick-when"><strong>选这个：</strong>需要免费可商用的图片素材。</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ===================== SCENARIO 11: PERFORMANCE ===================== -->
+  <div class="scenario" data-scen="perf">
+    <div class="scenario-header" onclick="toggle(this.parentElement)">
+      <span class="icon">⚡</span>
+      <h2>性能分析 / 平台工具</h2>
+      <span class="count">2 技能</span>
+      <span class="arrow">▶</span>
+    </div>
+    <div class="scenario-body">
+
+      <div class="situation">
+        <div class="situation-header">Apple 平台性能分析</div>
+        <div class="skill-row" data-search="performance profiling apple instruments xcode">
+          <div class="skill-name">
+            <a href="agent-skills/codex/performance-profiling/SKILL.md">performance-profiling</a>
+            <span class="badge-demo">🟢 Demo</span>
+          </div>
+          <div class="skill-meta">
+            <p class="desc">Apple 性能分析：Instruments/Xcode 诊断/MetricKit，卡顿/内存/启动/电量/发热。</p>
+            <p class="pick-when"><strong>选这个：</strong>需要分析 iOS/macOS 应用的性能问题。</p>
+            <div class="skill-tags">
+              <span class="skill-tag tag-tool">工具</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ===================== SCENARIO 12: PRODUCTIVITY ===================== -->
+  <div class="scenario" data-scen="prod">
+    <div class="scenario-header" onclick="toggle(this.parentElement)">
+      <span class="icon">🔄</span>
+      <h2>AI 生产力 / 内容自动化</h2>
+      <span class="count">2 技能</span>
+      <span class="arrow">▶</span>
+    </div>
+    <div class="scenario-body">
+
+      <div class="situation">
+        <div class="situation-header">X/Twitter 内容创作</div>
+        <div class="skill-row" data-search="x bookmark quote posts social media">
+          <div class="skill-name">
+            <a href="agent-skills/codex/x-bookmark-quote-posts/SKILL.md">x-bookmark-quote-posts</a>
+            <span class="badge-demo">🟢 Demo</span>
+          </div>
+          <div class="skill-meta">
+            <p class="desc">X 书签 → 引用帖：推文书签 → 带来源的引用帖草稿。</p>
+            <p class="pick-when"><strong>选这个：</strong>需要把收集的 X 推文转成引用帖格式。</p>
+          </div>
+        </div>
+        <div class="skill-row" data-search="write like meng x twitter post voice">
+          <div class="skill-name">
+            <a href="agent-skills/codex/write-like-meng-on-x/SKILL.md">write-like-meng-on-x</a>
+            <span class="badge-skill">⚪ SKILL</span>
+          </div>
+          <div class="skill-meta">
+            <p class="desc">X/Twitter Meng 风格写作：基于去重帖子语料库，用 Meng To 当前语气撰写推文。</p>
+            <p class="pick-when"><strong>选这个：</strong>需要模仿 Meng To 的写作风格发 X 推文。</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- NO RESULTS -->
+  <div class="no-results" id="no-results">
+    <h3>未找到匹配的技能</h3>
+    <p>试试其他关键词，或展开所有分类浏览</p>
+  </div>
+
+</main>
+
+<footer>
+  <p>能力地图 · MengTo/Skills · <a href="https://github.com/MengTo/Skills">上游仓库</a> · MIT</p>
+</footer>
+
+<script>
+  function toggle(scenario) {
+    scenario.classList.toggle('open');
+  }
+
+  // Open all scenarios by default
+  document.querySelectorAll('.scenario').forEach(s => s.classList.add('open'));
+
+  // Search
+  const searchInput = document.getElementById('search');
+  const noResults = document.getElementById('no-results');
+
+  searchInput.addEventListener('input', () => {
+    const q = searchInput.value.toLowerCase().trim();
+    let visibleCount = 0;
+
+    document.querySelectorAll('.skill-row').forEach(row => {
+      const text = row.dataset.search || '';
+      const name = row.querySelector('.skill-name')?.textContent?.toLowerCase() || '';
+      const desc = row.querySelector('.desc')?.textContent?.toLowerCase() || '';
+      const match = !q || text.includes(q) || name.includes(q) || desc.includes(q);
+      row.classList.toggle('hidden', !match);
+      if (match) visibleCount++;
+    });
+
+    // Also show/hide scenario headers if they have visible children
+    document.querySelectorAll('.scenario').forEach(s => {
+      const visibleRows = s.querySelectorAll('.skill-row:not(.hidden)');
+      const situationHeaders = s.querySelectorAll('.situation');
+      situationHeaders.forEach(sit => {
+        const visibleInSit = sit.querySelectorAll('.skill-row:not(.hidden)');
+        sit.style.display = visibleInSit.length > 0 ? '' : 'none';
+      });
+    });
+
+    noResults.classList.toggle('show', visibleCount === 0);
+  });
+</script>
+
+</body>
+</html>

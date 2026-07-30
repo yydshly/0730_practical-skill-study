@@ -1,0 +1,1008 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Project 2 · MengTo/Skills 深度研究</title>
+  <style>
+    /* ===== TOKENS ===== */
+    :root {
+      --bg: #0a0a0f;
+      --surface: #13131a;
+      --surface2: #1c1c26;
+      --border: #2a2a38;
+      --text: #e8e8f0;
+      --text-dim: #8888a0;
+      --accent: #7c6fff;
+      --accent2: #ff6f9c;
+      --accent-glow: rgba(124, 111, 255, 0.25);
+      --code-bg: #0d0d14;
+      --font: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      --font-mono: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+      --radius: 12px;
+      --transition: 0.2s ease;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    /* ===== NAV ===== */
+    nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(10, 10, 15, 0.85);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+      padding: 0 2rem;
+    }
+    nav .inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      gap: 2rem;
+      height: 60px;
+    }
+    nav .logo {
+      font-weight: 700;
+      font-size: 1rem;
+      color: var(--accent);
+      text-decoration: none;
+      letter-spacing: -0.02em;
+    }
+    nav .links {
+      display: flex;
+      gap: 1.5rem;
+      list-style: none;
+    }
+    nav .links a {
+      color: var(--text-dim);
+      text-decoration: none;
+      font-size: 0.875rem;
+      transition: color var(--transition);
+    }
+    nav .links a:hover { color: var(--text); }
+    nav .links a.active { color: var(--accent); }
+    nav .back-link {
+      margin-left: auto;
+      color: var(--text-dim);
+      text-decoration: none;
+      font-size: 0.8rem;
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+      transition: color var(--transition);
+    }
+    nav .back-link:hover { color: var(--accent); }
+
+    /* ===== HERO ===== */
+    .hero {
+      padding: 6rem 2rem 4rem;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 600px;
+      height: 600px;
+      background: radial-gradient(circle, var(--accent-glow) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .hero .badge {
+      display: inline-block;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      padding: 0.4rem 1rem;
+      border-radius: 100px;
+      font-size: 0.8rem;
+      color: var(--text-dim);
+      margin-bottom: 1.5rem;
+    }
+    .hero h1 {
+      font-size: clamp(2.5rem, 6vw, 4rem);
+      font-weight: 800;
+      letter-spacing: -0.04em;
+      line-height: 1.1;
+      margin-bottom: 1rem;
+      background: linear-gradient(135deg, var(--text) 0%, var(--accent) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .hero .subtitle {
+      font-size: 1.2rem;
+      color: var(--text-dim);
+      max-width: 600px;
+      margin: 0 auto 2rem;
+    }
+    .hero .stats {
+      display: flex;
+      justify-content: center;
+      gap: 3rem;
+      flex-wrap: wrap;
+    }
+    .hero .stat {
+      text-align: center;
+    }
+    .hero .stat .num {
+      font-size: 2.5rem;
+      font-weight: 800;
+      color: var(--accent);
+      letter-spacing: -0.04em;
+    }
+    .hero .stat .label {
+      font-size: 0.85rem;
+      color: var(--text-dim);
+    }
+
+    /* ===== SECTIONS ===== */
+    section {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 4rem 2rem;
+    }
+    section h2 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      margin-bottom: 0.5rem;
+    }
+    section .section-desc {
+      color: var(--text-dim);
+      font-size: 0.95rem;
+      margin-bottom: 2rem;
+    }
+
+    /* ===== PHILOSOPHY ===== */
+    .philosophy-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 1rem;
+    }
+    .philosophy-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      transition: border-color var(--transition), transform var(--transition);
+    }
+    .philosophy-card:hover {
+      border-color: var(--accent);
+      transform: translateY(-2px);
+    }
+    .philosophy-card .num {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--accent);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 0.75rem;
+    }
+    .philosophy-card h3 {
+      font-size: 1rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+    .philosophy-card p {
+      font-size: 0.875rem;
+      color: var(--text-dim);
+      line-height: 1.5;
+    }
+
+    /* ===== CATEGORY CARDS ===== */
+    .category-tabs {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 2rem;
+      flex-wrap: wrap;
+    }
+    .category-tab {
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text-dim);
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all var(--transition);
+    }
+    .category-tab:hover { border-color: var(--accent); color: var(--text); }
+    .category-tab.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: white;
+    }
+    .category-tab .count {
+      display: inline-block;
+      background: rgba(255,255,255,0.15);
+      padding: 0.1rem 0.4rem;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      margin-left: 0.3rem;
+    }
+
+    .category-panel { display: none; }
+    .category-panel.active { display: block; }
+
+    .skill-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 1rem;
+    }
+    .skill-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.25rem;
+      transition: border-color var(--transition);
+    }
+    .skill-card:hover { border-color: var(--accent); }
+    .skill-card .skill-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 0.5rem;
+    }
+    .skill-card .skill-name {
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--accent);
+    }
+    .skill-card .skill-demo {
+      font-size: 0.75rem;
+      color: var(--text-dim);
+      text-decoration: none;
+      padding: 0.2rem 0.6rem;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      transition: all var(--transition);
+      white-space: nowrap;
+    }
+    .skill-card .skill-demo:hover {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: white;
+    }
+    .skill-card .skill-desc {
+      font-size: 0.85rem;
+      color: var(--text-dim);
+      line-height: 1.5;
+    }
+
+    /* ===== DEMO PREVIEW ===== */
+    .demo-showcase {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .demo-showcase .preview-area {
+      position: relative;
+      aspect-ratio: 16/9;
+      background: var(--code-bg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .demo-showcase .preview-area img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      opacity: 0.8;
+    }
+    .demo-showcase .preview-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transition: opacity var(--transition);
+    }
+    .demo-showcase:hover .preview-overlay { opacity: 1; }
+    .demo-showcase .preview-overlay a {
+      background: var(--accent);
+      color: white;
+      text-decoration: none;
+      padding: 0.6rem 1.2rem;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+    .demo-info {
+      padding: 1.25rem;
+    }
+    .demo-info h3 {
+      font-size: 0.95rem;
+      font-weight: 600;
+      margin-bottom: 0.3rem;
+    }
+    .demo-info p {
+      font-size: 0.8rem;
+      color: var(--text-dim);
+    }
+
+    /* ===== SKILL FORMAT ===== */
+    .format-example {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      line-height: 1.7;
+      overflow-x: auto;
+    }
+    .format-example .comment { color: #5a6270; }
+    .format-example .frontmatter { color: var(--accent2); }
+    .format-example .key { color: #82d9c8; }
+    .format-example .value { color: #f0c07a; }
+
+    /* ===== WORKFLOW ===== */
+    .workflow-steps {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 1rem;
+    }
+    .workflow-step {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.25rem;
+      position: relative;
+    }
+    .workflow-step .step-num {
+      position: absolute;
+      top: -0.6rem;
+      left: 1.25rem;
+      background: var(--accent);
+      color: white;
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 0.15rem 0.5rem;
+      border-radius: 4px;
+    }
+    .workflow-step h4 {
+      font-size: 0.9rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      margin-top: 0.25rem;
+    }
+    .workflow-step p {
+      font-size: 0.8rem;
+      color: var(--text-dim);
+      line-height: 1.5;
+    }
+
+    /* ===== FOLDER CONTRACT ===== */
+    .folder-tree {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      line-height: 1.9;
+    }
+    .folder-tree .folder { color: #f0c07a; }
+    .folder-tree .file { color: var(--accent); }
+    .folder-tree .optional { color: #5a6270; }
+
+    /* ===== CTA ===== */
+    .cta-section {
+      text-align: center;
+      padding: 5rem 2rem;
+    }
+    .cta-section h2 {
+      font-size: 2rem;
+      font-weight: 800;
+      letter-spacing: -0.04em;
+      margin-bottom: 1rem;
+    }
+    .cta-section p {
+      color: var(--text-dim);
+      margin-bottom: 2rem;
+      font-size: 1.1rem;
+    }
+    .cta-links {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+    .cta-links a {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.75rem 1.5rem;
+      border-radius: 10px;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 0.95rem;
+      transition: all var(--transition);
+    }
+    .cta-links a.primary {
+      background: var(--accent);
+      color: white;
+    }
+    .cta-links a.primary:hover {
+      background: #6a5fe0;
+      transform: translateY(-1px);
+    }
+    .cta-links a.secondary {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text);
+    }
+    .cta-links a.secondary:hover {
+      border-color: var(--accent);
+      transform: translateY(-1px);
+    }
+
+    /* ===== FOOTER ===== */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 2rem;
+      text-align: center;
+      color: var(--text-dim);
+      font-size: 0.8rem;
+    }
+    footer a { color: var(--accent); text-decoration: none; }
+
+    @media (max-width: 768px) {
+      nav .links { display: none; }
+      .hero { padding: 4rem 1.5rem 3rem; }
+      .hero .stats { gap: 1.5rem; }
+      section { padding: 3rem 1.5rem; }
+      .skill-list { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav>
+    <div class="inner">
+      <a href="index.html" class="logo">MengTo/Skills · 研究</a>
+      <ul class="links">
+        <li><a href="#overview">总览</a></li>
+        <li><a href="#philosophy">哲学</a></li>
+        <li><a href="#categories">分类</a></li>
+        <li><a href="#workflow">工作流</a></li>
+        <li><a href="#format">格式</a></li>
+      </ul>
+      <a href="../" class="back-link">← 返回研究库</a>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <section class="hero" id="overview">
+    <div class="badge">Project 2 · AI Agent 设计技能库</div>
+    <h1>MengTo / Skills</h1>
+    <p class="subtitle">
+      一个面向 AI 编码智能体的设计技能库（3.9k Stars · MIT）<br>
+      118 个 SKILL.md 工作流，让 Codex · Claude Code · Cursor · Lovable 精准完成设计任务
+    </p>
+    <div class="stats">
+      <div class="stat">
+        <div class="num">118</div>
+        <div class="label">Skills</div>
+      </div>
+      <div class="stat">
+        <div class="num">89</div>
+        <div class="label">Demos</div>
+      </div>
+      <div class="stat">
+        <div class="num">5</div>
+        <div class="label">分类</div>
+      </div>
+      <div class="stat">
+        <div class="num">3.9k</div>
+        <div class="label">Stars</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PHILOSOPHY -->
+  <section id="philosophy">
+    <h2>核心哲学</h2>
+    <p class="section-desc">这个库建立在四个核心原则之上，驱动着每一个技能的设计方式。</p>
+    <div class="philosophy-grid">
+      <div class="philosophy-card">
+        <div class="num">Principle 01</div>
+        <h3>Prompts are assets</h3>
+        <p>好的提示词应该被版本化管理、存入技能库，而不是用完即弃。一次好的提示词 = 永久可复用的资产。</p>
+      </div>
+      <div class="philosophy-card">
+        <div class="num">Principle 02</div>
+        <h3>Specs beat vibes</h3>
+        <p>最快速获得一致输出的方式：清晰的约束条件 + 明确的层级结构 + "只改 1-2 处"的迭代纪律。</p>
+      </div>
+      <div class="philosophy-card">
+        <div class="num">Principle 03</div>
+        <h3>References beat paragraphs</h3>
+        <p>截图承载着字体、间距、颜色、布局节奏——这些信息密度远高于文字描述，且无可歧义。</p>
+      </div>
+      <div class="philosophy-card">
+        <div class="num">Principle 04</div>
+        <h3>Skills are operating procedures</h3>
+        <p>好的技能精确告诉 AI：何时使用、如何启动、用什么默认值、以及需要避开哪些坑。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- CATEGORIES -->
+  <section id="categories">
+    <h2>五大分类</h2>
+    <p class="section-desc">118 个技能分布在 5 个分类中，覆盖从设计到工程的全链路。</p>
+
+    <div class="category-tabs">
+      <button class="category-tab active" data-cat="codex">Codex 工作流 <span class="count">17</span></button>
+      <button class="category-tab" data-cat="web-design">Web Design <span class="count">79</span></button>
+      <button class="category-tab" data-cat="game-dev">Game Dev <span class="count">19</span></button>
+      <button class="category-tab" data-cat="ui">UI <span class="count">1</span></button>
+      <button class="category-tab" data-cat="media">Media <span class="count">2</span></button>
+    </div>
+
+    <!-- CODEX -->
+    <div class="category-panel active" id="panel-codex">
+      <div class="skill-list">
+        <div class="skill-card">
+          <div class="skill-header">
+            <span class="skill-name">video-to-superprompt</span>
+            <a href="agent-skills/codex/video-to-superprompt/demo/index.html" class="skill-demo">Demo →</a>
+          </div>
+          <p class="skill-desc">将参考视频转换为可重建的超级提示词。捕捉设计、UI、动画、过渡、滚动交互、字体、颜色、资产。</p>
+        </div>
+        <div class="skill-card">
+          <div class="skill-header">
+            <span class="skill-name">html-to-interaction-prompts</span>
+            <a href="agent-skills/codex/html-to-interaction-prompts/demo/index.html" class="skill-demo">Demo →</a>
+          </div>
+          <p class="skill-desc">将 HTML 页面转换为截图-backed 的交互提示词组，每个交互一个可复用提示词。</p>
+        </div>
+        <div class="skill-card">
+          <div class="skill-header">
+            <span class="skill-name">stitched-full-page-capture</span>
+            <a href="agent-skills/codex/stitched-full-page-capture/demo/index.html" class="skill-demo">Demo →</a>
+          </div>
+          <p class="skill-desc">全页截图捕获（含懒加载、WebGL、动画页），解决空白/灰色/稀疏截图的常见问题。</p>
+        </div>
+        <div class="skill-card">
+          <div class="skill-header">
+            <span class="skill-name">daily-ui-inspiration-capture</span>
+            <a href="agent-skills/codex/daily-ui-inspiration-capture/demo/index.html" class="skill-demo">Demo →</a>
+          </div>
+          <p class="skill-desc">每日 UI 灵感捕获循环：浏览 → 捕获 → 参考研究 → 提示词生成，产出 5 个灵感包。</p>
+        </div>
+        <div class="skill-card">
+          <div class="skill-header">
+            <span class="skill-name">optimize-web-animations</span>
+            <a href="agent-skills/codex/optimize-web-animations/demo/index.html" class="skill-demo">Demo →</a>
+          </div>
+          <p class="skill-desc">动画性能分析：内存泄漏风险、长会话卡顿、Canvas/WebGL 性能剖析、滚动卡顿优化。</p>
+        </div>
+        <div class="skill-card">
+          <div class="skill-header">
+            <span class="skill-name">audit-verify-explain-grade-5</span>
+            <a href="agent-skills/codex/audit-verify-explain-grade-5/demo/index.html" class="skill-demo">Demo →</a>
+          </div>
+          <p class="skill-desc">审计 + 验证 + 用五年级语言解释技术结果，让非技术人员也能理解复杂技术发现。</p>
+        </div>
+        <div class="skill-card">
+          <div class="skill-header">
+            <span class="skill-name">elevenlabs-tts</span>
+            <a href="agent-skills/codex/elevenlabs-tts/demo/index.html" class="skill-demo">Demo →</a>
+          </div>
+          <p class="skill-desc">使用本地 voice profile 生成 ElevenLabs TTS 音频，提示词 → 语音旁白。</p>
+        </div>
+        <div class="skill-card">
+          <div class="skill-header">
+            <span class="skill-name">browser-video-recording</span>
+            <a href="agent-skills/codex/browser-video-recording/demo/index.html" class="skill-demo">Demo →</a>
+          </div>
+          <p class="skill-desc">60fps 4K 浏览器录屏视频制作：macOS 光标样式、自然点击编排、缩放跟随帧。</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- WEB DESIGN -->
+    <div class="category-panel" id="panel-web-design">
+      <div class="skill-list">
+        <div class="skill-card">
+          <div class="skill-header">
+            <span class="skill-name">gsap</span>
+            <a href="agent-skills/web-design/gsap/demo/index.html" class="skill-demo">Demo →</a>
+          </div>
+          <p class="skill-desc">GSAP 时间线、ScrollTrigger、stagger、transform 动画。含常见坑点（FOUC、布局属性动画、overflow）。</p>
+        </div>
+        <div class="skill-card">
+          <div class="skill-header">
+            <span class="skill-name">threejs</span>
+            <a href="agent-skills/web-design/threejs/demo/index.html" class="skill-demo">Demo →</a>
+          </div>
+          <p class="skill-desc">Three.js 场景/相机/渲染/GLTF 加载/OrbitControls/性能调优/SPA 清理。含最小旋转立方体示例代码。</p>
+        </div>
+        <div class="skill-card">
+          <div class="skill-header">
+            <span class="skill-name">tailwindcss</span>
+            <a href="agent-skills/web-design/tailwindcss/demo/index.html" class="skill-demo">Demo →</a>
+          </div>
+          <p class="skill-desc">Tailwind CSS 工具优先模式、响应式变体、状态变体、暗黑模式、@apply 边界、clsx/cva 组合。</p>
+        </div>
+        <div class="skill-card">
+          <div class="skill-header">
+            <span class="skill-name">landing-page</span>
+            <a href="agent-skills/web-design/landing-page/demo/index.html" class="skill-demo">Demo →</a>
+          </div>
+          <p class="skill-desc">高转化落地页：结构/布局/转化策略/文案/SEO·AEO，涵盖 8 个常见陷阱和验收标准。</p>
+        </div>
+        <div class="skill-card">
+          <div class="skill-header">
+            <span class="skill-name">matterjs</span>
+            <a href="agent-skills/web-design/matterjs/demo/index.html" class="skill-demo">Demo →</a>
+          </div>
+          <p class="skill-desc">Matter.js 2D 物理引擎：碰撞、布料模拟、粒子效果、刚体约束。</p>
+        </div>
+        <div class="skill-card">
+          <div class="skill-header">
+            <span class="skill-name">vantajs</span>
+            <a href="agent-skills/web-design/vantajs/demo/index.html" class="skill-demo">Demo →</a>
+          </div>
+          <p class="skill-desc">Vanta.js WebGL 动画背景：仙人掌/森林/海洋/波浪/星辰，附清理（cancelAnimationFrame/dispose）。</p>
+        </div>
+        <div class="skill-card">
+          <div class="skill-header">
+            <span class="skill-name">globe-gl</span>
+            <a href="agent-skills/web-design/globe-gl/demo/index.html" class="skill-demo">Demo →</a>
+          </div>
+          <p class="skill-desc">Globe.gl 3D 地球数据可视化：自定义标记、弧线、文本标注、时区层。</p>
+        </div>
+        <div class="skill-card">
+          <div class="skill-header">
+            <span class="skill-name">marquee-loop</span>
+            <a href="agent-skills/web-design/marquee-loop/demo/index.html" class="skill-demo">Demo →</a>
+          </div>
+          <p class="skill-desc">无缝循环字幕动画：CSS-only + JS 增强，无缝拼接技术，prefetch 优化。</p>
+        </div>
+        <div class="skill-card">
+          <div class="skill-header">
+            <span class="skill-name">animation-on-scroll</span>
+            <a href="agent-skills/web-design/animation-on-scroll/demo/index.html" class="skill-demo">Demo →</a>
+          </div>
+          <p class="skill-desc">IntersectionObserver 滚动动画：opacity/transform 进入动画，prefers-reduced-motion 降级。</p>
+        </div>
+        <div class="skill-card">
+          <div class="skill-header">
+            <span class="skill-name">beautiful-shadows</span>
+            <a href="agent-skills/web-design/beautiful-shadows/demo/index.html" class="skill-demo">Demo →</a>
+          </div>
+          <p class="skill-desc">精致阴影：多层 box-shadow、彩色阴影、内阴影、等高线阴影、扩散光。</p>
+        </div>
+        <div class="skill-card">
+          <div class="skill-header">
+            <span class="skill-name">dark-glass-clean-layout</span>
+            <a href="agent-skills/web-design/dark-glass-clean-layout/demo/index.html" class="skill-demo">Demo →</a>
+          </div>
+          <p class="skill-desc">深色玻璃干净布局：glassmorphism、backdrop-filter、微妙边框、渐变叠加。</p>
+        </div>
+        <div class="skill-card">
+          <div class="skill-header">
+            <span class="skill-name">cinematic-gsap-lenis-motion-system</span>
+            <a href="agent-skills/web-design/cinematic-gsap-lenis-motion-system/demo/index.html" class="skill-demo">Demo →</a>
+          </div>
+          <p class="skill-desc">电影感 GSAP + Lenis 滚动系统：平滑滚动、视差层、电影化分镜节奏。</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- GAME DEV -->
+    <div class="category-panel" id="panel-game-dev">
+      <div class="skill-list">
+        <div class="skill-card">
+          <div class="skill-header">
+            <span class="skill-name">build-isometric-arpg</span>
+          </div>
+          <p class="skill-desc">等距 ARPG 垂直切片开发：游戏循环/相机/移动/战斗/敌人/奖励/进度/存档，按垂直切片顺序交付可玩路线。</p>
+        </div>
+        <div class="skill-card">
+          <div class="skill-header">
+            <span class="skill-name">design-action-combat</span>
+          </div>
+          <p class="skill-desc">动作战斗系统：起手帧/命中帧/恢复帧、接触判定、防御、打断、确定性验证。</p>
+        </div>
+        <div class="skill-card">
+          <div class="skill-header">
+            <span class="skill-name">build-threejs-enemy-systems</span>
+          </div>
+          <p class="skill-desc">Three.js 敌人系统：敌人原型定义/moveset/模型规范/Runtime hooks/备选方案/测试夹具。</p>
+        </div>
+        <div class="skill-card">
+          <div class="skill-header">
+            <span class="skill-name">tune-enemy-ai</span>
+          </div>
+          <p class="skill-desc">敌人 AI 感知与决策：感知范围/意图/导航/间距/攻击决策，公平、有界、可复现。</p>
+        </div>
+        <div class="skill-card">
+          <div class="skill-header">
+            <span class="skill-name">build-game-inventory</span>
+          </div>
+          <p class="skill-desc">背包/装备/掉落系统：原子化库存/战利品/装备/拖放/迁移/不丢失持久化流程。</p>
+        </div>
+        <div class="skill-card">
+          <div class="skill-header">
+            <span class="skill-name">test-playable-web-games</span>
+          </div>
+          <p class="skill-desc">游戏 QA 测试：确定性测试夹具 + 真实浏览器体验验证，绿 build ≠ 游戏验证通过。</p>
+        </div>
+        <div class="skill-card">
+          <div class="skill-header">
+            <span class="skill-name">optimize-threejs-games</span>
+          </div>
+          <p class="skill-desc">Three.js 游戏优化：帧时间/绘制调用/内存/质量问题诊断，不牺牲操作可读性。</p>
+        </div>
+        <div class="skill-card">
+          <div class="skill-header">
+            <span class="skill-name">create-game-vfx</span>
+          </div>
+          <p class="skill-desc">游戏视觉特效：可见、有界、对象池化、prefers-reduced-motion 感知特效。</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- UI -->
+    <div class="category-panel" id="panel-ui">
+      <div class="skill-list">
+        <div class="skill-card">
+          <div class="skill-header">
+            <span class="skill-name">design-first-ui-prompting</span>
+            <a href="agent-skills/ui/design-first-ui-prompting/demo/index.html" class="skill-demo">Demo →</a>
+          </div>
+          <p class="skill-desc">设计优先 UI 提示词系统：6 段式模板（Goal→Format→Layout→Type→Color→Constraints）、变体迭代工作流、负面提示词、2-pass 字体流程。复制粘贴即可使用。</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- MEDIA -->
+    <div class="category-panel" id="panel-media">
+      <div class="skill-list">
+        <div class="skill-card">
+          <div class="skill-header">
+            <span class="skill-name">aura-asset-images</span>
+            <a href="agent-skills/media/aura-asset-images/demo/index.html" class="skill-demo">Demo →</a>
+          </div>
+          <p class="skill-desc">Aura Assets 商业图库：按用途/裁剪/比例选取高质量设计/营销图像。</p>
+        </div>
+        <div class="skill-card">
+          <div class="skill-header">
+            <span class="skill-name">unsplash-asset-images</span>
+            <a href="agent-skills/media/unsplash-asset-images/demo/index.html" class="skill-demo">Demo →</a>
+          </div>
+          <p class="skill-desc">Unsplash 免费高质量图库：按用途/裁剪/比例选取，CC0 免版权。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- WORKFLOW -->
+  <section id="workflow">
+    <h2>招牌工作流（四步闭环）</h2>
+    <p class="section-desc">MengTo 推荐的 AI 设计工作流，从视频到完整灵感库的完整循环。</p>
+    <div class="workflow-steps">
+      <div class="workflow-step">
+        <div class="step-num">01</div>
+        <h4>video-to-superprompt</h4>
+        <p>将参考视频转换为超级重建提示词，捕捉设计、动画、过渡、字体、颜色、资产完整信息。</p>
+      </div>
+      <div class="workflow-step">
+        <div class="step-num">02</div>
+        <h4>html-to-interaction-prompts</h4>
+        <p>将 HTML 页面拆解为多个可复用交互提示词：每个交互（hover/滚动/悬停）一个独立提示词。</p>
+      </div>
+      <div class="workflow-step">
+        <div class="step-num">03</div>
+        <h4>stitched-full-page-capture</h4>
+        <p>捕获完整落地页截图作为结构参考，解决懒加载/WebGL/动画页的截图为空白问题。</p>
+      </div>
+      <div class="workflow-step">
+        <div class="step-num">04</div>
+        <h4>daily-ui-inspiration-capture</h4>
+        <p>每日 UI 灵感循环：浏览捕获 → 参考研究 → 提示词生成，产出 5 个高质量灵感包。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- FORMAT -->
+  <section id="format">
+    <h2>SKILL.md 标准格式</h2>
+    <p class="section-desc">每个技能遵循统一的文件契约，前 Matters 作为触发器，正文作为工作流执行手册。</p>
+
+    <div class="format-example">
+<span class="comment">---</span>
+<span class="frontmatter">name</span><span class="key">: video-to-superprompt</span>
+<span class="frontmatter">description</span><span class="value">: Turn a reference video into a super detailed recreation or inspiration prompt. Use when the user provides, mentions, uploads, links, or points to a video and asks to analyze the design, UI, animations, transitions, scroll interactions...</span>
+<span class="comment">---</span>
+
+<span class="comment"># Video To Superprompt</span>
+
+<span class="comment">## Goal</span>
+Convert any usable reference video into a builder-ready prompt that captures what the video shows...
+
+<span class="comment">## Workflow</span>
+<span class="key">1. <strong>Locate the source video.</strong></span>
+Accept local paths, uploaded files, URLs...
+<span class="key">2. <strong>Inspect technically.</strong></span>
+Run ffprobe for metadata, extract frames with ffmpeg...
+<span class="key">3. <strong>Analyze in layers.</strong></span>
+Story / Screen-layout / Motion / Visual design / Technical rebuild...
+<span class="key">4. <strong>Plan assets.</strong></span>
+Produce an asset map with exact URLs...
+<span class="key">5. <strong>Write the superprompt.</strong></span>
+Start with the final thing to build...
+<span class="key">6. <strong>Verify before finalizing.</strong></span>
+Confirm all asset paths exist...
+
+<span class="comment">## Quality Bar</span>
+The prompt should be long enough to rebuild the interaction without seeing the original video.
+Include exact motion mechanisms: pinned section, scrubbed timeline, video.currentTime, parallax...
+
+<span class="comment">## Pitfalls</span>
+Generic landing-page sections, decorative blobs, mismatched stock media, autoplay-only video...
+    </div>
+  </section>
+
+  <!-- FOLDER CONTRACT -->
+  <section id="contract">
+    <h2>技能文件夹契约</h2>
+    <p class="section-desc">每个技能文件夹的标准化结构，确保 AI 智能体可以无歧义地找到所需文件。</p>
+    <div class="folder-tree">
+<span class="folder">agent-skills/&lt;category&gt;/&lt;skill-name&gt;/</span>
+├── <span class="file">SKILL.md</span>              <span class="comment"># 必需：frontmatter + 工作流</span>
+├── <span class="file">REFERENCES.md</span>         <span class="comment"># 可选：仅链接</span>
+├── <span class="file">ARTICLE.md</span>          <span class="comment"># 可选：长文解释</span>
+├── <span class="folder">assets/</span>              <span class="comment"># 可选：图片/模板</span>
+├── <span class="folder">scripts/</span>             <span class="comment"># 可选：辅助脚本</span>
+└── <span class="folder">demo/</span>
+    ├── <span class="file">index.html</span>         <span class="comment"># 可移植独立 HTML</span>
+    ├── <span class="file">PROMPT.md</span>         <span class="comment"># 精确复现提示词</span>
+    ├── <span class="file">preview.jpg</span>       <span class="comment"># 1280×720 截图</span>
+    ├── <span class="file">source.json</span>        <span class="comment"># Neuform 溯源数据</span>
+    └── <span class="folder">assets/</span>           <span class="comment"># demo 本地资源</span>
+    </div>
+  </section>
+
+  <!-- DEMOS -->
+  <section id="demos">
+    <h2>精选 Demo 展示</h2>
+    <p class="section-desc">89 个 Demo 覆盖所有核心技能，点击可直接在浏览器中预览运行效果。</p>
+    <div class="skill-list">
+      <div class="demo-showcase">
+        <div class="preview-area">
+          <img src="agent-skills/web-design/gsap/demo/preview.jpg" alt="GSAP Demo" loading="lazy">
+          <div class="preview-overlay">
+            <a href="agent-skills/web-design/gsap/demo/index.html" target="_blank">打开 Demo →</a>
+          </div>
+        </div>
+        <div class="demo-info">
+          <h3>GSAP Motion</h3>
+          <p>GSAP 时间线 + ScrollTrigger + 交错动画</p>
+        </div>
+      </div>
+      <div class="demo-showcase">
+        <div class="preview-area">
+          <img src="agent-skills/web-design/threejs/demo/preview.jpg" alt="Three.js Demo" loading="lazy">
+          <div class="preview-overlay">
+            <a href="agent-skills/web-design/threejs/demo/index.html" target="_blank">打开 Demo →</a>
+          </div>
+        </div>
+        <div class="demo-info">
+          <h3>Three.js Scene</h3>
+          <p>Three.js 3D 场景 / 相机 / 渲染 / GLTF</p>
+        </div>
+      </div>
+      <div class="demo-showcase">
+        <div class="preview-area">
+          <img src="agent-skills/web-design/beautiful-shadows/demo/preview.jpg" alt="Beautiful Shadows" loading="lazy">
+          <div class="preview-overlay">
+            <a href="agent-skills/web-design/beautiful-shadows/demo/index.html" target="_blank">打开 Demo →</a>
+          </div>
+        </div>
+        <div class="demo-info">
+          <h3>Beautiful Shadows</h3>
+          <p>精致 CSS 阴影效果集合</p>
+        </div>
+      </div>
+      <div class="demo-showcase">
+        <div class="preview-area">
+          <img src="agent-skills/web-design/globe-gl/demo/preview.jpg" alt="Globe.gl Demo" loading="lazy">
+          <div class="preview-overlay">
+            <a href="agent-skills/web-design/globe-gl/demo/index.html" target="_blank">打开 Demo →</a>
+          </div>
+        </div>
+        <div class="demo-info">
+          <h3>Globe.gl</h3>
+          <p>3D 地球数据可视化</p>
+        </div>
+      </div>
+      <div class="demo-showcase">
+        <div class="preview-area">
+          <img src="agent-skills/web-design/masked-reveal/demo/preview.jpg" alt="Masked Reveal" loading="lazy">
+          <div class="preview-overlay">
+            <a href="agent-skills/web-design/masked-reveal/demo/index.html" target="_blank">打开 Demo →</a>
+          </div>
+        </div>
+        <div class="demo-info">
+          <h3>Masked Reveal</h3>
+          <p>CSS 遮罩显示动画效果</p>
+        </div>
+      </div>
+      <div class="demo-showcase">
+        <div class="preview-area">
+          <img src="agent-skills/web-design/marquee-loop/demo/preview.jpg" alt="Marquee Loop" loading="lazy">
+          <div class="preview-overlay">
+            <a href="agent-skills/web-design/marquee-loop/demo/index.html" target="_blank">打开 Demo →</a>
+          </div>
+        </div>
+        <div class="demo-info">
+          <h3>Marquee Loop</h3>
+          <p>无缝循环字幕动画</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="cta-section">
+    <h2>深入研究</h2>
+    <p>查看完整技能矩阵、所有 SKILL.md 源文件、以及 DEMOS.md 演示索引。</p>
+    <div class="cta-links">
+      <a href="SKILL-MATRIX.md" class="secondary">📋 技能矩阵 →</a>
+      <a href="agent-skills/codex/video-to-superprompt/SKILL.md" class="secondary">📄 video-to-superprompt 源文件 →</a>
+      <a href="DEMOS.md" class="secondary">🎬 完整 Demo 索引 →</a>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <p>Project 2 · MengTo/Skills 深度研究 | 上游 <a href="https://github.com/MengTo/Skills">MengTo/Skills</a> · MIT License</p>
+  </footer>
+
+  <script>
+    // Category tabs
+    document.querySelectorAll('.category-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.category-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.category-panel').forEach(p => p.classList.remove('active'));
+        tab.classList.add('active');
+        document.getElementById('panel-' + tab.dataset.cat).classList.add('active');
+      });
+    });
+
+    // Smooth scroll for nav links
+    document.querySelectorAll('a[href^="#"]').forEach(a => {
+      a.addEventListener('click', e => {
+        e.preventDefault();
+        const target = document.querySelector(a.getAttribute('href'));
+        if (target) {
+          target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      });
+    });
+  </script>
+</body>
+</html>
