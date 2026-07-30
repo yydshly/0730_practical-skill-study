@@ -26,7 +26,7 @@
 
 ```
 .
-├── README.md                        ← 你正在读的（外层）
+├── README.md                        ← 你正在读的（项目 1 入口）
 ├── AGENTS.md / USAGE.md             ← 上游 Skill 自带的文档,保留
 │
 ├── .trae/skills/finesse-ui/         ← 上游 Skill 库(vendor,只读)
@@ -122,10 +122,9 @@ family-orchard/
 
 ## 维护约定
 
-- **加新项目**:在根目录建 `项目名/` 子目录,内含自己的 `README.md` + `index.html` + `_assets/`,不必改其它文件
-- **加新研究工具**:可以直接放根目录,工具页之间用 `xx-nav.html` 互链
+- **加新研究工具**:可以直接放在本项目目录,工具页之间用 `xx-nav.html` 互链
+- **加新子交付物**:在本项目目录下建 `子项目名/` 子目录,内含 README + 交付物
 - **改上游 Skill**:不动 `.trae/skills/finesse-ui/`(vendor),如要修改,在 `skills/finesse-ui/` 内 fork
-- **OPTIMIZATION.md**(在工作区根,被 .gitignore 忽略):个人待办 / 不进库的
 
 ---
 
@@ -139,7 +138,7 @@ family-orchard/
 
 ## 项目索引
 
-- [项目 1 · 拾穗果园品牌官网](./family-orchard/) — 已完成 v0 → v9
+- **[子交付物 · 拾穗果园品牌官网](./family-orchard/)** — 5 节内容 + 真表单 + 主题切换,按 Quiet Luxury Minimal + Forest palette 规格生成的可交付品牌页,详见 [./family-orchard/README.md](./family-orchard/README.md)
 - [研究工具 · examples-index](./examples-index.html) — 13 个范例索引
 - [研究工具 · capabilities](./capabilities.html) — 能力全景 + 决策树
 - [研究工具 · prompt-builder](./prompt-builder.html) — Prompt 自动拼装
