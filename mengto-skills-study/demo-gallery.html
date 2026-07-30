@@ -2493,9 +2493,9 @@
       var href = link.getAttribute('href');
       var m = href.match(/agent-skills\/([^/]+\/[^/]+)\/demo/);
       if (m && SANDBOXED[m[1]]) {
-        link.href = href.replace('/demo/index.html', '/demo/preview.jpg');
+        link.href = href.replace('/demo/index.html', '/demo/index-standalone.html');
         link.target = '_blank';
-        link.title = '（此 Demo 需在 gallery 中预览，图片为效果图）';
+        link.title = '（自包含独立 Demo，素材已内联）';
       }
     });
   </script>
