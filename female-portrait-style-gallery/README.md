@@ -4,13 +4,17 @@ Female Portrait Director 的二十种人像风格样例展廊。项目使用原�
 
 ## 浏览项目
 
-在当前目录启动任意静态文件服务器，例如：
+最简单的方式是直接双击 `index.html`，浏览器会通过 `file://` 打开完整展廊。
+
+开发和测试时，也可以在当前目录启动静态文件服务器：
 
 ```powershell
 python -m http.server 43173
 ```
 
 然后打开 `http://127.0.0.1:43173/`。
+
+修改 `js/gallery.js`、`js/styles.js` 或 `js/main.js` 后，必须重新运行 `npm.cmd run build`，生成浏览器加载的 `js/app.js`。
 
 页面支持九类风格筛选、中文关键词搜索、空结果重置、键盘操作的详情弹窗，以及完整提示词复制。按 `/` 可以快速聚焦搜索框，按 `Esc` 可以退出详情。
 
@@ -23,6 +27,8 @@ female-portrait-style-gallery/
 ├─ js/gallery.js        # 目录校验和筛选工具
 ├─ js/styles.js         # 二十种风格、参数与提示词
 ├─ js/main.js           # 页面渲染和交互
+├─ js/app.js            # 构建生成的经典浏览器脚本
+├─ scripts/             # 无依赖静态脚本构建器
 ├─ tests/               # 数据单元测试与浏览器验收
 ├─ index.html
 └─ styles.css
