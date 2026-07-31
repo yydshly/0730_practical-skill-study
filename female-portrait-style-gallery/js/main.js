@@ -63,10 +63,10 @@ function createStyleCard(style, index) {
   const article = document.createElement('article');
   article.className = 'style-card';
 
-  const button = document.createElement('button');
-  button.type = 'button';
-  button.className = 'style-card__button';
-  button.setAttribute('aria-label', `查看${style.name}详情`);
+  const openButton = document.createElement('button');
+  openButton.type = 'button';
+  openButton.className = 'style-card__button';
+  openButton.setAttribute('aria-label', `查看${style.name}详情`);
 
   const visual = document.createElement('div');
   visual.className = 'style-card__visual';
@@ -103,9 +103,21 @@ function createStyleCard(style, index) {
   description.textContent = style.description;
   caption.append(topline, title, description);
   visual.append(image, fallback);
-  button.append(visual, caption);
-  button.addEventListener('click', () => openStyle(style, button));
-  article.append(button);
+  openButton.append(visual, caption);
+  openButton.addEventListener('click', () => openStyle(style, openButton));
+
+  const promptPanel = document.createElement('div');
+  promptPanel.className = 'style-card__prompt';
+  const promptText = document.createElement('p');
+  promptText.textContent = style.prompt;
+  const copyButton = document.createElement('button');
+  copyButton.type = 'button';
+  copyButton.className = 'card-copy-button';
+  copyButton.textContent = '复制提示词';
+  copyButton.addEventListener('click', () => copyText(style.prompt));
+  promptPanel.append(promptText, copyButton);
+
+  article.append(openButton, promptPanel);
   return article;
 }
 
@@ -151,14 +163,13 @@ function showToast(message) {
   toastTimer = window.setTimeout(() => elements.toast.classList.remove('is-visible'), 2200);
 }
 
-async function copyPrompt() {
-  if (!activeStyle) return;
+async function copyText(text) {
   try {
-    await navigator.clipboard.writeText(activeStyle.prompt);
+    await navigator.clipboard.writeText(text);
     showToast('提示词已复制');
   } catch {
     const textarea = document.createElement('textarea');
-    textarea.value = activeStyle.prompt;
+    textarea.value = text;
     textarea.setAttribute('readonly', '');
     textarea.style.position = 'fixed';
     textarea.style.opacity = '0';
@@ -168,6 +179,10 @@ async function copyPrompt() {
     textarea.remove();
     showToast(copied ? '提示词已复制' : '复制失败，请手动选择提示词');
   }
+}
+
+function copyPrompt() {
+  if (activeStyle) return copyText(activeStyle.prompt);
 }
 
 elements.search.addEventListener('input', (event) => {
