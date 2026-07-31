@@ -1,8 +1,8 @@
 # 0730 · 本次会话归档
 
-> **里程碑 tag**: `v0.11` · Project 2 启动
-> **归档时间**: 2026-07-30
-> **归档内容**: Project 2 启动（MengTo/Skills 深度研究）
+> **里程碑 tag**: `v0.12` · Project 2 + 3 完成
+> **归档时间**: 2026-07-31
+> **归档内容**: Project 2 研究收尾（18 Codex Skills 完整DETAIL_DATA + 19 Game Dev Skills 参考页）+ Project 3 启动（15 设计模式 + 5 原创Skills）
 
 ---
 
@@ -261,6 +261,83 @@ examples-index  ←→  capabilities  ←→  prompt-builder  ←→  family-orc
 - 逐个分类深度分析（Web Design 79 个技能逐个研究）
 - 与 Finesse Skill 对比研究
 - 构建我们自己的 AI Agent Design Skills 库
+
+---
+
+## Project 2 · 收尾 + Project 3 · 设计模式研究（v0.12 完成）
+
+**里程碑**: `ec97fd1` · 2026-07-31
+
+### 本次完成内容
+
+#### BUG 修复（本次触发任务）
+
+| 文件 | 问题 | 修复 |
+|---|---|---|
+| `skill-reference.html` | DETAIL_DATA 只有 6/18 entries，12 卡片打不开 | 补充全部 18 个 Codex Skills 的完整数据 |
+| `skill-reference.html` | 无 copy 按钮 | 添加 copyPrompt() + clipboard API |
+| `skill-reference.html` | XSS 风险：innerHTML 直接拼接 user data | 改用 textContent（scenario/prompt）+ innerHTML（仅 steps） |
+| `web-design-reference.html` | HTML 标签被渲染为真实 DOM | code 字段 HTML 标签改注释语法 |
+| `web-design-reference.html` | copy button 失效（引号/分号破坏 HTML 属性） | 提取为独立 copyCode() 函数 |
+| `web-design-reference.html` | orphaned `detailContent` 变量引用 | 移除冗余变量 |
+
+#### 新增参考页面
+
+| 文件 | 技能数 | 说明 |
+|---|---|---|
+| `game-dev-reference.html` | 19 | Game Dev Skills 完整参考手册，含 5 类筛选 |
+| `patterns-reference.html` | 15 | 从 48 个 Skills 提炼的设计模式速查 |
+| `custom-skills-reference.html` | 5 | 原创 Agent Skills 库入口 |
+
+#### 15 个设计模式（patterns-reference.html）
+
+| # | 模式 | 类型 | 来源 |
+|---|---|---|---|
+| 1 | 数据属性标记 API | 架构 | cinematic-gsap-lenis-motion-system |
+| 2 | 5个约束强制精选 | 质量 | daily-ui-inspiration-capture |
+| 3 | 执行-验证循环 | 工作流 | iterate-until-verified |
+| 4 | 质量门矩阵 | 质量 | iterate-until-verified |
+| 5 | Portable Contract | 工作流 | article-prompts-to-skills |
+| 6 | 相似度刻度盘 | Prompt | generate-reference-inspired-brand-worlds |
+| 7 | 垂直切片 | 架构 | build-isometric-arpg |
+| 8 | 原子事务 | 架构 | build-game-inventory |
+| 9 | 决策树路由 | 工作流 | performance-profiling |
+| 10 | 设计系统式 Prompt | Prompt | design-first-ui-prompting |
+| 11 | 分离制作与审判 | 质量 | iterate-until-verified |
+| 12 | 降级 Graceful Degradation | 架构 | cinematic-gsap-lenis-motion-system |
+| 13 | 真实证据要求 | 质量 | iterate-until-verified |
+| 14 | 单一数据源 | 架构 | build-game-inventory |
+| 15 | 失败模式清单 | 质量 | article-prompts-to-skills |
+
+#### 5 个原创 Agent Skills（agent-skills/custom/）
+
+| Skill | 提炼自 | 核心机制 |
+|---|---|---|
+| `agentic-loop` | iterate-until-verified | 7步执行-验证循环，质量门独立审判 |
+| `spec-first-ui` | design-first-ui-prompting | 先写规格再生成UI，约束单变量迭代 |
+| `extract-skill` | article-prompts-to-skills | Portable Contract 提取法，3示例Prompt |
+| `vertical-slice-delivery` | build-isometric-arpg | 垂直切片交付，三阶段Lock契约 |
+| `atomic-state-update` | build-game-inventory | 验证→计算→提交或拒绝→持久化 |
+
+#### 全站导航闭环
+
+skill-reference / web-design-reference / game-dev-reference / patterns-reference / custom-skills-reference 五页全部互通。
+
+### 提交记录
+
+```
+ec97fd1 feat: 15个设计模式速查 + 5个原创Agent Skills + 全站nav更新
+6fd522a feat: add game-dev-reference.html — 19个Game Dev Skill速查手册
+a2986bb fix: skill-reference — 补全 12 个缺失 DETAIL_DATA，添加 copy 按钮，修复 detail panel 结构
+5c20b64 fix: web-design-reference 卡片展开 — 转义 HTML 标签、修复 copy 按钮、移除悬空引用
+138ded0 feat: add web-design-reference.html — 11个精选Web Design Skill速查手册
+```
+
+### 已知遗留
+
+- family-orchard Phase B/C 全部待做（WebP/PWA/Lighthouse≥90/a11y审计/Schema.org）
+- MengTo/Skills Web Design 79 个技能尚未逐个深度分析
+- 与 Finesse Skill 的对比研究尚未开始
 
 ---
 

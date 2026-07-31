@@ -38,6 +38,11 @@
 | [`/mengto-skills-study/capability-map.html`](https://yydshly.github.io/0730_practical-skill-study/mengto-skills-study/capability-map.html) | 项目 2 · 能力地图（决策树） |
 | [`/mengto-skills-study/scene-testing.html`](https://yydshly.github.io/0730_practical-skill-study/mengto-skills-study/scene-testing.html) | 项目 2 · 场景测试（4 技能验证） |
 | [`/mengto-skills-study/workflow-demo.html`](https://yydshly.github.io/0730_practical-skill-study/mengto-skills-study/workflow-demo.html) | 项目 2 · 工作流实战（4 步闭环） |
+| [`/mengto-skills-study/skill-reference.html`](https://yydshly.github.io/0730_practical-skill-study/mengto-skills-study/skill-reference.html) | 项目 2 · 18 Codex Skills 参考手册 |
+| [`/mengto-skills-study/web-design-reference.html`](https://yydshly.github.io/0730_practical-skill-study/mengto-skills-study/web-design-reference.html) | 项目 2 · 11 Web Design Skills 参考手册 |
+| [`/mengto-skills-study/game-dev-reference.html`](https://yydshly.github.io/0730_practical-skill-study/mengto-skills-study/game-dev-reference.html) | 项目 2 · 19 Game Dev Skills 参考手册 |
+| [`/mengto-skills-study/patterns-reference.html`](https://yydshly.github.io/0730_practical-skill-study/mengto-skills-study/patterns-reference.html) | 项目 3 · 15 设计模式速查 |
+| [`/mengto-skills-study/custom-skills-reference.html`](https://yydshly.github.io/0730_practical-skill-study/mengto-skills-study/custom-skills-reference.html) | 项目 3 · 5 个原创 Agent Skills |
 
 > 部署开关：`Settings → Pages → Source: master · /(root)`（首次部署需仓库 owner 手动开启）
 
@@ -59,6 +64,11 @@ python -m http.server 8000
 #   http://localhost:8000/mengto-skills-study/capability-map.html
 #   http://localhost:8000/mengto-skills-study/scene-testing.html
 #   http://localhost:8000/mengto-skills-study/workflow-demo.html
+#   http://localhost:8000/mengto-skills-study/skill-reference.html      ← Codex 参考手册
+#   http://localhost:8000/mengto-skills-study/web-design-reference.html  ← Web Design 参考手册
+#   http://localhost:8000/mengto-skills-study/game-dev-reference.html    ← Game Dev 参考手册
+#   http://localhost:8000/mengto-skills-study/patterns-reference.html    ← 设计模式速查
+#   http://localhost:8000/mengto-skills-study/custom-skills-reference.html ← 原创 Skills
 ```
 
 > 项目 1 子交付物（family-orchard）使用了 ES module，必须走 HTTP 不能 `file://` 双击。项目 2 的 Demo 展示页内含"打开 Demo"链接，必须用 HTTP 服务打开。
@@ -82,18 +92,26 @@ python -m http.server 8000
 │       ├── index.html
 │       └── _assets/img/            ← 10 张 Pollinations AI 摄影
 │
-└── mengto-skills-study/            ← 项目 2 · MengTo/Skills 研究
+└── mengto-skills-study/            ← 项目 2/3 · MengTo/Skills 研究 + 设计模式
     ├── README.md                   ← 项目 2 入口
     ├── index.html                  ← 研究总览
     ├── demo-gallery.html           ← Layer 1 · 118 技能 Demo 展示(89 有 Demo)
     ├── capability-map.html         ← Layer 2 · 能力决策树
     ├── scene-testing.html          ← Layer 3 · 4 技能真实场景验证
     ├── workflow-demo.html          ← Layer 3 · 招牌 4 步工作流演示
+    ├── skill-reference.html        ← 18 Codex Skills 参考手册
+    ├── web-design-reference.html    ← 11 Web Design Skills 参考手册
+    ├── game-dev-reference.html      ← 19 Game Dev Skills 参考手册
+    ├── patterns-reference.html      ← 15 设计模式速查手册
+    ├── custom-skills-reference.html ← 5 个原创 Agent Skills 入口
     ├── SKILL-MATRIX.md            ← 118 技能完整索引
-    └── agent-skills/               ← 118 个技能的源代码(SKILL.md + demo)
+    └── agent-skills/               ← 118 个技能源码 + 5 个原创 Skills
+        └── custom/                ← 原创: agentic-loop / spec-first-ui /
+                                      extract-skill / vertical-slice-delivery /
+                                      atomic-state-update
 ```
 
-**当前 2 个项目,4 个研究工具 HTML,1 个可交付页面。** 未来每个新项目按 `项目名/` 单目录形式加入。
+**当前 3 个项目,9 个研究工具 HTML,1 个可交付页面。** 未来每个新项目按 `项目名/` 单目录形式加入。
 
 ---
 
@@ -102,7 +120,8 @@ python -m http.server 8000
 | # | 项目 | 一句话 | 状态 |
 |---|---|---|---|
 | 1 | [finesse-skill-study](./finesse-skill-study/) | 学习 UI 设计 Skill 并实战一个家庭果园品牌页 | 已完成 v0 → v9 |
-| 2 | [mengto-skills-study](./mengto-skills-study/) | 深度研究 MengTo/Skills 库（118 个 AI 设计技能） | 研究中 |
+| 2 | [mengto-skills-study](./mengto-skills-study/) | 研究 MengTo/Skills（118 Skills → 3 参考手册 + 场景测试 + 工作流） | 已完成 v0.11 → v0.12 |
+| 3 | — | 设计模式提炼 + 5 个原创 Agent Skills | 已完成 |
 
 > **项目 2 研究三层**：
 > - **Layer 1**：[Demo 展示](./mengto-skills-study/demo-gallery.html) — 118 技能 89 个 Demo 可视浏览
