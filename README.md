@@ -34,7 +34,7 @@
 | [`/finesse-skill-study/prompt-builder.html`](https://yydshly.github.io/0730_practical-skill-study/finesse-skill-study/prompt-builder.html) | 项目 1 · Prompt 自动拼装 |
 | [`/finesse-skill-study/family-orchard/`](https://yydshly.github.io/0730_practical-skill-study/finesse-skill-study/family-orchard/) | 项目 1 子交付物 · 拾穗果园 |
 | [`/mengto-skills-study/`](https://yydshly.github.io/0730_practical-skill-study/mengto-skills-study/) | 项目 2 研究总览 |
-| — | [craftzdog-homepage](./craftzdog-homepage/) | 3D 模型加载（需本地 `npm run dev` 运行，非 GitHub Pages） |
+| [`/craftzdog-homepage/`](./craftzdog-homepage/) | 项目 3 · 3D 模型加载（需本地 `npm run dev` 运行，非 GitHub Pages） |
 | [`/mengto-skills-study/demo-gallery.html`](https://yydshly.github.io/0730_practical-skill-study/mengto-skills-study/demo-gallery.html) | 项目 2 · Demo 展示（89 个可运行） |
 | [`/mengto-skills-study/capability-map.html`](https://yydshly.github.io/0730_practical-skill-study/mengto-skills-study/capability-map.html) | 项目 2 · 能力地图（决策树） |
 | [`/mengto-skills-study/scene-testing.html`](https://yydshly.github.io/0730_practical-skill-study/mengto-skills-study/scene-testing.html) | 项目 2 · 场景测试（4 技能验证） |
@@ -72,6 +72,8 @@ python -m http.server 8000
 #   http://localhost:8000/mengto-skills-study/custom-skills-reference.html ← 原创 Skills
 
 # craftzdog-homepage 需要独立运行（Next.js 项目）:
+#   cd craftzdog-homepage && npm install && npm run dev
+#   → http://localhost:3000
 #   cd craftzdog-homepage && npm run dev
 #   http://localhost:3000
 ```
