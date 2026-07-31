@@ -140,6 +140,8 @@ python -m http.server 8000
 | 2 | [mengto-skills-study](./mengto-skills-study/) | 研究 MengTo/Skills（118 Skills → 3 参考手册 + 设计模式 + 5 个原创 Skills） | 已完成 v0.11 → v0.12 |
 | 3 | [craftzdog-homepage](./craftzdog-homepage/) | 3D 模型加载到网页的能力（GLB + Three.js + React） | 已完成 |
 
+![craftzdog-homepage 运行效果](./craftzdog-homepage/screenshot.png)
+
 > **项目 2 研究三层**：
 > - **Layer 1**：[Demo 展示](./mengto-skills-study/demo-gallery.html) — 118 技能 89 个 Demo 可视浏览
 > - **Layer 2**：[能力地图](./mengto-skills-study/capability-map.html) — "需要 X → 用哪个 Y"决策树
