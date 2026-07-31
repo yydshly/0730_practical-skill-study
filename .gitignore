@@ -13,6 +13,7 @@ Thumbs.db
 .cursor/
 .traef
 .trae-cn/
+.worktrees/
 
 # OS
 .DS_Store
