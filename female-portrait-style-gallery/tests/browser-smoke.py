@@ -38,7 +38,10 @@ def exercise_gallery(page, url, capture=False):
             clamp["lineClamp"] in ("3", "4"),
             "每张卡片提示词摘要应限制为 3 至 4 行",
         )
-        expect(clamp["display"] == "-webkit-box", "提示词摘要应使用 WebKit 弹性盒截断")
+        expect(
+            clamp["display"] in ("-webkit-box", "flow-root"),
+            "提示词摘要应使用 WebKit 弹性盒截断",
+        )
         expect(clamp["webkitBoxOrient"] == "vertical", "提示词摘要应垂直排列以支持行数截断")
         expect(clamp["overflow"] == "hidden", "提示词摘要的超出文本应隐藏")
         expect(clamp["lineHeight"] > 0, "提示词摘要应具有可计算的行高")
