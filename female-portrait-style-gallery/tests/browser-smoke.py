@@ -20,6 +20,11 @@ def exercise_gallery(page, url, capture=False):
 
     expect(page.locator(".style-card").count() == 20, f"{url} 应显示 20 张风格卡片")
     expect(page.locator(".style-card__prompt").count() == 20, "每张卡片应显示提示词摘要")
+    for prompt in page.locator(".style-card__prompt").all():
+        expect(
+            prompt.evaluate("element => getComputedStyle(element).webkitLineClamp") in ("3", "4"),
+            "每张卡片提示词摘要应限制为 3 至 4 行",
+        )
     expect(page.locator(".card-copy-button").count() == 20, "每张卡片应提供复制按钮")
 
     first_copy = page.locator(".card-copy-button").first
