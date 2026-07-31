@@ -34,6 +34,7 @@
 | [`/finesse-skill-study/prompt-builder.html`](https://yydshly.github.io/0730_practical-skill-study/finesse-skill-study/prompt-builder.html) | 项目 1 · Prompt 自动拼装 |
 | [`/finesse-skill-study/family-orchard/`](https://yydshly.github.io/0730_practical-skill-study/finesse-skill-study/family-orchard/) | 项目 1 子交付物 · 拾穗果园 |
 | [`/mengto-skills-study/`](https://yydshly.github.io/0730_practical-skill-study/mengto-skills-study/) | 项目 2 研究总览 |
+| — | [craftzdog-homepage](./craftzdog-homepage/) | 3D 模型加载（需本地 `npm run dev` 运行，非 GitHub Pages） |
 | [`/mengto-skills-study/demo-gallery.html`](https://yydshly.github.io/0730_practical-skill-study/mengto-skills-study/demo-gallery.html) | 项目 2 · Demo 展示（89 个可运行） |
 | [`/mengto-skills-study/capability-map.html`](https://yydshly.github.io/0730_practical-skill-study/mengto-skills-study/capability-map.html) | 项目 2 · 能力地图（决策树） |
 | [`/mengto-skills-study/scene-testing.html`](https://yydshly.github.io/0730_practical-skill-study/mengto-skills-study/scene-testing.html) | 项目 2 · 场景测试（4 技能验证） |
@@ -69,6 +70,10 @@ python -m http.server 8000
 #   http://localhost:8000/mengto-skills-study/game-dev-reference.html    ← Game Dev 参考手册
 #   http://localhost:8000/mengto-skills-study/patterns-reference.html    ← 设计模式速查
 #   http://localhost:8000/mengto-skills-study/custom-skills-reference.html ← 原创 Skills
+
+# craftzdog-homepage 需要独立运行（Next.js 项目）:
+#   cd craftzdog-homepage && npm run dev
+#   http://localhost:3000
 ```
 
 > 项目 1 子交付物（family-orchard）使用了 ES module，必须走 HTTP 不能 `file://` 双击。项目 2 的 Demo 展示页内含"打开 Demo"链接，必须用 HTTP 服务打开。
@@ -92,6 +97,18 @@ python -m http.server 8000
 │       ├── index.html
 │       └── _assets/img/            ← 10 张 Pollinations AI 摄影
 │
+├── craftzdog-homepage/            ← 项目 3 · 3D 模型加载能力研究
+│   ├── README.md
+│   ├── components/
+│   │   ├── voxel-dog.js          ← Three.js 渲染 + OrbitControls
+│   │   ├── voxel-dog-loader.js   ← Chakra UI 加载容器
+│   │   └── ...
+│   ├── lib/
+│   │   └── model.js              ← GLTFLoader 加载 GLB 模型
+│   ├── public/
+│   │   └── dog.glb               ← 3D 像素狗模型
+│   └── pages/                    ← Next.js 页面结构
+│
 └── mengto-skills-study/            ← 项目 2/3 · MengTo/Skills 研究 + 设计模式
     ├── README.md                   ← 项目 2 入口
     ├── index.html                  ← 研究总览
@@ -111,7 +128,7 @@ python -m http.server 8000
                                       atomic-state-update
 ```
 
-**当前 3 个项目,9 个研究工具 HTML,1 个可交付页面。** 未来每个新项目按 `项目名/` 单目录形式加入。
+**当前 3 个项目（+1 个 3D Skill），9 个研究工具 HTML,1 个可交付页面。** 未来每个新项目按 `项目名/` 单目录形式加入。
 
 ---
 
@@ -120,8 +137,8 @@ python -m http.server 8000
 | # | 项目 | 一句话 | 状态 |
 |---|---|---|---|
 | 1 | [finesse-skill-study](./finesse-skill-study/) | 学习 UI 设计 Skill 并实战一个家庭果园品牌页 | 已完成 v0 → v9 |
-| 2 | [mengto-skills-study](./mengto-skills-study/) | 研究 MengTo/Skills（118 Skills → 3 参考手册 + 场景测试 + 工作流） | 已完成 v0.11 → v0.12 |
-| 3 | — | 设计模式提炼 + 5 个原创 Agent Skills | 已完成 |
+| 2 | [mengto-skills-study](./mengto-skills-study/) | 研究 MengTo/Skills（118 Skills → 3 参考手册 + 设计模式 + 5 个原创 Skills） | 已完成 v0.11 → v0.12 |
+| 3 | [craftzdog-homepage](./craftzdog-homepage/) | 3D 模型加载到网页的能力（GLB + Three.js + React） | 已完成 |
 
 > **项目 2 研究三层**：
 > - **Layer 1**：[Demo 展示](./mengto-skills-study/demo-gallery.html) — 118 技能 89 个 Demo 可视浏览
@@ -131,7 +148,8 @@ python -m http.server 8000
 | - | [项目 1 · capabilities](./finesse-skill-study/capabilities.html) | 能力全景 + 决策树 | ✓ |
 | - | [项目 1 · prompt-builder](./finesse-skill-study/prompt-builder.html) | Prompt 自动拼装器 | ✓ |
 | - | [项目 1 · 子交付物 · 拾穗果园](./finesse-skill-study/family-orchard/) | 家庭果园品牌官网（已模块化为 15 CSS + 9 JS） | ✓ |
-| 2 | [项目 2 · MengTo/Skills 研究](./mengto-skills-study/) | 118 个 AI Agent 设计技能深度研究 | 研究中 |
+| - | [项目 3 · craftzdog-homepage](./craftzdog-homepage/) | 3D 模型加载：GLB + Three.js + React 完整链路（需 `npm run dev`） | ✓ |
+| - | [webgl-3d-object](./mengto-skills-study/agent-skills/web-design/webgl-3d-object/) | Three.js 程序化 3D 物体（几何体 + 材质 + 灯光） | Skill 已沉淀 |
 | - | [项目 2 · Demo 展示](./mengto-skills-study/demo-gallery.html) | 118 技能 89 个 Demo 可视浏览 | ✓ |
 | - | [项目 2 · 能力地图](./mengto-skills-study/capability-map.html) | 118 技能"需要 X → 用哪个 Y"决策树 | ✓ |
 | - | [项目 2 · 场景测试](./mengto-skills-study/scene-testing.html) | Layer 3 · 4 个技能真实场景验证 | ✓ |
