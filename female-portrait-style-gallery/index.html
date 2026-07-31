@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0d0d0d">
+  <meta name="description" content="Female Portrait Director 二十种女性人像风格样例展廊。">
+  <title>Female Portrait Director · 风格样例展廊</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <a class="skip-link" href="#gallery">跳到风格画廊</a>
+
+  <header class="masthead">
+    <div class="masthead__bar shell">
+      <a class="wordmark" href="#top" aria-label="返回页面顶部">
+        <span class="wordmark__mark">FP</span>
+        <span>Portrait<br>Director</span>
+      </a>
+      <p class="edition">Visual index · 2026</p>
+    </div>
+
+    <div class="hero shell" id="top">
+      <div class="hero__copy">
+        <p class="eyebrow">女性人像风格库 / Curated studies</p>
+        <h1>二十种风格，<br><em>一种清晰的观看方式。</em></h1>
+        <p class="hero__intro">从自然生活、东方叙事到商业影棚与电影光影。每个样例都拆解为场景、造型、镜头与光线，并保留可复用的完整提示词。</p>
+      </div>
+      <div class="hero__index" aria-label="馆藏摘要">
+        <span class="hero__number">20</span>
+        <span>种视觉方向</span>
+        <span class="hero__rule" aria-hidden="true"></span>
+        <span>9 个主题分类</span>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section class="collection shell" aria-labelledby="collection-title">
+      <div class="collection__heading">
+        <div>
+          <p class="eyebrow">The collection</p>
+          <h2 id="collection-title">风格索引</h2>
+        </div>
+        <p class="result-count" id="result-count" aria-live="polite">20 个风格</p>
+      </div>
+
+      <div class="tools" aria-label="筛选与搜索">
+        <div class="category-list" id="category-list" role="group" aria-label="按主题分类筛选"></div>
+        <label class="search-field" for="style-search">
+          <span class="visually-hidden">搜索风格</span>
+          <svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"></circle><path d="m16 16 4 4"></path></svg>
+          <input id="style-search" type="search" autocomplete="off" placeholder="搜索场景、风格或关键词">
+          <kbd aria-hidden="true">/</kbd>
+        </label>
+      </div>
+
+      <div class="gallery" id="gallery" aria-label="人像风格样例"></div>
+
+      <div class="empty-state" id="empty-state" hidden>
+        <p class="empty-state__number">00</p>
+        <h3>没有找到相符风格</h3>
+        <p>换一个关键词，或返回浏览全部二十种视觉方向。</p>
+        <button class="text-button" id="reset-filters" type="button">重置筛选</button>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer shell">
+    <p>Female Portrait Director</p>
+    <p>Original style studies · Built with Codex</p>
+  </footer>
+
+  <dialog class="style-dialog" id="style-dialog" aria-labelledby="dialog-title">
+    <div class="dialog__frame">
+      <button class="dialog__close" id="dialog-close" type="button" aria-label="关闭详情">
+        <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M5 5l14 14M19 5 5 19"></path></svg>
+      </button>
+      <div class="dialog__visual">
+        <img id="dialog-image" alt="">
+        <div class="image-fallback image-fallback--dialog" id="dialog-fallback" hidden>
+          <span id="dialog-fallback-number"></span>
+          <small>IMAGE STUDY PENDING</small>
+        </div>
+      </div>
+      <div class="dialog__content">
+        <p class="dialog__meta"><span id="dialog-number"></span><span id="dialog-category"></span></p>
+        <h2 id="dialog-title"></h2>
+        <p class="dialog__description" id="dialog-description"></p>
+        <dl class="style-details">
+          <div><dt>场景</dt><dd id="detail-scene"></dd></div>
+          <div><dt>造型</dt><dd id="detail-outfit"></dd></div>
+          <div><dt>镜头</dt><dd id="detail-camera"></dd></div>
+          <div><dt>光线</dt><dd id="detail-light"></dd></div>
+        </dl>
+        <div class="prompt-block">
+          <div class="prompt-block__heading">
+            <p>生成提示词</p>
+            <button class="copy-button" id="copy-prompt" type="button">复制提示词</button>
+          </div>
+          <p id="dialog-prompt"></p>
+        </div>
+      </div>
+    </div>
+  </dialog>
+
+  <div class="toast" id="toast" role="status" aria-live="polite" aria-atomic="true"></div>
+
+  <noscript><p class="noscript">此展廊需要启用 JavaScript 才能浏览和筛选风格。</p></noscript>
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>

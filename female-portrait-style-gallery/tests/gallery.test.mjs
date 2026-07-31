@@ -5,6 +5,7 @@ import {
   formatResultCount,
   validateCatalog
 } from '../js/gallery.js';
+import { CATEGORIES, STYLES, getStyleById } from '../js/styles.js';
 
 const fixture = [
   {
@@ -46,4 +47,29 @@ test('matches category and Chinese keyword without changing the input array', ()
 test('uses the same result label for one and many styles', () => {
   assert.equal(formatResultCount(1), '1 个风格');
   assert.equal(formatResultCount(20), '20 个风格');
+});
+
+test('contains twenty valid styles across the nine library categories', () => {
+  assert.equal(STYLES.length, 20);
+  assert.deepEqual(CATEGORIES.map((category) => category.id), [
+    'lifestyle',
+    'curve',
+    'fashion',
+    'fantasy',
+    'commercial',
+    'oriental',
+    'beauty',
+    'realism',
+    'cinematic'
+  ]);
+  assert.deepEqual(validateCatalog(STYLES), { valid: true, errors: [] });
+  assert.equal(new Set(STYLES.map((style) => style.image)).size, 20);
+});
+
+test('resolves a known style image and returns undefined for an unknown id', () => {
+  assert.equal(
+    getStyleById('gufeng-xianxia').image,
+    'assets/styles/04-gufeng-xianxia.png'
+  );
+  assert.equal(getStyleById('missing-style'), undefined);
 });
