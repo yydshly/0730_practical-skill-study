@@ -2,6 +2,16 @@
 
 [https://www.craftz.dog/](https://www.craftz.dog/)
 
+## 本地运行效果
+
+```bash
+npm install
+npm run dev
+# → http://localhost:3000
+```
+
+![craftzdog-homepage 运行截图](./screenshot.png)
+
 ## Tutorial
 
 Watch how I built this website on YouTube:
