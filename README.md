@@ -140,23 +140,23 @@ python -m http.server 8000
 | 2 | [mengto-skills-study](./mengto-skills-study/) | 研究 MengTo/Skills（118 Skills → 3 参考手册 + 设计模式 + 5 个原创 Skills） | 已完成 v0.11 → v0.12 |
 | 3 | [craftzdog-homepage](./craftzdog-homepage/) | 3D 模型加载到网页的能力（GLB + Three.js + React） | 已完成 |
 
-![craftzdog-homepage 运行效果](./craftzdog-homepage/screenshot.png)
+> **项目 3 运行方式**：
+> ```bash
+> cd craftzdog-homepage && npm install && npm run dev
+> # → http://localhost:3000
+> ```
+> ![craftzdog-homepage 运行效果](./craftzdog-homepage/screenshot.png)
 
-> **项目 2 研究三层**：
-> - **Layer 1**：[Demo 展示](./mengto-skills-study/demo-gallery.html) — 118 技能 89 个 Demo 可视浏览
-> - **Layer 2**：[能力地图](./mengto-skills-study/capability-map.html) — "需要 X → 用哪个 Y"决策树
-> - **Layer 3**：[场景测试](./mengto-skills-study/scene-testing.html) + [工作流实战](./mengto-skills-study/workflow-demo.html) — 4 技能真实验证 + 招牌 4 步闭环演示
 | - | [项目 1 · examples-index](./finesse-skill-study/examples-index.html) | 13 个范例索引浏览器 | ✓ |
 | - | [项目 1 · capabilities](./finesse-skill-study/capabilities.html) | 能力全景 + 决策树 | ✓ |
 | - | [项目 1 · prompt-builder](./finesse-skill-study/prompt-builder.html) | Prompt 自动拼装器 | ✓ |
 | - | [项目 1 · 子交付物 · 拾穗果园](./finesse-skill-study/family-orchard/) | 家庭果园品牌官网（已模块化为 15 CSS + 9 JS） | ✓ |
-| - | [项目 3 · craftzdog-homepage](./craftzdog-homepage/) | 3D 模型加载：GLB + Three.js + React 完整链路（需 `npm run dev`） | ✓ |
-| - | [webgl-3d-object](./mengto-skills-study/agent-skills/web-design/webgl-3d-object/) | Three.js 程序化 3D 物体（几何体 + 材质 + 灯光） | Skill 已沉淀 |
 | - | [项目 2 · Demo 展示](./mengto-skills-study/demo-gallery.html) | 118 技能 89 个 Demo 可视浏览 | ✓ |
 | - | [项目 2 · 能力地图](./mengto-skills-study/capability-map.html) | 118 技能"需要 X → 用哪个 Y"决策树 | ✓ |
 | - | [项目 2 · 场景测试](./mengto-skills-study/scene-testing.html) | Layer 3 · 4 个技能真实场景验证 | ✓ |
 | - | [项目 2 · 工作流实战](./mengto-skills-study/workflow-demo.html) | 招牌 4 步闭环完整演示 | ✓ |
 | - | [项目 2 · 技能矩阵](./mengto-skills-study/SKILL-MATRIX.md) | 全部 118 个技能的分类索引 | 建设中 |
+| - | [webgl-3d-object](./mengto-skills-study/agent-skills/web-design/webgl-3d-object/) | Three.js 程序化 3D 物体（几何体 + 材质 + 灯光） | Skill 已沉淀 |
 
 (更多项目待加入。)
 
