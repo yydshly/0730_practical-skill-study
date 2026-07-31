@@ -1,4 +1,4 @@
-import { filterStyles, formatResultCount } from './gallery.js';
+import { filterStyles, formatResultCount, validateCatalog } from './gallery.js';
 import { CATEGORIES, STYLES } from './styles.js';
 
 const CATEGORY_LABELS = new Map(CATEGORIES.map(({ id, label }) => [id, label]));
@@ -52,6 +52,12 @@ function renderFilters() {
   fragment.append(createFilterButton('all', '全部'));
   CATEGORIES.forEach(({ id, label }) => fragment.append(createFilterButton(id, label)));
   elements.categories.replaceChildren(fragment);
+}
+
+function updateFilterSelection() {
+  elements.categories.querySelectorAll('.filter-button').forEach((button) => {
+    button.setAttribute('aria-pressed', String(button.dataset.category === state.category));
+  });
 }
 
 function handleImageError(image, fallback) {
@@ -122,14 +128,46 @@ function createStyleCard(style, index) {
 }
 
 function render() {
-  renderFilters();
-  const matches = filterStyles(STYLES, state.category, state.query);
+  updateFilterSelection();
+  const matches = filterStyles(STYLES, {
+    categories: CATEGORIES,
+    category: state.category,
+    query: state.query
+  });
   const fragment = document.createDocumentFragment();
   matches.forEach((style, index) => fragment.append(createStyleCard(style, index)));
   elements.gallery.replaceChildren(fragment);
   elements.count.textContent = formatResultCount(matches.length);
   elements.gallery.hidden = matches.length === 0;
   elements.empty.hidden = matches.length !== 0;
+}
+
+function renderCatalogError(errors) {
+  const number = document.createElement('p');
+  number.className = 'empty-state__number';
+  number.textContent = '!';
+
+  const title = document.createElement('h3');
+  title.textContent = '风格目录加载失败';
+
+  const guidance = document.createElement('p');
+  guidance.textContent = '目录数据不完整，页面已停止渲染。请修正以下问题后重新打开：';
+
+  const list = document.createElement('ul');
+  errors.forEach((error) => {
+    const item = document.createElement('li');
+    item.textContent = error;
+    list.append(item);
+  });
+
+  elements.categories.replaceChildren();
+  elements.search.disabled = true;
+  elements.gallery.replaceChildren();
+  elements.gallery.hidden = true;
+  elements.count.textContent = '目录加载失败';
+  elements.empty.setAttribute('role', 'alert');
+  elements.empty.replaceChildren(number, title, guidance, list);
+  elements.empty.hidden = false;
 }
 
 function openStyle(style, trigger) {
@@ -216,4 +254,10 @@ document.addEventListener('keydown', (event) => {
   }
 });
 
-render();
+const validation = validateCatalog(STYLES, { categories: CATEGORIES });
+if (validation.valid) {
+  renderFilters();
+  render();
+} else {
+  renderCatalogError(validation.errors);
+}

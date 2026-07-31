@@ -14,6 +14,61 @@ def expect(condition, message):
         raise AssertionError(message)
 
 
+def exercise_mobile_journey(page):
+    fantasy = page.locator('[data-category="fantasy"]')
+    fantasy.focus()
+    page.keyboard.press("Enter")
+    expect(page.locator(".style-card").count() == 3, "390px 幻想分类应显示三个风格")
+    expect(fantasy.get_attribute("aria-pressed") == "true", "390px 分类选中状态缺失")
+    expect(
+        page.evaluate("document.activeElement?.dataset.category === 'fantasy'"),
+        "键盘激活分类后焦点应保留在所选分类按钮",
+    )
+
+    page.locator("#style-search").fill("幻想")
+    expect(page.locator(".style-card").count() == 3, "390px 中文分类标签搜索应保留幻想分类结果")
+
+    trigger = page.locator(".style-card__button").first
+    trigger.click()
+    expect(page.locator("#style-dialog").evaluate("element => element.open"), "390px 详情弹窗未打开")
+    page.locator("#copy-prompt").click()
+    expect("复制" in page.locator("#toast").inner_text(), "390px 复制操作缺少反馈")
+    page.keyboard.press("Escape")
+    expect(not page.locator("#style-dialog").evaluate("element => element.open"), "390px Esc 未关闭弹窗")
+    expect(
+        page.evaluate("document.activeElement?.classList.contains('style-card__button')"),
+        "390px 关闭弹窗后焦点未返回卡片",
+    )
+
+
+def exercise_catalog_error(browser, app_source):
+    page = browser.new_page(viewport={"width": 390, "height": 844})
+    page_errors = []
+    page.on("pageerror", lambda error: page_errors.append(str(error)))
+    html = (ROOT / "index.html").read_text(encoding="utf-8").replace(
+        '<script defer src="js/app.js"></script>',
+        "",
+    )
+    invalid_app = app_source.replace(
+        "id: 'urban-fashion'",
+        "id: 'clean-lifestyle'",
+        1,
+    )
+    expect(invalid_app != app_source, "目录错误场景未能构造重复 id")
+
+    page.set_content(html, wait_until="load")
+    page.add_script_tag(content=invalid_app)
+
+    expect(page.locator("#empty-state").is_visible(), "非法目录应显示页面级错误")
+    expect(page.locator("#empty-state h3").inner_text() == "风格目录加载失败", "目录错误标题不可读")
+    expect("目录包含重复 id: clean-lifestyle" in page.locator("#empty-state").inner_text(), "目录错误应列出具体原因")
+    expect(page.locator(".style-card").count() == 0, "非法目录不应尝试正常卡片渲染")
+    expect(page.locator(".filter-button").count() == 0, "非法目录不应初始化筛选控件")
+    expect(page.locator("#style-search").is_disabled(), "非法目录应停用搜索")
+    expect(not page_errors, f"目录错误页脚本错误: {page_errors}")
+    page.close()
+
+
 def exercise_gallery(page, url, capture=False):
     page.set_viewport_size({"width": 1440, "height": 1000})
     page.goto(url, wait_until="networkidle")
@@ -99,6 +154,8 @@ def exercise_gallery(page, url, capture=False):
         if capture:
             page.screenshot(path=EVIDENCE / filename, full_page=True)
         expect(page.evaluate("document.documentElement.scrollWidth <= window.innerWidth"), f"{width}px 出现横向页面溢出")
+        if width == 390:
+            exercise_mobile_journey(page)
 
 
 def main():
@@ -116,6 +173,7 @@ def main():
 
         exercise_gallery(page, "http://127.0.0.1:43173/", capture=True)
         exercise_gallery(page, (ROOT / "index.html").as_uri())
+        exercise_catalog_error(browser, (ROOT / "js" / "app.js").read_text(encoding="utf-8"))
 
         expect(not page_errors, f"页面脚本错误: {page_errors}")
         browser.close()

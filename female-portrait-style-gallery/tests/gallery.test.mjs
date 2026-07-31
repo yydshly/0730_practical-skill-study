@@ -10,6 +10,7 @@ import { CATEGORIES, STYLES, getStyleById } from '../js/styles.js';
 const fixture = [
   {
     id: 'clean-lifestyle',
+    number: '01',
     category: 'lifestyle',
     name: '清纯生活照',
     keywords: ['咖啡馆'],
@@ -20,6 +21,7 @@ const fixture = [
   },
   {
     id: 'urban-fashion',
+    number: '02',
     category: 'fashion',
     name: '都市时尚写真',
     keywords: ['街拍'],
@@ -31,7 +33,7 @@ const fixture = [
 ];
 
 test('rejects a catalog record with an empty prompt', () => {
-  assert.deepEqual(validateCatalog([{ ...fixture[0], prompt: '' }]), {
+  assert.deepEqual(validateCatalog([{ ...fixture[0], prompt: '' }], { categories: CATEGORIES }), {
     valid: false,
     errors: ['clean-lifestyle 缺少 prompt']
   });
@@ -40,8 +42,103 @@ test('rejects a catalog record with an empty prompt', () => {
 test('matches category and Chinese keyword without changing the input array', () => {
   const source = [...fixture];
 
-  assert.deepEqual(filterStyles(source, 'lifestyle', '咖啡'), [fixture[0]]);
+  assert.deepEqual(filterStyles(source, {
+    categories: CATEGORIES,
+    category: 'lifestyle',
+    query: '咖啡'
+  }), [fixture[0]]);
   assert.deepEqual(source, fixture);
+});
+
+test('indexes all nine visible Chinese category labels', () => {
+  const cases = [
+    ['生活方式', 'lifestyle'],
+    ['曲线', 'curve'],
+    ['时尚', 'fashion'],
+    ['幻想', 'fantasy'],
+    ['商业', 'commercial'],
+    ['东方', 'oriental'],
+    ['美妆', 'beauty'],
+    ['写实', 'realism'],
+    ['电影感', 'cinematic']
+  ];
+  const styles = cases.map(([, category], index) => ({
+    ...fixture[0],
+    id: `style-${index}`,
+    number: String(index + 1).padStart(2, '0'),
+    category,
+    name: '中性名称',
+    keywords: ['中性关键词'],
+    description: '中性描述'
+  }));
+
+  for (const [label, expectedCategory] of cases) {
+    assert.deepEqual(
+      filterStyles(styles, { categories: CATEGORIES, query: label }).map((style) => style.category),
+      [expectedCategory],
+      `${label} 应只命中 ${expectedCategory}`
+    );
+  }
+});
+
+test('rejects duplicate catalog ids', () => {
+  assert.deepEqual(validateCatalog([
+    fixture[0],
+    { ...fixture[1], id: fixture[0].id }
+  ], { categories: CATEGORIES }), {
+    valid: false,
+    errors: ['目录包含重复 id: clean-lifestyle']
+  });
+});
+
+test('rejects a category outside the visible category catalog', () => {
+  assert.deepEqual(validateCatalog([
+    { ...fixture[0], category: 'unknown' }
+  ], { categories: CATEGORIES }), {
+    valid: false,
+    errors: ['clean-lifestyle 的 category 不在允许分类中: unknown']
+  });
+});
+
+test('rejects all missing required catalog fields', () => {
+  assert.deepEqual(validateCatalog([{
+    ...fixture[0],
+    number: '',
+    name: ' ',
+    keywords: [],
+    description: '',
+    image: '',
+    prompt: '',
+    details: { scene: '', outfit: ' ', camera: '', light: '' }
+  }], { categories: CATEGORIES }), {
+    valid: false,
+    errors: [
+      'clean-lifestyle 缺少 number',
+      'clean-lifestyle 缺少 name',
+      'clean-lifestyle 缺少 keywords',
+      'clean-lifestyle 缺少 description',
+      'clean-lifestyle 缺少 image',
+      'clean-lifestyle 缺少 prompt',
+      'clean-lifestyle 缺少 details.scene',
+      'clean-lifestyle 缺少 details.outfit',
+      'clean-lifestyle 缺少 details.camera',
+      'clean-lifestyle 缺少 details.light'
+    ]
+  });
+});
+
+test('rejects malformed numbering and image paths', () => {
+  assert.deepEqual(validateCatalog([{
+    ...fixture[0],
+    number: '1',
+    image: '../outside.jpg'
+  }], { categories: CATEGORIES }), {
+    valid: false,
+    errors: [
+      'clean-lifestyle 的 number 必须是两位数字: 1',
+      'clean-lifestyle 的 image 必须是 assets/styles/ 下的 PNG: ../outside.jpg'
+    ]
+  });
 });
 
 test('uses the same result label for one and many styles', () => {
@@ -62,7 +159,7 @@ test('contains twenty valid styles across the nine library categories', () => {
     'realism',
     'cinematic'
   ]);
-  assert.deepEqual(validateCatalog(STYLES), { valid: true, errors: [] });
+  assert.deepEqual(validateCatalog(STYLES, { categories: CATEGORIES }), { valid: true, errors: [] });
   assert.equal(new Set(STYLES.map((style) => style.image)).size, 20);
 });
 
