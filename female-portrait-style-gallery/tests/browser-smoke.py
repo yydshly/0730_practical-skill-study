@@ -21,9 +21,30 @@ def exercise_gallery(page, url, capture=False):
     expect(page.locator(".style-card").count() == 20, f"{url} 应显示 20 张风格卡片")
     expect(page.locator(".style-card__prompt").count() == 20, "每张卡片应显示提示词摘要")
     for prompt in page.locator(".style-card__prompt").all():
+        clamp = prompt.evaluate(
+            """element => {
+                const style = getComputedStyle(element);
+                return {
+                    lineClamp: style.webkitLineClamp,
+                    display: style.display,
+                    webkitBoxOrient: style.webkitBoxOrient,
+                    overflow: style.overflow,
+                    lineHeight: Number.parseFloat(style.lineHeight),
+                    clientHeight: element.clientHeight,
+                };
+            }"""
+        )
         expect(
-            prompt.evaluate("element => getComputedStyle(element).webkitLineClamp") in ("3", "4"),
+            clamp["lineClamp"] in ("3", "4"),
             "每张卡片提示词摘要应限制为 3 至 4 行",
+        )
+        expect(clamp["display"] == "-webkit-box", "提示词摘要应使用 WebKit 弹性盒截断")
+        expect(clamp["webkitBoxOrient"] == "vertical", "提示词摘要应垂直排列以支持行数截断")
+        expect(clamp["overflow"] == "hidden", "提示词摘要的超出文本应隐藏")
+        expect(clamp["lineHeight"] > 0, "提示词摘要应具有可计算的行高")
+        expect(
+            clamp["clientHeight"] <= clamp["lineHeight"] * int(clamp["lineClamp"]) + 1,
+            "提示词摘要的实际高度不应超过截断行数",
         )
     expect(page.locator(".card-copy-button").count() == 20, "每张卡片应提供复制按钮")
 
