@@ -7,6 +7,7 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { App } from '../src/app/App';
+import { IMAGE_FIXTURES } from './fixtures/image-fixtures';
 
 const originalCreateObjectURL = URL.createObjectURL;
 const originalRevokeObjectURL = URL.revokeObjectURL;
@@ -124,18 +125,32 @@ describe('图片工具路由', () => {
   });
 
   it('Base64 核心交互解析有效 Data URL，失败后清除旧结果', async () => {
+    Object.defineProperty(URL, 'createObjectURL', { configurable: true, value: vi.fn(() => 'blob:base64-test') });
+    Object.defineProperty(URL, 'revokeObjectURL', { configurable: true, value: vi.fn() });
+    class ImmediateImage {
+      onload: ((event: Event) => void) | null = null;
+      onerror: ((event: Event | string) => void) | null = null;
+      naturalWidth = 1;
+      naturalHeight = 1;
+      width = 1;
+      height = 1;
+      set src(_value: string) { queueMicrotask(() => this.onload?.(new Event('load'))); }
+    }
+    vi.stubGlobal('Image', ImmediateImage as unknown as typeof Image);
     renderTool('base64-image-encoder');
     const input = screen.getByLabelText('图片 Data URL');
-    await userEvent.type(input, 'data:image/png;base64,aGk=');
+    await userEvent.type(input, `data:image/png;base64,${IMAGE_FIXTURES.png.base64}`);
     await userEvent.click(screen.getByRole('button', { name: '解析 Data URL' }));
     expect(screen.getByRole('status')).toHaveTextContent('已解析 image/png 图片');
     expect(screen.getByRole('button', { name: '下载解码图片' })).toBeVisible();
+    expect(screen.getByRole('button', { name: '复制 Data URL' })).toBeVisible();
 
     await userEvent.clear(input);
     await userEvent.type(input, '错误内容');
     await userEvent.click(screen.getByRole('button', { name: '解析 Data URL' }));
     expect(screen.getByRole('alert')).toHaveTextContent('图片 Data URL 格式无效');
     expect(screen.queryByRole('button', { name: '下载解码图片' })).toBeNull();
+    expect(screen.queryByRole('button', { name: '复制 Data URL' })).toBeNull();
   });
 
   it('格式转换器只启用真实支持格式并解释禁用项', () => {

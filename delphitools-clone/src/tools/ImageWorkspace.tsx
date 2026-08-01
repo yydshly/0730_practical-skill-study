@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import type { ChangeEvent, ReactNode } from 'react';
 
 import { FileDropzone } from '../components/FileDropzone';
@@ -9,6 +9,7 @@ import type { ToolDefinition, ToolId } from '../core/types';
 import {
   createPlaceholderSvg,
   decodeImageBase64,
+  encodeImageBase64,
   faviconSizes,
   fitMatte,
   getImageFormatCapabilities,
@@ -154,38 +155,47 @@ function useImageJob(multiple = false) {
   const [images, setImages] = useState<LocalImage[]>([]);
   const [outputs, setOutputs] = useState<ImageOutput[]>([]);
   const [status, setStatus] = useState<JobStatus>({ kind: 'idle', message: '请选择图片并设置处理参数' });
+  const taskVersion = useRef(0);
 
   const clearResult = () => setOutputs([]);
   const rejectFiles = (message: string) => {
+    taskVersion.current += 1;
     setOutputs([]);
     setStatus({ kind: 'idle', message: `结果已清除：${message}` });
   };
   const reset = () => {
+    taskVersion.current += 1;
     setImages([]);
     setOutputs([]);
     setStatus({ kind: 'idle', message: '已重置，请重新选择图片' });
   };
 
   const acceptFiles = async (files: File[]) => {
+    const version = ++taskVersion.current;
     clearResult();
     setImages([]);
     if (files.length === 0) {
       setStatus({ kind: 'error', message: '请选择至少一张图片' });
-      return;
+      return null;
     }
     setStatus({ kind: 'loading', message: '正在本地解码图片' });
     try {
       const loaded = await Promise.all((multiple ? files : files.slice(0, 1)).map(readLocalImage));
+      if (version !== taskVersion.current) return null;
       setImages(loaded);
       setStatus({ kind: 'success', message: `已读取 ${loaded.length} 张图片，可开始处理` });
+      return loaded;
     } catch (reason) {
+      if (version !== taskVersion.current) return null;
       setImages([]);
       setOutputs([]);
       setStatus({ kind: 'error', message: errorMessage(reason) });
+      return null;
     }
   };
 
   const run = async (work: (loaded: LocalImage[]) => Promise<ImageOutput[]>) => {
+    const version = ++taskVersion.current;
     clearResult();
     if (images.length === 0) {
       setStatus({ kind: 'error', message: '请先选择图片' });
@@ -194,10 +204,12 @@ function useImageJob(multiple = false) {
     setStatus({ kind: 'loading', message: '正在本地处理图片' });
     try {
       const next = await work(images);
+      if (version !== taskVersion.current) return;
       if (next.length === 0) throw new Error('没有生成可下载的图片结果');
       setOutputs(next);
       setStatus({ kind: 'success', message: `处理完成，共生成 ${next.length} 个文件` });
     } catch (reason) {
+      if (version !== taskVersion.current) return;
       setOutputs([]);
       setStatus({ kind: 'error', message: errorMessage(reason) });
     }
@@ -210,8 +222,12 @@ function WorkspaceFrame({ children, status, images, outputs, reset, rejectFiles 
   return <ImageValidationContext.Provider value={rejectFiles}><div className="image-workspace__body">{children}<StatusMessage status={status.kind} message={status.message} /><SourcePreview images={images} /><OutputGallery outputs={outputs} reset={reset} /></div></ImageValidationContext.Provider>;
 }
 
-function Dropzone({ onFiles, multiple = false }: { onFiles: (files: File[]) => void; multiple?: boolean }) {
-  const onError = useContext(ImageValidationContext);
+function Dropzone({ onFiles, multiple = false, onValidationError }: { onFiles: (files: File[]) => void; multiple?: boolean; onValidationError?: (message: string) => void }) {
+  const rejectFiles = useContext(ImageValidationContext);
+  const onError = (message: string) => {
+    rejectFiles(message);
+    onValidationError?.(message);
+  };
   return <FileDropzone accepted={['image/*']} multiple={multiple} onFiles={onFiles} onError={onError} />;
 }
 
@@ -253,7 +269,8 @@ function SocialCropTool() {
     const region = socialCropRect(asset.width, asset.height, ratio);
     const canvas = makeCanvas(region.width, region.height);
     context2d(canvas).drawImage(asset.image, region.x, region.y, region.width, region.height, 0, 0, region.width, region.height);
-    return [{ blob: await canvasBlob(canvas), name: `社交裁剪-${ratio.replace(':', 'x')}.png`, label: `${selected.label} · ${ratio}` }];
+    const safeRatio = ratio.trim().replace(/\s*[:/]\s*/g, 'x').replace(/[\\:*?"<>|]/g, '-');
+    return [{ blob: await canvasBlob(canvas), name: `社交裁剪-${safeRatio}.png`, label: `${selected.label} · ${ratio}` }];
   });
   return <WorkspaceFrame {...job}><Dropzone onFiles={job.acceptFiles} /><div className="image-controls"><label>裁剪场景<select aria-label="裁剪场景" value={preset} onChange={(event) => setPreset(event.target.value as keyof typeof SOCIAL_PRESETS)}>{Object.entries(SOCIAL_PRESETS).map(([key, item]) => <option key={key} value={key}>{item.label}</option>)}</select></label>{preset === 'custom' && <label>自定义比例<input aria-label="自定义比例" value={custom} onChange={(event) => setCustom(event.target.value)} placeholder="例如 3:2" /></label>}<p className="image-ratio-label">{selected.label} · {ratio}</p><button type="button" onClick={process}>按比例裁剪</button></div></WorkspaceFrame>;
 }
@@ -267,13 +284,26 @@ function WatermarkTool() {
   const [opacity, setOpacity] = useState(0.4);
   const [rotation, setRotation] = useState(-20);
   const [margin, setMargin] = useState(24);
+  const watermarkVersion = useRef(0);
 
   const loadWatermark = async (event: ChangeEvent<HTMLInputElement>) => {
+    const version = ++watermarkVersion.current;
     setWatermark(null);
+    job.setOutputs([]);
     const file = event.target.files?.[0];
     if (!file) return;
-    try { setWatermark(await readLocalImage(file)); }
-    catch (reason) { job.setStatus({ kind: 'error', message: errorMessage(reason) }); }
+    job.setStatus({ kind: 'loading', message: '正在本地解码水印图片' });
+    try {
+      const loaded = await readLocalImage(file);
+      if (version !== watermarkVersion.current) return;
+      setWatermark(loaded);
+      job.setStatus({ kind: 'success', message: '水印图片已读取，可开始处理' });
+    } catch (reason) {
+      if (version !== watermarkVersion.current) return;
+      setWatermark(null);
+      job.setOutputs([]);
+      job.setStatus({ kind: 'error', message: errorMessage(reason) });
+    }
   };
   const process = () => job.run(async ([asset]) => {
     const canvas = makeCanvas(asset.width, asset.height);
@@ -291,9 +321,10 @@ function WatermarkTool() {
     placements.forEach((placement) => {
       context.save();
       context.globalAlpha = placement.opacity;
-      context.translate(placement.x + placement.width / 2, placement.y + placement.height / 2);
+      context.translate(placement.centerX, placement.centerY);
       context.rotate((placement.rotation * Math.PI) / 180);
       if (type === 'text') {
+        context.font = `700 ${Math.max(1, fontSize * scale)}px system-ui`;
         context.fillStyle = '#ffffff';
         context.textAlign = 'center';
         context.textBaseline = 'middle';
@@ -411,11 +442,16 @@ function SplitterTool() {
   const job = useImageJob();
   const [columns, setColumns] = useState(3);
   const [rows, setRows] = useState(3);
-  const process = () => job.run(async ([asset]) => Promise.all(splitGrid(asset.width, asset.height, columns, rows).map(async (region, index) => {
-    const canvas = makeCanvas(region.width, region.height);
-    context2d(canvas).drawImage(asset.image, region.x, region.y, region.width, region.height, 0, 0, region.width, region.height);
-    return { blob: await canvasBlob(canvas), name: `切图-${index + 1}.png`, label: `切图 ${index + 1}` };
-  })));
+  const process = () => job.run(async ([asset]) => {
+    if (!Number.isInteger(columns) || !Number.isInteger(rows) || columns < 1 || rows < 1) throw new Error('分割行列必须是大于 0 的整数');
+    if (columns > 20 || rows > 20 || columns * rows > 400) throw new Error('分割行列每边最多 20，总输出最多 400 张');
+    const regions = splitGrid(asset.width, asset.height, columns, rows);
+    return Promise.all(regions.map(async (region, index) => {
+      const canvas = makeCanvas(region.width, region.height);
+      context2d(canvas).drawImage(asset.image, region.x, region.y, region.width, region.height, 0, 0, region.width, region.height);
+      return { blob: await canvasBlob(canvas), name: `切图-${index + 1}.png`, label: `切图 ${index + 1}` };
+    }));
+  });
   return <WorkspaceFrame {...job}><Dropzone onFiles={job.acceptFiles} /><div className="image-controls"><label>分割列数<input aria-label="分割列数" type="number" min="1" max="20" value={columns} onChange={(event) => setColumns(Number(event.target.value))} /></label><label>分割行数<input aria-label="分割行数" type="number" min="1" max="20" value={rows} onChange={(event) => setRows(Number(event.target.value))} /></label><button type="button" onClick={process}>按网格切图</button></div></WorkspaceFrame>;
 }
 
@@ -483,13 +519,12 @@ function PlaceholderTool() {
     }
   };
   const importSize = async (files: File[]) => {
-    await job.acceptFiles(files);
-    try {
-      const asset = await readLocalImage(files[0]);
-      setWidth(asset.width);
-      setHeight(asset.height);
-      setText(`${asset.width} × ${asset.height}`);
-    } catch { /* job already presents decoding errors */ }
+    const loaded = await job.acceptFiles(files);
+    const asset = loaded?.[0];
+    if (!asset) return;
+    setWidth(asset.width);
+    setHeight(asset.height);
+    setText(`${asset.width} × ${asset.height}`);
   };
   return <WorkspaceFrame {...job}><Dropzone onFiles={importSize} /><div className="image-controls"><label>占位宽度<input aria-label="占位宽度" type="number" min="1" max="16384" value={width} onChange={(event) => setWidth(Number(event.target.value))} /></label><label>占位高度<input aria-label="占位高度" type="number" min="1" max="16384" value={height} onChange={(event) => setHeight(Number(event.target.value))} /></label><label>占位文字<input aria-label="占位文字" value={text} onChange={(event) => setText(event.target.value)} /></label><label>背景颜色<input aria-label="占位背景颜色" type="color" value={background} onChange={(event) => setBackground(event.target.value)} /></label><label>文字颜色<input aria-label="占位文字颜色" type="color" value={foreground} onChange={(event) => setForeground(event.target.value)} /></label><button type="button" onClick={generate}>生成占位图</button></div></WorkspaceFrame>;
 }
@@ -497,39 +532,70 @@ function PlaceholderTool() {
 function Base64Tool() {
   const job = useImageJob();
   const [dataUrl, setDataUrl] = useState('');
+  const [verifiedDataUrl, setVerifiedDataUrl] = useState('');
+  const verificationVersion = useRef(0);
   const encodeFiles = async (files: File[]) => {
+    const version = ++verificationVersion.current;
     job.setOutputs([]);
+    job.setImages([]);
+    setVerifiedDataUrl('');
     job.setStatus({ kind: 'loading', message: '正在读取图片并生成 Data URL' });
     try {
       const [file] = files;
-      const value = await readFileAsDataUrl(file);
-      setDataUrl(value);
-      const image = await readLocalImage(file);
+      const [value, image] = await Promise.all([readFileAsDataUrl(file), readLocalImage(file)]);
+      const decoded = decodeImageBase64(value);
+      const verified = encodeImageBase64(decoded.bytes, decoded.mime);
+      if (version !== verificationVersion.current) return;
+      setDataUrl(verified);
+      setVerifiedDataUrl(verified);
       job.setImages([image]);
-      job.setStatus({ kind: 'success', message: `已编码 ${file.type || 'image/*'} 图片` });
+      job.setStatus({ kind: 'success', message: `已编码并验证 ${decoded.mime} 图片` });
     } catch (reason) {
+      if (version !== verificationVersion.current) return;
       job.setImages([]);
       job.setOutputs([]);
+      setVerifiedDataUrl('');
       job.setStatus({ kind: 'error', message: errorMessage(reason) });
     }
   };
-  const decode = () => {
+  const decode = async () => {
+    const version = ++verificationVersion.current;
     job.setOutputs([]);
+    job.setImages([]);
+    setVerifiedDataUrl('');
     job.setStatus({ kind: 'loading', message: '正在解析图片 Data URL' });
     try {
       const decoded = decodeImageBase64(dataUrl);
-      const extension = decoded.mime.split('/')[1]?.replace('jpeg', 'jpg').replace('svg+xml', 'svg') || 'bin';
       const byteCopy = new Uint8Array(decoded.bytes.length);
       byteCopy.set(decoded.bytes);
       const blob = new Blob([byteCopy.buffer], { type: decoded.mime });
-      job.setOutputs([{ blob, name: `解码图片.${extension}`, label: '解码图片' }]);
+      const image = await readLocalImage(new File([byteCopy.buffer], `解码验证.${decoded.extension}`, { type: decoded.mime }));
+      if (version !== verificationVersion.current) return;
+      job.setImages([image]);
+      job.setOutputs([{ blob, name: `解码图片.${decoded.extension}`, label: '解码图片' }]);
+      setVerifiedDataUrl(encodeImageBase64(decoded.bytes, decoded.mime));
       job.setStatus({ kind: 'success', message: `已解析 ${decoded.mime} 图片` });
     } catch (reason) {
+      if (version !== verificationVersion.current) return;
+      job.setImages([]);
       job.setOutputs([]);
+      setVerifiedDataUrl('');
       job.setStatus({ kind: 'error', message: errorMessage(reason) });
     }
   };
-  return <WorkspaceFrame {...job}><Dropzone onFiles={encodeFiles} /><div className="image-controls image-controls--stack"><label>图片 Data URL<textarea aria-label="图片 Data URL" rows={7} value={dataUrl} onChange={(event) => setDataUrl(event.target.value)} placeholder="data:image/png;base64,..." /></label><div className="image-inline-actions"><button type="button" onClick={decode}>解析 Data URL</button>{dataUrl && <ResultPanel text={dataUrl} copyLabel="复制 Data URL" />}</div></div></WorkspaceFrame>;
+  const updateInput = (value: string) => {
+    verificationVersion.current += 1;
+    setDataUrl(value);
+    setVerifiedDataUrl('');
+    job.setOutputs([]);
+  };
+  const clearVerifiedResult = () => {
+    verificationVersion.current += 1;
+    setVerifiedDataUrl('');
+    job.setImages([]);
+    job.setOutputs([]);
+  };
+  return <WorkspaceFrame {...job}><Dropzone onFiles={encodeFiles} onValidationError={clearVerifiedResult} /><div className="image-controls image-controls--stack"><label>图片 Data URL<textarea aria-label="图片 Data URL" rows={7} value={dataUrl} onChange={(event) => updateInput(event.target.value)} placeholder="data:image/png;base64,..." /></label><div className="image-inline-actions"><button type="button" onClick={decode}>解析 Data URL</button>{verifiedDataUrl && <ResultPanel text={verifiedDataUrl} copyLabel="复制 Data URL" />}</div></div></WorkspaceFrame>;
 }
 
 function ToolContent({ toolId }: { toolId: ToolId }) {

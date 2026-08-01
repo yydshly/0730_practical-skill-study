@@ -23,8 +23,16 @@ export type WatermarkOptions = {
 };
 
 export type WatermarkPlacement = Rect & {
+  bounds: Rect;
+  centerX: number;
+  centerY: number;
   opacity: number;
   rotation: number;
+};
+
+export type VerifiedImageFormat = {
+  mime: 'image/png' | 'image/jpeg' | 'image/webp';
+  extension: 'png' | 'jpg' | 'webp';
 };
 
 export type PlaceholderOptions = {
@@ -127,6 +135,8 @@ export function splitGrid(width: number, height: number, columns: number, rows: 
   assertSize(width, height);
   assertPositiveInteger(columns, '分割列数');
   assertPositiveInteger(rows, '分割行数');
+  if (columns > 20 || rows > 20) throw new Error('分割行列每边最多 20，总输出最多 400 张');
+  if (columns * rows > 400) throw new Error('分割总输出最多 400 张');
   if (columns > width || rows > height) throw new Error('分割行列不能超过图片像素尺寸');
 
   const regions: Rect[] = [];
@@ -201,20 +211,30 @@ export function transparentBounds(pixels: PixelBuffer): Rect | null {
 function singleWatermarkPosition(
   canvasWidth: number,
   canvasHeight: number,
-  markWidth: number,
-  markHeight: number,
+  boundsWidth: number,
+  boundsHeight: number,
   margin: number,
   position: NonNullable<WatermarkOptions['position']>,
 ): Rect {
   const positions: Record<NonNullable<WatermarkOptions['position']>, [number, number]> = {
     'top-left': [margin, margin],
-    'top-right': [canvasWidth - markWidth - margin, margin],
-    center: [(canvasWidth - markWidth) / 2, (canvasHeight - markHeight) / 2],
-    'bottom-left': [margin, canvasHeight - markHeight - margin],
-    'bottom-right': [canvasWidth - markWidth - margin, canvasHeight - markHeight - margin],
+    'top-right': [canvasWidth - boundsWidth - margin, margin],
+    center: [(canvasWidth - boundsWidth) / 2, (canvasHeight - boundsHeight) / 2],
+    'bottom-left': [margin, canvasHeight - boundsHeight - margin],
+    'bottom-right': [canvasWidth - boundsWidth - margin, canvasHeight - boundsHeight - margin],
   };
   const [x, y] = positions[position];
-  return { x: cleanNumber(x), y: cleanNumber(y), width: markWidth, height: markHeight };
+  return { x: cleanNumber(x), y: cleanNumber(y), width: boundsWidth, height: boundsHeight };
+}
+
+function rotatedBoundingSize(width: number, height: number, rotation: number): Size {
+  const radians = (rotation * Math.PI) / 180;
+  const cosine = Math.abs(Math.cos(radians));
+  const sine = Math.abs(Math.sin(radians));
+  return {
+    width: cleanNumber(width * cosine + height * sine),
+    height: cleanNumber(width * sine + height * cosine),
+  };
 }
 
 export function watermarkLayout(
@@ -230,21 +250,38 @@ export function watermarkLayout(
   if (!Number.isFinite(options.rotation) || options.rotation < -180 || options.rotation > 180) throw new Error('水印旋转角度必须在 -180 到 180 度之间');
   if (!Number.isFinite(options.margin) || options.margin < 0) throw new Error('水印边距不能小于 0');
   if (!Number.isFinite(options.gap) || options.gap < 0) throw new Error('水印间距不能小于 0');
-  if (markWidth + options.margin * 2 > canvasWidth || markHeight + options.margin * 2 > canvasHeight) throw new Error('水印尺寸和边距超出图片范围');
-  const decorate = (rect: Rect): WatermarkPlacement => ({ ...rect, opacity: options.opacity, rotation: options.rotation });
+  const rotated = rotatedBoundingSize(markWidth, markHeight, options.rotation);
+  if (rotated.width + options.margin * 2 > canvasWidth || rotated.height + options.margin * 2 > canvasHeight) throw new Error('旋转后的水印尺寸和边距超出图片范围');
+  const decorate = (bounds: Rect): WatermarkPlacement => {
+    const centerX = cleanNumber(bounds.x + bounds.width / 2);
+    const centerY = cleanNumber(bounds.y + bounds.height / 2);
+    return {
+      x: cleanNumber(centerX - markWidth / 2),
+      y: cleanNumber(centerY - markHeight / 2),
+      width: markWidth,
+      height: markHeight,
+      bounds,
+      centerX,
+      centerY,
+      opacity: options.opacity,
+      rotation: options.rotation,
+    };
+  };
 
   if (options.mode === 'single') {
-    return [decorate(singleWatermarkPosition(canvasWidth, canvasHeight, markWidth, markHeight, options.margin, options.position ?? 'bottom-right'))];
+    return [decorate(singleWatermarkPosition(canvasWidth, canvasHeight, rotated.width, rotated.height, options.margin, options.position ?? 'bottom-right'))];
   }
   if (options.mode !== 'tile') throw new Error('水印布局模式无效');
 
   const placements: WatermarkPlacement[] = [];
-  const maxX = canvasWidth - markWidth - options.margin;
-  const maxY = canvasHeight - markHeight - options.margin;
-  const stepX = markWidth + options.gap;
-  const stepY = markHeight + options.gap;
+  const maxX = canvasWidth - rotated.width - options.margin;
+  const maxY = canvasHeight - rotated.height - options.margin;
+  const stepX = rotated.width + options.gap;
+  const stepY = rotated.height + options.gap;
   for (let y = options.margin; y <= maxY; y += stepY) {
-    for (let x = options.margin; x <= maxX; x += stepX) placements.push(decorate({ x, y, width: markWidth, height: markHeight }));
+    for (let x = options.margin; x <= maxX; x += stepX) {
+      placements.push(decorate({ x: cleanNumber(x), y: cleanNumber(y), width: rotated.width, height: rotated.height }));
+    }
   }
   return placements;
 }
@@ -313,18 +350,39 @@ function assertImageMime(mime: string): void {
   if (!/^image\/[a-z0-9.+-]+$/i.test(mime)) throw new Error('Data URL 必须包含图片 MIME 类型');
 }
 
+function hasBytes(bytes: Uint8Array, offset: number, expected: readonly number[]): boolean {
+  return expected.every((value, index) => bytes[offset + index] === value);
+}
+
+export function detectImageFormat(bytes: Uint8Array): VerifiedImageFormat {
+  if (hasBytes(bytes, 0, [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])) {
+    return { mime: 'image/png', extension: 'png' };
+  }
+  if (hasBytes(bytes, 0, [0xff, 0xd8, 0xff])) {
+    return { mime: 'image/jpeg', extension: 'jpg' };
+  }
+  if (hasBytes(bytes, 0, [0x52, 0x49, 0x46, 0x46]) && hasBytes(bytes, 8, [0x57, 0x45, 0x42, 0x50])) {
+    return { mime: 'image/webp', extension: 'webp' };
+  }
+  throw new Error('内容不是有效的 PNG、JPEG 或 WebP 图片');
+}
+
 export function encodeImageBase64(bytes: Uint8Array, mime: string): string {
   assertImageMime(mime);
   if (bytes.length === 0) throw new Error('图片内容不能为空');
   return `data:${mime.toLowerCase()};base64,${bytesToBase64(bytes)}`;
 }
 
-export function decodeImageBase64(dataUrl: string): { mime: string; bytes: Uint8Array } {
+export function decodeImageBase64(dataUrl: string): VerifiedImageFormat & { bytes: Uint8Array } {
   if (!dataUrl.trim()) throw new Error('请输入图片 Data URL');
   const match = /^data:([^;,]+);base64,([^\s]+)$/i.exec(dataUrl.trim());
   if (!match) throw new Error('图片 Data URL 格式无效');
   assertImageMime(match[1]);
-  return { mime: match[1].toLowerCase(), bytes: base64ToBytes(match[2]) };
+  const declaredMime = match[1].toLowerCase();
+  const bytes = base64ToBytes(match[2]);
+  const detected = detectImageFormat(bytes);
+  if (declaredMime !== detected.mime) throw new Error(`声明的 MIME 与图片内容不一致：内容实际为 ${detected.mime}`);
+  return { ...detected, bytes };
 }
 
 function browserCanvasCanEncode(mime: string): boolean {

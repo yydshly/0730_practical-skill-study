@@ -14,6 +14,7 @@ import {
   transparentBounds,
   watermarkLayout,
 } from '../src/engines/image';
+import { IMAGE_FIXTURES, bytesFromBase64 } from './fixtures/image-fixtures';
 
 describe('图片几何引擎', () => {
   it('2x2 网格能生成四个不重叠区域', () => {
@@ -34,6 +35,12 @@ describe('图片几何引擎', () => {
       { x: 2, y: 1, width: 3, height: 2 },
     ]);
     expect(regions.reduce((area, region) => area + region.width * region.height, 0)).toBe(15);
+  });
+
+  it('网格引擎硬限制每边 20 且总输出不超过 400', () => {
+    expect(() => splitGrid(5000, 5000, 21, 1)).toThrow('每边最多 20');
+    expect(() => splitGrid(5000, 5000, 1, 21)).toThrow('每边最多 20');
+    expect(splitGrid(5000, 5000, 20, 20)).toHaveLength(400);
   });
 
   it('长图切片保留最后不足一页的高度', () => {
@@ -105,8 +112,42 @@ describe('图片几何引擎', () => {
       mode: 'tile', margin: 20, gap: 30, opacity: 0.35, rotation: -20,
     });
     expect(result.length).toBeGreaterThan(1);
-    expect(result[0]).toMatchObject({ x: 20, y: 20, opacity: 0.35, rotation: -20 });
-    expect(result.every((item) => item.x >= 20 && item.y >= 20)).toBe(true);
+    expect(result[0]).toMatchObject({ bounds: { x: 20, y: 20 }, opacity: 0.35, rotation: -20 });
+    expect(result.every((item) => item.bounds.x >= 20 && item.bounds.y >= 20)).toBe(true);
+  });
+
+  it('45 度单个水印按旋转后包围盒贴齐右下边距', () => {
+    const [placement] = watermarkLayout(400, 300, 100, 20, {
+      mode: 'single', margin: 16, gap: 0, opacity: 0.5, rotation: 45, position: 'bottom-right',
+    });
+    expect(placement.bounds.width).toBeCloseTo(84.85281374);
+    expect(placement.bounds.height).toBeCloseTo(84.85281374);
+    expect(placement.bounds.x + placement.bounds.width).toBeCloseTo(384);
+    expect(placement.bounds.y + placement.bounds.height).toBeCloseTo(284);
+    expect(placement.centerX).toBeCloseTo(placement.bounds.x + placement.bounds.width / 2);
+    expect(placement.centerY).toBeCloseTo(placement.bounds.y + placement.bounds.height / 2);
+  });
+
+  it('90 度单个水印交换包围盒轴并保持左上边距', () => {
+    const [placement] = watermarkLayout(400, 300, 100, 20, {
+      mode: 'single', margin: 12, gap: 0, opacity: 1, rotation: 90, position: 'top-left',
+    });
+    expect(placement.bounds).toMatchObject({ x: 12, y: 12 });
+    expect(placement.bounds.width).toBeCloseTo(20);
+    expect(placement.bounds.height).toBeCloseTo(100);
+  });
+
+  it('45 度平铺使用旋转包围盒计算步长且所有水印不越界', () => {
+    const placements = watermarkLayout(300, 260, 100, 20, {
+      mode: 'tile', margin: 10, gap: 15, opacity: 0.4, rotation: 45,
+    });
+    expect(placements.length).toBeGreaterThan(1);
+    expect(placements[1].bounds.x - placements[0].bounds.x).toBeCloseTo(placements[0].bounds.width + 15);
+    expect(placements.every(({ bounds }) => (
+      bounds.x >= 10 && bounds.y >= 10
+      && bounds.x + bounds.width <= 290.000001
+      && bounds.y + bounds.height <= 250.000001
+    ))).toBe(true);
   });
 
   it('拒绝越界的水印参数', () => {
@@ -132,15 +173,17 @@ describe('图片编码与格式能力', () => {
     expect(svg).not.toContain('<script>');
   });
 
-  it('图片字节可编码为带 MIME 的 Data URL 并原样解码', () => {
-    const dataUrl = encodeImageBase64(new Uint8Array([0, 1, 2, 253, 254, 255]), 'image/png');
-    expect(dataUrl).toBe('data:image/png;base64,AAEC/f7/');
-    expect(decodeImageBase64(dataUrl)).toEqual({ mime: 'image/png', bytes: new Uint8Array([0, 1, 2, 253, 254, 255]) });
+  it.each(Object.values(IMAGE_FIXTURES))('真实 $mime 字节按内容验证并决定扩展名', ({ mime, extension, base64 }) => {
+    const bytes = bytesFromBase64(base64);
+    const dataUrl = encodeImageBase64(bytes, mime);
+    expect(decodeImageBase64(dataUrl)).toEqual({ mime, extension, bytes });
   });
 
-  it('Data URL 拒绝非图片 MIME、非法 base64 和空内容', () => {
+  it('Data URL 拒绝非图片 MIME、非法 base64、伪图片和 MIME 魔数不一致', () => {
     expect(() => decodeImageBase64('data:text/plain;base64,aGk=')).toThrow('Data URL 必须包含图片 MIME 类型');
     expect(() => decodeImageBase64('data:image/png;base64,***')).toThrow('图片 Base64 内容无效');
+    expect(() => decodeImageBase64('data:image/png;base64,aGk=')).toThrow('不是有效的 PNG、JPEG 或 WebP 图片');
+    expect(() => decodeImageBase64(`data:image/jpeg;base64,${IMAGE_FIXTURES.png.base64}`)).toThrow('声明的 MIME 与图片内容不一致');
     expect(() => decodeImageBase64('')).toThrow('请输入图片 Data URL');
   });
 
