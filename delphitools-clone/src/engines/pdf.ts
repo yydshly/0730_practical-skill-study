@@ -1,5 +1,8 @@
 import { degrees, PDFDocument, type PDFEmbeddedPage, type PDFPage } from 'pdf-lib';
 
+export { removeBackground, traceImage } from './advancedImage';
+export type { BackgroundOptions, RasterData, TraceOptions } from './advancedImage';
+
 export type PaperName = 'A3' | 'A4' | 'A5' | 'Letter';
 export type PageOrientation = 'portrait' | 'landscape';
 
@@ -27,10 +30,6 @@ export type ImposeOptions = NUpOptions & {
   duplex: 'single' | 'double';
   flip: 'long-edge' | 'short-edge';
 };
-
-export type RasterData = { width: number; height: number; data: Uint8ClampedArray };
-export type TraceOptions = { threshold: number; smoothing: number; mode: 'monochrome' | 'color'; maxColors: number };
-export type BackgroundOptions = { threshold: number; feather: number };
 
 const PAPER_SIZES: Record<PaperName, readonly [number, number]> = {
   A3: [841.89, 1190.55],
@@ -129,11 +128,15 @@ export async function preflightPdf(bytes: Uint8Array): Promise<PdfPreflightResul
   const document = await loadPdf(bytes);
   const pages = document.getPages().map((page, index) => {
     const { width, height } = page.getSize();
+    const rotation = ((page.getRotation().angle % 360) + 360) % 360;
+    const swapsAxes = rotation === 90 || rotation === 270;
+    const visualWidth = swapsAxes ? height : width;
+    const visualHeight = swapsAxes ? width : height;
     return {
       number: index + 1,
-      width: round(width, 2),
-      height: round(height, 2),
-      orientation: (width > height ? 'landscape' : 'portrait') as PageOrientation,
+      width: round(visualWidth, 2),
+      height: round(visualHeight, 2),
+      orientation: (visualWidth > visualHeight ? 'landscape' : 'portrait') as PageOrientation,
     };
   });
   const signatures = new Set(pages.map((page) => `${page.width}x${page.height}:${page.orientation}`));
@@ -154,25 +157,59 @@ export async function preflightPdf(bytes: Uint8Array): Promise<PdfPreflightResul
   };
 }
 
-function drawEmbedded(target: PDFPage, embedded: PDFEmbeddedPage | undefined, placement: NUpPlacement, rotate = false): void {
-  if (!embedded) return;
-  const scale = Math.min(placement.width / embedded.width, placement.height / embedded.height);
-  const width = embedded.width * scale;
-  const height = embedded.height * scale;
-  const x = placement.x + (placement.width - width) / 2;
-  const y = placement.y + (placement.height - height) / 2;
-  if (rotate) {
-    target.drawPage(embedded, { x: x + width, y: y + height, width, height, rotate: degrees(180) });
-  } else {
-    target.drawPage(embedded, { x, y, width, height });
-  }
+type EmbeddedSourcePage = { embedded: PDFEmbeddedPage; rotation: number };
+
+function normalizedRightAngle(angle: number): 0 | 90 | 180 | 270 {
+  const normalized = ((angle % 360) + 360) % 360;
+  return (normalized === 90 || normalized === 180 || normalized === 270 ? normalized : 0);
 }
 
-async function embeddedPages(output: PDFDocument, source: PDFDocument): Promise<PDFEmbeddedPage[]> {
+export function embeddedPagePlacement(
+  sourceWidth: number,
+  sourceHeight: number,
+  angle: number,
+  placement: NUpPlacement,
+): { x: number; y: number; width: number; height: number; rotation: 0 | 90 | 180 | 270 } {
+  const rotation = normalizedRightAngle(angle);
+  const swapsAxes = rotation === 90 || rotation === 270;
+  const naturalWidth = swapsAxes ? sourceHeight : sourceWidth;
+  const naturalHeight = swapsAxes ? sourceWidth : sourceHeight;
+  const scale = Math.min(placement.width / naturalWidth, placement.height / naturalHeight);
+  const width = sourceWidth * scale;
+  const height = sourceHeight * scale;
+  const visualWidth = swapsAxes ? height : width;
+  const visualHeight = swapsAxes ? width : height;
+  const left = placement.x + (placement.width - visualWidth) / 2;
+  const bottom = placement.y + (placement.height - visualHeight) / 2;
+  const origin = rotation === 90
+    ? { x: left + visualWidth, y: bottom }
+    : rotation === 180
+      ? { x: left + visualWidth, y: bottom + visualHeight }
+      : rotation === 270
+        ? { x: left, y: bottom + visualHeight }
+        : { x: left, y: bottom };
+  return { x: round(origin.x), y: round(origin.y), width: round(width), height: round(height), rotation };
+}
+
+function drawEmbedded(target: PDFPage, source: EmbeddedSourcePage | undefined, placement: NUpPlacement, extraRotation = 0): void {
+  if (!source) return;
+  const transform = embeddedPagePlacement(source.embedded.width, source.embedded.height, source.rotation + extraRotation, placement);
+  target.drawPage(source.embedded, { x: transform.x, y: transform.y, width: transform.width, height: transform.height, rotate: degrees(transform.rotation) });
+}
+
+async function embeddedPages(output: PDFDocument, source: PDFDocument): Promise<EmbeddedSourcePage[]> {
   source.getPages().forEach((page) => {
     if (!page.node.Contents()) page.drawRectangle({ x: 0, y: 0, width: 0.01, height: 0.01, opacity: 0 });
   });
-  return output.embedPdf(source, source.getPageIndices());
+  const embedded = await output.embedPdf(source, source.getPageIndices());
+  return embedded.map((page, index) => ({ embedded: page, rotation: normalizedRightAngle(source.getPage(index).getRotation().angle) }));
+}
+
+function placementsForOutputSide(layout: NUpResult, outputPageIndex: number, duplex: ImposeOptions['duplex'], flip: ImposeOptions['flip']): NUpPlacement[] {
+  if (duplex !== 'double' || outputPageIndex % 2 === 0) return layout.placements;
+  return layout.placements.map((placement) => flip === 'long-edge'
+    ? { ...placement, x: round(layout.sheet.width - placement.x - placement.width) }
+    : { ...placement, y: round(layout.sheet.height - placement.y - placement.height) });
 }
 
 export async function imposePdf(bytes: Uint8Array, options: ImposeOptions): Promise<Uint8Array> {
@@ -193,9 +230,10 @@ export async function imposePdf(bytes: Uint8Array, options: ImposeOptions): Prom
   } else {
     const layout = nUpLayout(options);
     const perSheet = layout.placements.length;
-    for (let start = 0; start < embedded.length; start += perSheet) {
+    for (let start = 0, outputPageIndex = 0; start < embedded.length; start += perSheet, outputPageIndex += 1) {
       const page = output.addPage([layout.sheet.width, layout.sheet.height]);
-      embedded.slice(start, start + perSheet).forEach((sourcePage, index) => drawEmbedded(page, sourcePage, layout.placements[index]));
+      const placements = placementsForOutputSide(layout, outputPageIndex, options.duplex, options.flip);
+      embedded.slice(start, start + perSheet).forEach((sourcePage, index) => drawEmbedded(page, sourcePage, placements[index]));
     }
   }
   output.setTitle(options.mode === 'booklet' ? '本地小册子拼版' : '本地 N-up 拼版');
@@ -210,7 +248,7 @@ export async function createZinePdf(bytes: Uint8Array, options: Pick<NUpOptions,
   const embedded = await embeddedPages(output, source);
   const layout = nUpLayout({ ...options, columns: 4, rows: 2 });
   const page = output.addPage([layout.sheet.width, layout.sheet.height]);
-  zineEightPageOrder().forEach((pageNumber, index) => drawEmbedded(page, embedded[pageNumber - 1], layout.placements[index], index < 4));
+  zineEightPageOrder().forEach((pageNumber, index) => drawEmbedded(page, embedded[pageNumber - 1], layout.placements[index], index < 4 ? 180 : 0));
   output.setTitle('8 页 Mini-Zine 本地拼版');
   output.setProducer('DelphiTools 本地 Zine 拼版');
   return output.save();
@@ -220,116 +258,73 @@ function utf8Size(value: string): number {
   return new TextEncoder().encode(value).byteLength;
 }
 
-function sanitizeAttribute(match: string, name: string, quote: string, value: string): string {
-  const lowerName = name.toLowerCase();
-  const normalizedValue = value.trim().toLowerCase();
-  if (lowerName.startsWith('on')) return '';
-  if (lowerName === 'src') return '';
-  if (lowerName === 'href' || lowerName === 'xlink:href') return normalizedValue.startsWith('#') ? ` ${name}=${quote}${value}${quote}` : '';
-  if ((lowerName === 'style' || lowerName === 'fill' || lowerName === 'stroke' || lowerName === 'filter' || lowerName === 'clip-path' || lowerName === 'mask')
-    && /(?:javascript:|data:|https?:|\/\/|url\((?!\s*#))/i.test(value)) return '';
-  return match;
+const SVG_NAMESPACE = 'http://www.w3.org/2000/svg';
+const BLOCKED_SVG_ELEMENTS = new Set(['script', 'foreignobject', 'iframe', 'object', 'embed']);
+const CSS_VALUE_ATTRIBUTES = new Set(['style', 'fill', 'stroke', 'filter', 'clip-path', 'mask', 'marker', 'marker-start', 'marker-mid', 'marker-end']);
+
+function parserFailed(document: Document): boolean {
+  return document.documentElement.localName.toLowerCase() === 'parsererror'
+    || Array.from(document.getElementsByTagName('*')).some((element) => element.localName.toLowerCase() === 'parsererror');
+}
+
+function unsafeCss(value: string): boolean {
+  const normalized = value.replace(/\/\*[\s\S]*?\*\//g, '').replace(/[\u0000-\u0020]+/g, '').toLowerCase();
+  if (/@import|expression\(|javascript:|data:|https?:|(?:^|[({:,])\/\//i.test(normalized)) return true;
+  for (const match of normalized.matchAll(/url\(([^)]*)\)/g)) {
+    const target = match[1].replace(/^['"]|['"]$/g, '').trim();
+    if (!target.startsWith('#')) return true;
+  }
+  return false;
+}
+
+function removeComments(node: Node): void {
+  Array.from(node.childNodes).forEach((child) => {
+    if (child.nodeType === 8) child.parentNode?.removeChild(child);
+    else removeComments(child);
+  });
 }
 
 export function optimiseSvg(source: string): { svg: string; beforeBytes: number; afterBytes: number; removedUnsafe: boolean } {
   const input = source.trim();
   if (!input) throw new Error('SVG 内容不能为空');
   if (/<!DOCTYPE|<!ENTITY/i.test(input)) throw new Error('不允许 XML 外部实体或文档类型声明');
-  if (!/<svg\b/i.test(input) || !/<\/svg\s*>/i.test(input)) throw new Error('不是有效的 SVG 文件');
-  let svg = input;
-  const unsafePattern = /<script\b|<foreignObject\b|\son[a-z]+\s*=|(?:href|src)\s*=\s*["']\s*(?:https?:|\/\/|javascript:|data:)/i;
-  const removedUnsafe = unsafePattern.test(svg);
-  svg = svg
-    .replace(/<\?xml[\s\S]*?\?>/gi, '')
-    .replace(/<!--[\s\S]*?-->/g, '')
-    .replace(/<metadata\b[\s\S]*?<\/metadata\s*>/gi, '')
-    .replace(/<script\b[\s\S]*?<\/script\s*>/gi, '')
-    .replace(/<script\b[^>]*\/>/gi, '')
-    .replace(/<foreignObject\b[\s\S]*?<\/foreignObject\s*>/gi, '')
-    .replace(/\s([:\w-]+)\s*=\s*(["'])([\s\S]*?)\2/g, sanitizeAttribute)
-    .replace(/>\s+</g, '><')
-    .replace(/\s{2,}/g, ' ')
-    .trim();
-  if (!/\sxmlns=/.test(svg)) svg = svg.replace(/<svg\b/i, '<svg xmlns="http://www.w3.org/2000/svg"');
-  return { svg, beforeBytes: utf8Size(source), afterBytes: utf8Size(svg), removedUnsafe };
-}
+  const parser = new DOMParser();
+  const document = parser.parseFromString(input, 'image/svg+xml');
+  if (parserFailed(document)) throw new Error('不是有效的 SVG 文件');
+  const root = document.documentElement;
+  if (root.localName.toLowerCase() !== 'svg' || (root.namespaceURI !== SVG_NAMESPACE && root.namespaceURI !== null)) throw new Error('不是有效的 SVG 文件');
 
-function assertRaster(raster: RasterData): void {
-  if (!Number.isInteger(raster.width) || !Number.isInteger(raster.height) || raster.width <= 0 || raster.height <= 0) throw new Error('图片尺寸无效');
-  if (raster.width * raster.height > 20_000_000) throw new Error('图片像素过多，请缩小后重试');
-  if (raster.data.length !== raster.width * raster.height * 4) throw new Error('图片像素数据不完整');
-}
-
-function abortIfNeeded(signal?: AbortSignal): void {
-  if (signal?.aborted) throw new Error('处理已取消');
-}
-
-function clampByte(value: number): number {
-  return Math.max(0, Math.min(255, Math.round(value)));
-}
-
-function hex(value: number): string {
-  return clampByte(value).toString(16).padStart(2, '0');
-}
-
-export function traceImage(raster: RasterData, options: TraceOptions, signal?: AbortSignal): string {
-  assertRaster(raster);
-  abortIfNeeded(signal);
-  if (!Number.isFinite(options.threshold) || options.threshold < 0 || options.threshold > 255) throw new Error('阈值必须在 0 到 255 之间');
-  if (!Number.isFinite(options.smoothing) || options.smoothing < 0 || options.smoothing > 100) throw new Error('平滑度必须在 0 到 100 之间');
-  if (!Number.isInteger(options.maxColors) || options.maxColors < 2 || options.maxColors > 16) throw new Error('颜色数量必须在 2 到 16 之间');
-  const groups = new Map<string, string[]>();
-  const levels = Math.max(2, Math.round(Math.cbrt(options.maxColors)));
-  const quantize = (value: number) => Math.round((value / 255) * (levels - 1)) * (255 / (levels - 1));
-  for (let y = 0; y < raster.height; y += 1) {
-    abortIfNeeded(signal);
-    let x = 0;
-    while (x < raster.width) {
-      const offset = (y * raster.width + x) * 4;
-      const alpha = raster.data[offset + 3];
-      const luminance = raster.data[offset] * 0.2126 + raster.data[offset + 1] * 0.7152 + raster.data[offset + 2] * 0.0722;
-      const fill = options.mode === 'monochrome'
-        ? (alpha > 0 && luminance < options.threshold ? '#000000' : '')
-        : (alpha > 0 ? `#${hex(quantize(raster.data[offset]))}${hex(quantize(raster.data[offset + 1]))}${hex(quantize(raster.data[offset + 2]))}` : '');
-      if (!fill) { x += 1; continue; }
-      let end = x + 1;
-      while (end < raster.width) {
-        const next = (y * raster.width + end) * 4;
-        const nextLuminance = raster.data[next] * 0.2126 + raster.data[next + 1] * 0.7152 + raster.data[next + 2] * 0.0722;
-        const nextFill = options.mode === 'monochrome'
-          ? (raster.data[next + 3] > 0 && nextLuminance < options.threshold ? '#000000' : '')
-          : (raster.data[next + 3] > 0 ? `#${hex(quantize(raster.data[next]))}${hex(quantize(raster.data[next + 1]))}${hex(quantize(raster.data[next + 2]))}` : '');
-        if (nextFill !== fill) break;
-        end += 1;
+  let removedUnsafe = false;
+  removeComments(document);
+  for (const element of Array.from(document.getElementsByTagName('*'))) {
+    const localName = element.localName.toLowerCase();
+    if (element !== root && (BLOCKED_SVG_ELEMENTS.has(localName) || (localName === 'metadata' && (element.namespaceURI === SVG_NAMESPACE || element.namespaceURI === null)))) {
+      removedUnsafe ||= BLOCKED_SVG_ELEMENTS.has(localName);
+      element.remove();
+      continue;
+    }
+    if (localName === 'style' && unsafeCss(element.textContent ?? '')) {
+      removedUnsafe = true;
+      element.remove();
+      continue;
+    }
+    for (const attribute of Array.from(element.attributes)) {
+      const attributeName = attribute.localName.toLowerCase();
+      const value = attribute.value.trim();
+      const remove = attributeName.startsWith('on')
+        || attributeName === 'src'
+        || (attributeName === 'href' && !value.startsWith('#'))
+        || (CSS_VALUE_ATTRIBUTES.has(attributeName) && unsafeCss(value));
+      if (remove) {
+        removedUnsafe = true;
+        element.removeAttributeNode(attribute);
       }
-      const paths = groups.get(fill) ?? [];
-      paths.push(`M${x} ${y}H${end}V${y + 1}H${x}Z`);
-      groups.set(fill, paths);
-      x = end;
     }
   }
-  const shapeMarkup = [...groups.entries()].map(([fill, paths]) => `<path fill="${fill}" d="${paths.join('')}"/>`).join('');
-  if (!shapeMarkup) throw new Error('当前参数没有追踪到可见图形，请调整阈值后重试');
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${raster.width} ${raster.height}" shape-rendering="${options.smoothing > 50 ? 'geometricPrecision' : 'crispEdges'}">${shapeMarkup}</svg>`;
-}
-
-export function removeBackground(raster: RasterData, options: BackgroundOptions, onProgress?: (progress: number) => void, signal?: AbortSignal): RasterData {
-  assertRaster(raster);
-  abortIfNeeded(signal);
-  if (!Number.isFinite(options.threshold) || options.threshold < 0 || options.threshold > 441) throw new Error('背景阈值必须在 0 到 441 之间');
-  if (!Number.isFinite(options.feather) || options.feather < 0 || options.feather > 255) throw new Error('羽化必须在 0 到 255 之间');
-  const corners = [0, raster.width - 1, (raster.height - 1) * raster.width, raster.width * raster.height - 1];
-  const background = [0, 1, 2].map((channel) => corners.reduce((sum, pixel) => sum + raster.data[pixel * 4 + channel], 0) / corners.length);
-  const output = new Uint8ClampedArray(raster.data);
-  for (let y = 0; y < raster.height; y += 1) {
-    abortIfNeeded(signal);
-    for (let x = 0; x < raster.width; x += 1) {
-      const offset = (y * raster.width + x) * 4;
-      const distance = Math.hypot(output[offset] - background[0], output[offset + 1] - background[1], output[offset + 2] - background[2]);
-      const factor = options.feather === 0 ? (distance <= options.threshold ? 0 : 1) : Math.max(0, Math.min(1, (distance - options.threshold) / options.feather));
-      output[offset + 3] = clampByte(output[offset + 3] * factor);
-    }
-    onProgress?.(round(((y + 1) / raster.height) * 100, 0));
-  }
-  return { width: raster.width, height: raster.height, data: output };
+  if (!root.hasAttribute('xmlns')) root.setAttribute('xmlns', SVG_NAMESPACE);
+  let svg = new XMLSerializer().serializeToString(root).replace(/>\s+</g, '><').trim();
+  const verification = parser.parseFromString(svg, 'image/svg+xml');
+  if (parserFailed(verification) || verification.documentElement.namespaceURI !== SVG_NAMESPACE || verification.documentElement.localName.toLowerCase() !== 'svg') throw new Error('不是有效的 SVG 文件');
+  svg = new XMLSerializer().serializeToString(verification.documentElement).replace(/>\s+</g, '><').trim();
+  return { svg, beforeBytes: utf8Size(source), afterBytes: utf8Size(svg), removedUnsafe };
 }

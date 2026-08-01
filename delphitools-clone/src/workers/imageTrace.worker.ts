@@ -1,4 +1,4 @@
-import { traceImage, type TraceOptions } from '../engines/pdf';
+import { traceImage, type TraceOptions } from '../engines/advancedImage';
 import { workerErrorResponse, workerProgressResponse } from './protocol';
 
 type Request = { id: string; type: 'trace-image'; payload: { width: number; height: number; data: ArrayBuffer; options: TraceOptions } } | { id: string; type: 'cancel' };

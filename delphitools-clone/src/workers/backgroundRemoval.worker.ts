@@ -1,4 +1,4 @@
-import { removeBackground, type BackgroundOptions } from '../engines/pdf';
+import { removeBackground, type BackgroundOptions } from '../engines/advancedImage';
 import { workerErrorResponse, workerProgressResponse } from './protocol';
 
 type Request = { id: string; type: 'remove-background'; payload: { width: number; height: number; data: ArrayBuffer; options: BackgroundOptions } } | { id: string; type: 'cancel' };

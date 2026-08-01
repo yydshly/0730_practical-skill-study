@@ -1,8 +1,11 @@
+/** @vitest-environment jsdom */
+
 import { describe, expect, it, vi } from 'vitest';
 
 import {
   bookletOrder,
   createZinePdf,
+  embeddedPagePlacement,
   imposePdf,
   nUpLayout,
   optimiseSvg,
@@ -11,7 +14,7 @@ import {
   traceImage,
   zineEightPageOrder,
 } from '../src/engines/pdf';
-import { PDFDocument } from 'pdf-lib';
+import { degrees, PDFDocument, rgb } from 'pdf-lib';
 import { workerErrorResponse } from '../src/workers/protocol';
 
 describe('PDF 页序与版面', () => {
@@ -69,6 +72,16 @@ describe('PDF 预检错误', () => {
     expect(result.warnings).toContain('页面尺寸或方向不一致，请在印刷前确认');
   });
 
+  it('预检按页面旋转后的视觉尺寸判断方向', async () => {
+    const source = await PDFDocument.create();
+    const page = source.addPage([300, 400]);
+    page.setRotation(degrees(90));
+
+    const result = await preflightPdf(await source.save());
+
+    expect(result.pages[0]).toEqual({ number: 1, width: 400, height: 300, orientation: 'landscape' });
+  });
+
   it('N-up 和 Zine 都生成可被重新打开的真实 PDF', async () => {
     const source = await PDFDocument.create();
     for (let index = 0; index < 8; index += 1) source.addPage([300, 400]);
@@ -78,6 +91,51 @@ describe('PDF 预检错误', () => {
     expect((await PDFDocument.load(imposed)).getPageCount()).toBe(2);
     expect((await PDFDocument.load(zine)).getPageCount()).toBe(1);
     expect(new TextDecoder('latin1').decode(imposed.slice(0, 8))).toContain('%PDF-');
+  });
+
+  it('N-up 双面长边与短边翻转生成不同的背面变换，单面时翻转方式不生效', async () => {
+    const source = await PDFDocument.create();
+    for (let index = 0; index < 8; index += 1) {
+      const page = source.addPage([300, 400]);
+      page.drawRectangle({ x: index * 5, y: 10, width: 30, height: 20, color: rgb(index / 8, 0.2, 0.6) });
+    }
+    const input = await source.save();
+    const base = { mode: 'nup' as const, paper: 'A4' as const, orientation: 'landscape' as const, columns: 2, rows: 2, margin: 18, gap: 8 };
+
+    const doubleLong = await imposePdf(input, { ...base, duplex: 'double', flip: 'long-edge' });
+    const doubleShort = await imposePdf(input, { ...base, duplex: 'double', flip: 'short-edge' });
+    const singleLong = await imposePdf(input, { ...base, duplex: 'single', flip: 'long-edge' });
+    const singleShort = await imposePdf(input, { ...base, duplex: 'single', flip: 'short-edge' });
+
+    expect(Array.from(doubleLong)).not.toEqual(Array.from(doubleShort));
+    expect(Array.from(singleLong)).toEqual(Array.from(singleShort));
+    expect((await PDFDocument.load(doubleLong)).getPageCount()).toBe(2);
+    expect((await PDFDocument.load(doubleShort)).getPageCount()).toBe(2);
+  });
+
+  it('拼版保留 90、180、270 度来源页并生成可重载输出', async () => {
+    const source = await PDFDocument.create();
+    [90, 180, 270].forEach((angle, index) => {
+      const page = source.addPage([300, 400]);
+      page.setRotation(degrees(angle));
+      page.drawText(`corner-${angle}`, { x: 12 + index, y: 365, size: 18 });
+    });
+
+    const output = await imposePdf(await source.save(), {
+      mode: 'nup', paper: 'A4', orientation: 'landscape', columns: 3, rows: 1,
+      margin: 18, gap: 8, duplex: 'single', flip: 'long-edge',
+    });
+
+    const loaded = await PDFDocument.load(output);
+    expect(loaded.getPageCount()).toBe(1);
+    expect(loaded.getPage(0).getSize()).toEqual({ width: 841.89, height: 595.28 });
+  });
+
+  it('来源页旋转补偿为 90、180、270 度生成正确绘制原点和尺寸', () => {
+    const placement = { x: 10, y: 20, width: 200, height: 200 };
+    expect(embeddedPagePlacement(300, 400, 90, placement)).toEqual({ x: 210, y: 45, width: 150, height: 200, rotation: 90 });
+    expect(embeddedPagePlacement(300, 400, 180, placement)).toEqual({ x: 185, y: 220, width: 150, height: 200, rotation: 180 });
+    expect(embeddedPagePlacement(300, 400, 270, placement)).toEqual({ x: 10, y: 195, width: 150, height: 200, rotation: 270 });
   });
 });
 
@@ -108,6 +166,34 @@ describe('SVG 安全优化', () => {
     expect(result.svg).not.toMatch(/script|onload|evil\.example/i);
     expect(result.svg).toContain('href="#safe"');
   });
+
+  it('按命名空间移除脚本和任意前缀危险 href', () => {
+    const source = '<svg xmlns="http://www.w3.org/2000/svg" xmlns:s="http://www.w3.org/2000/svg" xmlns:link="http://www.w3.org/1999/xlink"><s:script>alert(1)</s:script><use link:href="javascript:alert(1)"/><use link:href="#safe"/></svg>';
+    const result = optimiseSvg(source);
+    expect(result.svg).not.toMatch(/script|javascript/i);
+    expect(result.svg).toContain('#safe');
+  });
+
+  it('净化 style 元素与属性中的外链，同时保留本地 url 引用', () => {
+    const source = '<svg xmlns="http://www.w3.org/2000/svg"><defs><filter id="soft"/></defs><style>.bad{@import url(https://evil.example/a.css)}.ok{filter:url(#soft)}</style><rect style="fill:url(&#x6a;avascript:alert(1));filter:url(#soft)" filter="url(#soft)"/></svg>';
+    const result = optimiseSvg(source);
+    expect(result.svg).not.toMatch(/@import|evil\.example|javascript/i);
+    expect(result.svg).toContain('url(#soft)');
+  });
+
+  it('接受带空格的合法 xmlns，不重复命名空间并保留 viewBox 与本地引用', () => {
+    const source = '<svg xmlns = "http://www.w3.org/2000/svg" viewBox="0 0 10 10"><defs><path id="p" d="M0 0h1v1z"/></defs><use href="#p"/></svg>';
+    const result = optimiseSvg(source);
+    expect(result.svg.match(/xmlns="http:\/\/www\.w3\.org\/2000\/svg"/g)).toHaveLength(1);
+    expect(result.svg).toContain('viewBox="0 0 10 10"');
+    expect(result.svg).toContain('href="#p"');
+    const reparsed = new DOMParser().parseFromString(result.svg, 'image/svg+xml');
+    expect(reparsed.querySelector('parsererror')).toBeNull();
+  });
+
+  it('拒绝畸形 XML，而不是下载无法解析的 SVG', () => {
+    expect(() => optimiseSvg('<svg xmlns="http://www.w3.org/2000/svg"><g></svg>')).toThrow('不是有效的 SVG 文件');
+  });
 });
 
 describe('本地高级图像处理', () => {
@@ -134,6 +220,30 @@ describe('本地高级图像处理', () => {
     expect(() => traceImage(raster, { threshold: 128, smoothing: 101, mode: 'color', maxColors: 4 })).toThrow('平滑度必须在 0 到 100 之间');
   });
 
+  it('彩色追踪的实际填充色不超过 maxColors', () => {
+    const colors = [
+      [255, 0, 0], [0, 255, 0], [0, 0, 255], [255, 255, 0],
+      [255, 0, 255], [0, 255, 255], [128, 64, 32], [240, 240, 240],
+    ];
+    const colorful = {
+      width: colors.length,
+      height: 1,
+      data: new Uint8ClampedArray(colors.flatMap(([red, green, blue]) => [red, green, blue, 255])),
+    };
+
+    const result = traceImage(colorful, { threshold: 128, smoothing: 0, mode: 'color', maxColors: 2 });
+    const fills = new Set(Array.from(result.matchAll(/fill="(#[0-9a-f]{6})"/gi), (match) => match[1]));
+    expect(fills.size).toBeLessThanOrEqual(2);
+  });
+
+  it('平滑度会改变 SVG 路径几何，而不只是渲染属性', () => {
+    const crisp = traceImage(raster, { threshold: 128, smoothing: 0, mode: 'monochrome', maxColors: 4 });
+    const smooth = traceImage(raster, { threshold: 128, smoothing: 100, mode: 'monochrome', maxColors: 4 });
+    const crispPath = crisp.match(/ d="([^"]+)"/)?.[1];
+    const smoothPath = smooth.match(/ d="([^"]+)"/)?.[1];
+    expect(smoothPath).not.toBe(crispPath);
+  });
+
   it('本地颜色背景移除产生透明像素并报告进度', () => {
     const progress = vi.fn();
     const result = removeBackground(raster, { threshold: 20, feather: 0 }, progress);
@@ -141,6 +251,22 @@ describe('本地高级图像处理', () => {
     expect(result.data[7]).toBe(255);
     expect(result.data[11]).toBe(0);
     expect(progress).toHaveBeenCalledWith(100);
+  });
+
+  it('背景移除只清理与边界连通的相似颜色，保留主体内部隔离白点', () => {
+    const pixels: number[] = [];
+    for (let y = 0; y < 5; y += 1) {
+      for (let x = 0; x < 5; x += 1) {
+        const edge = x === 0 || y === 0 || x === 4 || y === 4;
+        const center = x === 2 && y === 2;
+        const value = edge || center ? 255 : 0;
+        pixels.push(value, value, value, 255);
+      }
+    }
+    const result = removeBackground({ width: 5, height: 5, data: new Uint8ClampedArray(pixels) }, { threshold: 20, feather: 0 });
+    expect(result.data[(0 * 5 + 0) * 4 + 3]).toBe(0);
+    expect(result.data[(2 * 5 + 2) * 4 + 3]).toBe(255);
+    expect(result.data[(2 * 5 + 1) * 4 + 3]).toBe(255);
   });
 
   it('已经取消的本地处理返回中文取消错误', () => {
