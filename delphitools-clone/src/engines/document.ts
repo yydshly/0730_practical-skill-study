@@ -21,7 +21,8 @@ function decodeEntities(value: string): string {
     if (code[0] === '#') {
       const radix = code[1]?.toLowerCase() === 'x' ? 16 : 10;
       const number = Number.parseInt(code.slice(radix === 16 ? 2 : 1), radix);
-      return Number.isFinite(number) ? String.fromCodePoint(number) : entity;
+      const isUnicodeScalar = Number.isInteger(number) && number >= 0 && number <= 0x10ffff && !(number >= 0xd800 && number <= 0xdfff);
+      return isUnicodeScalar ? String.fromCodePoint(number) : '�';
     }
     return named[code.toLowerCase()] ?? entity;
   });
@@ -101,11 +102,38 @@ export function markdownToHtml(markdown: string): string {
 }
 
 export function sanitizeHtml(html: string): string {
-  return html
-    .replace(/<(script|style|iframe|object|embed)\b[^>]*>[\s\S]*?<\/\1\s*>/giu, '')
-    .replace(/<(script|style|iframe|object|embed)\b[^>]*\/?>/giu, '')
-    .replace(/\s+on[a-z]+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/giu, '')
-    .replace(/\s+(href|src)\s*=\s*(["'])\s*(?:javascript|data):[\s\S]*?\2/giu, ' $1="#"');
+  const parsed = new DOMParser().parseFromString(html, 'text/html');
+  const output = new DOMParser().parseFromString('', 'text/html');
+  const allowed = new Set(['a', 'article', 'b', 'blockquote', 'br', 'code', 'del', 'div', 'em', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'hr', 'i', 'li', 'ol', 'p', 'pre', 'section', 'span', 'strong', 'ul']);
+  const discardWithContent = new Set(['base', 'embed', 'iframe', 'link', 'math', 'meta', 'noscript', 'object', 'script', 'style', 'svg', 'template']);
+
+  const copySafeNode = (node: Node, parent: Node): void => {
+    if (node.nodeType === 3) {
+      parent.appendChild(output.createTextNode(node.textContent ?? ''));
+      return;
+    }
+    if (node.nodeType !== 1) return;
+    const source = node as Element;
+    const tagName = source.tagName.toLocaleLowerCase();
+    if (discardWithContent.has(tagName)) return;
+    if (!allowed.has(tagName)) {
+      Array.from(source.childNodes).forEach((child) => copySafeNode(child, parent));
+      return;
+    }
+
+    const clean = output.createElement(tagName);
+    if (tagName === 'a') {
+      const href = source.getAttribute('href');
+      if (href !== null) clean.setAttribute('href', safeUrl(href));
+      const title = source.getAttribute('title');
+      if (title) clean.setAttribute('title', title);
+    }
+    Array.from(source.childNodes).forEach((child) => copySafeNode(child, clean));
+    parent.appendChild(clean);
+  };
+
+  Array.from(parsed.body.childNodes).forEach((node) => copySafeNode(node, output.body));
+  return output.body.innerHTML;
 }
 
 export function htmlToMarkdown(html: string): string {
@@ -169,6 +197,112 @@ export function markdownToLatex(markdown: string): string {
     return escapeLatex(markdownToPlainText(line));
   }).join('\n');
   return latexDocument(body);
+}
+
+type ZipEntry = { name: string; content: string };
+
+function crc32(bytes: Uint8Array): number {
+  let crc = 0xffffffff;
+  for (const byte of bytes) {
+    crc ^= byte;
+    for (let bit = 0; bit < 8; bit += 1) crc = (crc >>> 1) ^ ((crc & 1) ? 0xedb88320 : 0);
+  }
+  return (crc ^ 0xffffffff) >>> 0;
+}
+
+function concatBytes(parts: Uint8Array[]): Uint8Array {
+  const result = new Uint8Array(parts.reduce((size, part) => size + part.length, 0));
+  let offset = 0;
+  for (const part of parts) {
+    result.set(part, offset);
+    offset += part.length;
+  }
+  return result;
+}
+
+function createStoredZip(entries: ZipEntry[]): ArrayBuffer {
+  const encoder = new TextEncoder();
+  const localParts: Uint8Array[] = [];
+  const centralParts: Uint8Array[] = [];
+  let localOffset = 0;
+
+  for (const entry of entries) {
+    const name = encoder.encode(entry.name);
+    const content = encoder.encode(entry.content);
+    const checksum = crc32(content);
+    const localHeader = new Uint8Array(30);
+    const localView = new DataView(localHeader.buffer);
+    localView.setUint32(0, 0x04034b50, true);
+    localView.setUint16(4, 20, true);
+    localView.setUint16(6, 0x0800, true);
+    localView.setUint16(8, 0, true);
+    localView.setUint16(10, 0, true);
+    localView.setUint16(12, 0x0021, true);
+    localView.setUint32(14, checksum, true);
+    localView.setUint32(18, content.length, true);
+    localView.setUint32(22, content.length, true);
+    localView.setUint16(26, name.length, true);
+    localView.setUint16(28, 0, true);
+    localParts.push(localHeader, name, content);
+
+    const centralHeader = new Uint8Array(46);
+    const centralView = new DataView(centralHeader.buffer);
+    centralView.setUint32(0, 0x02014b50, true);
+    centralView.setUint16(4, 20, true);
+    centralView.setUint16(6, 20, true);
+    centralView.setUint16(8, 0x0800, true);
+    centralView.setUint16(10, 0, true);
+    centralView.setUint16(12, 0, true);
+    centralView.setUint16(14, 0x0021, true);
+    centralView.setUint32(16, checksum, true);
+    centralView.setUint32(20, content.length, true);
+    centralView.setUint32(24, content.length, true);
+    centralView.setUint16(28, name.length, true);
+    centralView.setUint32(42, localOffset, true);
+    centralParts.push(centralHeader, name);
+    localOffset += localHeader.length + name.length + content.length;
+  }
+
+  const centralDirectory = concatBytes(centralParts);
+  const end = new Uint8Array(22);
+  const endView = new DataView(end.buffer);
+  endView.setUint32(0, 0x06054b50, true);
+  endView.setUint16(8, entries.length, true);
+  endView.setUint16(10, entries.length, true);
+  endView.setUint32(12, centralDirectory.length, true);
+  endView.setUint32(16, localOffset, true);
+  const bytes = concatBytes([...localParts, centralDirectory, end]);
+  const buffer = new ArrayBuffer(bytes.length);
+  new Uint8Array(buffer).set(bytes);
+  return buffer;
+}
+
+function docxDocumentXml(markdown: string): string {
+  const paragraphs = markdownToPlainText(markdown).split(/\n[\t ]*\n/gu);
+  const body = paragraphs.map((paragraph) => `<w:p><w:r><w:t xml:space="preserve">${escapeHtml(paragraph)}</w:t></w:r></w:p>`).join('');
+  return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body>${body}<w:sectPr /></w:body></w:document>`;
+}
+
+export function createDocx(markdown: string): Blob {
+  const archive = createStoredZip([
+    { name: '[Content_Types].xml', content: '<?xml version="1.0" encoding="UTF-8"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/></Types>' },
+    { name: '_rels/.rels', content: '<?xml version="1.0" encoding="UTF-8"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>' },
+    { name: 'word/document.xml', content: docxDocumentXml(markdown) },
+  ]);
+  return new Blob([archive], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+}
+
+export function createEpub(markdown: string): Blob {
+  const title = escapeHtml(markdownToPlainText(markdown).split('\n')[0] || '本地电子书');
+  const body = markdownToHtml(markdown).replace(/<br>/gu, '<br />');
+  const archive = createStoredZip([
+    { name: 'mimetype', content: 'application/epub+zip' },
+    { name: 'META-INF/container.xml', content: '<?xml version="1.0" encoding="UTF-8"?><container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container"><rootfiles><rootfile full-path="OEBPS/content.opf" media-type="application/oebps-package+xml"/></rootfiles></container>' },
+    { name: 'OEBPS/content.opf', content: `<?xml version="1.0" encoding="UTF-8"?><package xmlns="http://www.idpf.org/2007/opf" version="3.0" unique-identifier="book-id"><metadata xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:identifier id="book-id">urn:uuid:local-document</dc:identifier><dc:title>${title}</dc:title><dc:language>zh-CN</dc:language><meta property="dcterms:modified">2026-08-01T00:00:00Z</meta></metadata><manifest><item id="nav" href="nav.xhtml" media-type="application/xhtml+xml" properties="nav"/><item id="content" href="content.xhtml" media-type="application/xhtml+xml"/></manifest><spine><itemref idref="content"/></spine></package>` },
+    { name: 'OEBPS/nav.xhtml', content: `<?xml version="1.0" encoding="UTF-8"?><html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="zh-CN"><head><title>目录</title></head><body><nav epub:type="toc"><h1>目录</h1><ol><li><a href="content.xhtml">${title}</a></li></ol></nav></body></html>` },
+    { name: 'OEBPS/content.xhtml', content: `<?xml version="1.0" encoding="UTF-8"?><html xmlns="http://www.w3.org/1999/xhtml" lang="zh-CN"><head><title>${title}</title></head><body>${body}</body></html>` },
+  ]);
+  return new Blob([archive], { type: 'application/epub+zip' });
 }
 
 function tag(view: DataView, offset: number): string {

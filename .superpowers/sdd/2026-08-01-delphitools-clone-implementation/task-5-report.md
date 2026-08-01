@@ -115,3 +115,79 @@
 - Unicode 数据是常用区段目录，不包含完整 Unicode 字符名称数据库；搜索支持区段名称、单字符和 `U+` 码点。
 - Markdown 转换覆盖编辑器和文档工具所需的常用标题、段落、列表、强调、代码和链接，不宣称完整 CommonMark/HTML 互转兼容。
 - 当前运行环境没有独立代码审查代理工具，无法执行 `requesting-code-review` 的代理调度步骤；已以需求逐项自检、`git diff --check`、focused/full tests 和生产构建作为回退证据。
+
+---
+
+## Fix round 1（4 个 Important findings）
+
+### 状态
+
+`DONE`
+
+本节取代上方“Word 与 EPUB 未实现”的旧边界记录。两个格式现已作为可见选项提供，并生成真实 ZIP 容器与必需内部结构；本轮按要求未处理动态 `aria-label` 和字体 `name` 表内部边界两个 Minor 项。
+
+### 1. 真实 DOCX 与 EPUB
+
+- 新增无压缩 ZIP writer，写入正确 local header、central directory、CRC32 与 EOCD。
+- DOCX MIME：`application/vnd.openxmlformats-officedocument.wordprocessingml.document`。
+- DOCX 必需部件：`[Content_Types].xml`、`_rels/.rels`、`word/document.xml`。
+- EPUB MIME：`application/epub+zip`。
+- EPUB 首条为未压缩且内容精确的 `mimetype`；包含 `META-INF/container.xml`、EPUB 3 OPF、导航 XHTML 和正文 XHTML。
+- UI 新增 `Word DOCX`、`EPUB 3` 输出选项和中文边界：DOCX 仅基础文字 OOXML，不保留复杂版式；EPUB 为单章节 EPUB 3。
+
+RED：
+
+- `tests/text.test.ts`：新增 2 项失败，分别为 `createDocx is not a function`、`createEpub is not a function`。
+- `tests/text-workspace.test.tsx`：新增 UI 测试失败，`docx` 不存在于输出选项。
+
+GREEN：
+
+- 文档引擎 18/18 通过；测试直接解析 ZIP 本地头并核对条目、XML、MIME、EPUB 首项和 EOCD。
+- UI 21/21 通过；测试通过共享下载动作捕获 Blob 并核对 DOCX/EPUB MIME。
+
+### 2. 解析式 HTML 消毒
+
+- 移除基于字符串删除的正则清理。
+- 使用 `DOMParser` 首次解析，再重建严格允许标签树；脚本、样式、iframe、object、embed、SVG、MathML、template 等整棵丢弃。
+- 重建时不复制任意属性；链接仅保留经过协议检查的 `href` 和纯文本 `title`，事件属性不会进入输出。
+- 对 `javascript:`、`data:` 等危险 URL 统一降级为 `#`。
+
+RED：`<scr<script>ipt>...` 经旧清理后重新解析得到真实 `<script>`；事件属性和危险 URL 同时暴露。
+
+GREEN：重新解析消毒输出后不存在 `script`、事件属性或 `javascript:` URL。
+
+### 3. 越界数字实体
+
+- 数字实体仅接受 `0..0x10FFFF` 且排除 `0xD800..0xDFFF` 代理区的 Unicode 标量值。
+- 越界、代理区或畸形数字实体安全替换为 `�`，工具函数和页面不抛 `RangeError`。
+
+RED：`&#x110000;` 触发 `RangeError: Invalid code point 1114112`。
+
+GREEN：`&#x110000; / &#55296; / 正文` 稳定输出 `� / � / 正文`。
+
+### 4. 通用 MIME 字体上传
+
+- 字体选择器接受 `application/octet-stream`、`binary/octet-stream`。
+- 在读取内容前要求文件名扩展名为 `.ttf` 或 `.otf`。
+- 读取后继续由 `inspectFont` 校验 TTF/OTF SFNT magic、表目录和必需 `head`/`maxp` 表；扩展名不能绕过内容校验。
+
+RED：合法 `.ttf + application/octet-stream` 被 `FileDropzone` 前置拒绝；非字体扩展只得到通用类型错误。
+
+GREEN：手工构造的合法最小 SFNT 通过并显示 3 个字形；`.bin + application/octet-stream` 在读取前以“请选择 TTF 或 OTF 字体文件”拒绝。
+
+### 最终验证
+
+- Focused：`npm.cmd test -- tests/text.test.ts tests/text-workspace.test.tsx` → 2 files / 39 tests passed。
+- Full：`npm.cmd test` → 8 files / 93 tests passed。
+- Build：`npm.cmd run build` → TypeScript + Vite 成功，57 modules transformed。
+- 构建过程曾发现 ZIP helper 的 `Uint8Array<ArrayBufferLike>` 不满足 `BlobPart`；最小修复为复制到明确 `ArrayBuffer`，随后 build 与 focused/full tests 重新通过。
+- 依赖：未新增依赖，`package.json` 与锁文件不变。
+
+### 本轮文件与提交
+
+- 修改：`delphitools-clone/src/engines/document.ts`
+- 修改：`delphitools-clone/src/tools/TextWorkspace.tsx`
+- 修改：`delphitools-clone/tests/text.test.ts`
+- 修改：`delphitools-clone/tests/text-workspace.test.tsx`
+- 追加：本报告
+- 修复提交消息：`fix: harden text document and font tools`

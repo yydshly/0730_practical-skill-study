@@ -11,10 +11,30 @@ import { ToolPage } from '../src/app/ToolPage';
 afterEach(() => {
   cleanup();
   vi.restoreAllMocks();
+  vi.unstubAllGlobals();
 });
 
 function renderTool(toolId: string) {
   return render(<ToolPage toolId={toolId} />);
+}
+
+function minimalSfntFont(): ArrayBuffer {
+  const buffer = new ArrayBuffer(70);
+  const view = new DataView(buffer);
+  view.setUint32(0, 0x00010000);
+  view.setUint16(4, 2);
+  ['head', 'maxp'].forEach((tag, tableIndex) => {
+    const record = 12 + tableIndex * 16;
+    Array.from(tag).forEach((character, index) => view.setUint8(record + index, character.charCodeAt(0)));
+  });
+  view.setUint32(20, 44);
+  view.setUint32(24, 20);
+  view.setUint32(36, 64);
+  view.setUint32(40, 6);
+  view.setUint16(62, 1000);
+  view.setUint32(64, 0x00010000);
+  view.setUint16(68, 3);
+  return buffer;
 }
 
 describe('11 个文字工具入口', () => {
@@ -45,6 +65,26 @@ describe('11 个文字工具入口', () => {
 });
 
 describe('文档与 Markdown UI', () => {
+  it('文档转换器提供真实 DOCX 与 EPUB 下载并说明格式边界', async () => {
+    const user = userEvent.setup();
+    const downloaded: Blob[] = [];
+    vi.stubGlobal('URL', {
+      createObjectURL: vi.fn((blob: Blob) => { downloaded.push(blob); return 'blob:document'; }),
+      revokeObjectURL: vi.fn(),
+    });
+    vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => undefined);
+    renderTool('doc-converter');
+
+    await user.selectOptions(screen.getByLabelText('输出格式'), 'docx');
+    await user.click(screen.getByRole('button', { name: '下载 DOCX' }));
+    expect(downloaded[0]?.type).toBe('application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+
+    await user.selectOptions(screen.getByLabelText('输出格式'), 'epub');
+    await user.click(screen.getByRole('button', { name: '下载 EPUB' }));
+    expect(downloaded[1]?.type).toBe('application/epub+zip');
+    expect(screen.getByText(/DOCX 为基础文字 OOXML/)).toBeVisible();
+  });
+
   it('Markdown 源文和安全预览可切换，并提供两种真实下载', async () => {
     const user = userEvent.setup();
     renderTool('text-editor');
@@ -75,6 +115,31 @@ describe('文档与 Markdown UI', () => {
 });
 
 describe('字体、字形和文本反馈', () => {
+  it('通用 MIME 的合法 TTF 通过扩展名和 SFNT 内容校验', async () => {
+    renderTool('font-explorer');
+    const file = new File(['font'], 'valid.ttf', { type: 'application/octet-stream' });
+    const read = vi.fn().mockResolvedValue(minimalSfntFont());
+    Object.defineProperty(file, 'arrayBuffer', { value: read });
+
+    fireEvent.change(screen.getByLabelText('选择文件'), { target: { files: [file] } });
+
+    await waitFor(() => expect(screen.getByText('字形数量')).toBeVisible());
+    expect(screen.getByText('3')).toBeVisible();
+    expect(read).toHaveBeenCalledTimes(1);
+  });
+
+  it('通用 MIME 的非字体扩展在读取内容前中文拒绝', async () => {
+    renderTool('font-explorer');
+    const file = new File(['font'], 'not-font.bin', { type: 'application/octet-stream' });
+    const read = vi.fn().mockResolvedValue(minimalSfntFont());
+    Object.defineProperty(file, 'arrayBuffer', { value: read });
+
+    fireEvent.change(screen.getByLabelText('选择文件'), { target: { files: [file] } });
+
+    await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent('请选择 TTF 或 OTF 字体文件'));
+    expect(read).not.toHaveBeenCalled();
+  });
+
   it('字体浏览器只读取单文件选择中的第一个文件并中文报告损坏', async () => {
     renderTool('font-explorer');
     const first = new File(['bad'], 'first.ttf', { type: 'font/ttf' });

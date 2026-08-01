@@ -1,4 +1,31 @@
+/** @vitest-environment jsdom */
+
 import { describe, expect, it } from 'vitest';
+
+type StoredZipEntry = { name: string; content: string; compression: number };
+
+async function readStoredZip(blob: Blob): Promise<{ entries: StoredZipEntry[]; bytes: Uint8Array }> {
+  const bytes = new Uint8Array(await blob.arrayBuffer());
+  const view = new DataView(bytes.buffer);
+  const decoder = new TextDecoder();
+  const entries: StoredZipEntry[] = [];
+  let offset = 0;
+  while (offset + 30 <= bytes.length && view.getUint32(offset, true) === 0x04034b50) {
+    const compression = view.getUint16(offset + 8, true);
+    const size = view.getUint32(offset + 18, true);
+    const nameLength = view.getUint16(offset + 26, true);
+    const extraLength = view.getUint16(offset + 28, true);
+    const nameStart = offset + 30;
+    const contentStart = nameStart + nameLength + extraLength;
+    entries.push({
+      name: decoder.decode(bytes.slice(nameStart, nameStart + nameLength)),
+      content: decoder.decode(bytes.slice(contentStart, contentStart + size)),
+      compression,
+    });
+    offset = contentStart + size;
+  }
+  return { entries, bytes };
+}
 
 describe('文字与排版引擎', () => {
   it('统计中文、英文和段落', async () => {
@@ -67,6 +94,57 @@ describe('文字与排版引擎', () => {
 });
 
 describe('安全文档转换', () => {
+  it('DOCX 导出是包含必需 OOXML 部件的真实 ZIP 文件', async () => {
+    const { createDocx } = await import('../src/engines/document');
+    const blob = createDocx('# 文档标题\n\n正文');
+    const { entries, bytes } = await readStoredZip(blob);
+    const files = new Map(entries.map((entry) => [entry.name, entry.content]));
+
+    expect(blob.type).toBe('application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+    expect(Array.from(files.keys())).toEqual(['[Content_Types].xml', '_rels/.rels', 'word/document.xml']);
+    expect(files.get('[Content_Types].xml')).toContain('application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml');
+    expect(files.get('_rels/.rels')).toContain('officeDocument');
+    expect(files.get('word/document.xml')).toContain('<w:document');
+    expect(files.get('word/document.xml')).toContain('文档标题');
+    expect(new DataView(bytes.buffer).getUint32(bytes.length - 22, true)).toBe(0x06054b50);
+  });
+
+  it('EPUB 导出以未压缩 mimetype 开头并包含 EPUB 3 必需结构', async () => {
+    const { createEpub } = await import('../src/engines/document');
+    const blob = createEpub('# 电子书标题\n\n正文');
+    const { entries, bytes } = await readStoredZip(blob);
+    const files = new Map(entries.map((entry) => [entry.name, entry.content]));
+
+    expect(blob.type).toBe('application/epub+zip');
+    expect(entries[0]).toEqual({ name: 'mimetype', content: 'application/epub+zip', compression: 0 });
+    expect(Array.from(files.keys())).toEqual(['mimetype', 'META-INF/container.xml', 'OEBPS/content.opf', 'OEBPS/nav.xhtml', 'OEBPS/content.xhtml']);
+    expect(files.get('META-INF/container.xml')).toContain('OEBPS/content.opf');
+    expect(files.get('OEBPS/content.opf')).toContain('version="3.0"');
+    expect(files.get('OEBPS/content.opf')).toContain('application/xhtml+xml');
+    expect(files.get('OEBPS/content.xhtml')).toContain('电子书标题');
+    expect(new DataView(bytes.buffer).getUint32(bytes.length - 22, true)).toBe(0x06054b50);
+  });
+
+  it('解析式消毒不会把嵌套标签重组为脚本，并移除事件与危险 URL', async () => {
+    const { sanitizeHtml } = await import('../src/engines/document');
+    const hostile = '<p onclick="alert(1)">正文</p><scr<script>ipt>alert(2)</scr<script>ipt><a href="jav&#x61;script:alert(3)" onfocus="alert(4)">链接</a>';
+
+    const sanitized = sanitizeHtml(hostile);
+    const reparsed = new DOMParser().parseFromString(sanitized, 'text/html');
+
+    expect(reparsed.querySelector('script')).toBeNull();
+    expect(reparsed.querySelector('[onclick], [onfocus]')).toBeNull();
+    expect(reparsed.querySelector('a')?.getAttribute('href')).toBe('#');
+    expect(sanitized.toLocaleLowerCase()).not.toContain('javascript:');
+  });
+
+  it('越界和代理区数字实体返回安全替代字符而不抛错', async () => {
+    const { htmlToMarkdown } = await import('../src/engines/document');
+
+    expect(() => htmlToMarkdown('<p>&#x110000; / &#55296; / 正文</p>')).not.toThrow();
+    expect(htmlToMarkdown('<p>&#x110000; / &#55296; / 正文</p>')).toBe('� / � / 正文');
+  });
+
   it('Markdown 转 HTML 时转义原始标签并阻止危险链接协议', async () => {
     const { markdownToHtml } = await import('../src/engines/document');
     const html = markdownToHtml('# <script>alert(1)</script>\n\n[链接](javascript:alert(1))');

@@ -8,12 +8,12 @@ import { copyText } from '../core/clipboard';
 import type { ToolDefinition, ToolId } from '../core/types';
 import { PAPER_SIZES, convertPaperDimensions, type PaperUnit } from '../data/paperSizes';
 import { UNICODE_BLOCKS, searchUnicode } from '../data/unicodeBlocks';
-import { htmlToMarkdown, inspectFont, markdownToHtml, markdownToLatex, markdownToPlainText, plainTextToHtml, plainTextToLatex, sanitizeHtml, type FontInspection } from '../engines/document';
+import { createDocx, createEpub, htmlToMarkdown, inspectFont, markdownToHtml, markdownToLatex, markdownToPlainText, plainTextToHtml, plainTextToLatex, sanitizeHtml, type FontInspection } from '../engines/document';
 import { calculateLineHeight, convertTypographyUnit, countText, diffText, pxToRem, remToPx, type TypographyUnit } from '../engines/text';
 
 type TextWorkspaceProps = { tool: ToolDefinition };
 type DocumentInput = 'markdown' | 'html' | 'text';
-type DocumentOutput = 'markdown' | 'html' | 'text' | 'latex';
+type DocumentOutput = 'markdown' | 'html' | 'text' | 'latex' | 'docx' | 'epub';
 
 const TEXT_TOOL_IDS: readonly ToolId[] = [
   'doc-converter', 'text-editor', 'font-explorer', 'glyph-browser', 'large-type', 'line-height-calc',
@@ -35,10 +35,14 @@ function convertDocument(source: string, input: DocumentInput, output: DocumentO
   if (output === 'markdown') return markdown;
   if (output === 'html') return input === 'text' ? plainTextToHtml(source) : markdownToHtml(markdown);
   if (output === 'text') return input === 'text' ? source : markdownToPlainText(markdown);
+  if (output === 'docx') return 'DOCX 文件已按 OOXML 结构生成，可下载后使用兼容的文字处理软件打开。';
+  if (output === 'epub') return 'EPUB 3 文件已生成，可下载后使用兼容的电子书阅读器打开。';
   return input === 'text' ? plainTextToLatex(source) : markdownToLatex(markdown);
 }
 
 function outputMeta(format: DocumentOutput) {
+  if (format === 'docx') return ['document.docx', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', '下载 DOCX'] as const;
+  if (format === 'epub') return ['document.epub', 'application/epub+zip', '下载 EPUB'] as const;
   if (format === 'html') return ['document.html', 'text/html;charset=utf-8', '下载 HTML'] as const;
   if (format === 'latex') return ['document.tex', 'application/x-tex;charset=utf-8', '下载 LaTeX'] as const;
   if (format === 'text') return ['document.txt', 'text/plain;charset=utf-8', '下载纯文本'] as const;
@@ -52,14 +56,20 @@ function DocumentConverter() {
   const [source, setSource] = useState(initial);
   const result = convertDocument(source, input, output);
   const [name, mime, label] = outputMeta(output);
+  const markdown = input === 'markdown' ? source : input === 'html' ? htmlToMarkdown(source) : source;
+  const downloadable = output === 'docx'
+    ? { blob: createDocx(markdown), name, label }
+    : output === 'epub'
+      ? { blob: createEpub(markdown), name, label }
+      : download(result, name, mime, label);
   return <div className="text-tool-stack">
     <div className="text-controls text-controls--two">
       <label>输入格式<select aria-label="输入格式" value={input} onChange={(event) => setInput(event.target.value as DocumentInput)}><option value="markdown">Markdown</option><option value="html">HTML</option><option value="text">纯文本</option></select></label>
-      <label>输出格式<select aria-label="输出格式" value={output} onChange={(event) => setOutput(event.target.value as DocumentOutput)}><option value="html">HTML</option><option value="markdown">Markdown</option><option value="text">纯文本</option><option value="latex">LaTeX</option></select></label>
+      <label>输出格式<select aria-label="输出格式" value={output} onChange={(event) => setOutput(event.target.value as DocumentOutput)}><option value="html">HTML</option><option value="markdown">Markdown</option><option value="text">纯文本</option><option value="latex">LaTeX</option><option value="docx">Word DOCX</option><option value="epub">EPUB 3</option></select></label>
     </div>
     <label className="text-area-field">文档内容<textarea aria-label="文档内容" value={source} onChange={(event) => setSource(event.target.value)} /></label>
-    <p className="format-limit">当前可靠生成 Markdown、HTML、纯文本和 LaTeX。Word 和 EPUB 未作为可见选项提供，避免生成仅改扩展名的无效文件。</p>
-    <ResultPanel text={result} copyLabel="复制转换结果" download={download(result, name, mime, label)} onReset={() => { setInput('markdown'); setOutput('html'); setSource(initial); }}>
+    <p className="format-limit">Word 和 EPUB 均在本地生成真实压缩文档。DOCX 为基础文字 OOXML，不保留复杂版式；EPUB 为单章节 EPUB 3；LaTeX 保持完整 ctex 文档导出。</p>
+    <ResultPanel text={result} copyLabel="复制转换结果" download={downloadable} onReset={() => { setInput('markdown'); setOutput('html'); setSource(initial); }}>
       <pre className="document-output" aria-label="转换结果"><code>{result}</code></pre>
     </ResultPanel>
   </div>;
@@ -83,13 +93,18 @@ function FontExplorer() {
   const [loading, setLoading] = useState(false);
   const handleFiles = async (files: File[]) => {
     if (!files[0]) return;
+    if (!/\.(?:ttf|otf)$/iu.test(files[0].name)) {
+      setFont(null);
+      setError('请选择 TTF 或 OTF 字体文件');
+      return;
+    }
     setLoading(true); setError(''); setFont(null);
     try { setFont(inspectFont(await files[0].arrayBuffer())); }
     catch (reason) { setError(reason instanceof Error ? reason.message : '字体文件无效或已损坏'); }
     finally { setLoading(false); }
   };
   return <div className="text-tool-stack">
-    <FileDropzone accepted={['.ttf', '.otf', 'font/ttf', 'font/otf', 'application/font-sfnt']} maxSizeBytes={20 * 1024 * 1024} multiple={false} onFiles={handleFiles} />
+    <FileDropzone accepted={['.ttf', '.otf', 'font/ttf', 'font/otf', 'application/font-sfnt', 'application/octet-stream', 'binary/octet-stream']} maxSizeBytes={20 * 1024 * 1024} multiple={false} onFiles={handleFiles} />
     <p className="format-limit">仅读取你在此处选择的 TTF 或 OTF 文件，不会扫描设备中的其他字体。</p>
     {loading && <StatusMessage status="loading" message="正在解析字体" />}{error && <StatusMessage status="error" message={error} />}
     {font && <ResultPanel onReset={() => setFont(null)}><dl className="stats-grid"><div><dt>字体家族</dt><dd>{font.family}</dd></div><div><dt>样式</dt><dd>{font.style}</dd></div><div><dt>每 em 单位</dt><dd>{font.unitsPerEm}</dd></div><div><dt>字形数量</dt><dd>{font.glyphCount}</dd></div>{font.names.fullName && <div><dt>完整名称</dt><dd>{font.names.fullName}</dd></div>}{font.names.postScriptName && <div><dt>PostScript 名称</dt><dd>{font.names.postScriptName}</dd></div>}</dl></ResultPanel>}
