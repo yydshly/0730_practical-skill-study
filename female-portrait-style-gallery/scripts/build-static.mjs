@@ -4,6 +4,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 
 function stripModuleSyntax(source) {
   return source
+    .replace(/\r\n?/g, '\n')
     .replace(/^\s*import\s+[^;]+;\s*$/gm, '')
     .replace(/^(\s*)export\s+(?=(?:const|let|var|function|class)\b)/gm, '$1');
 }
