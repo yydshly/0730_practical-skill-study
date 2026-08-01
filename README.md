@@ -70,6 +70,9 @@ python -m http.server 8000
 #   http://localhost:8000/mengto-skills-study/game-dev-reference.html    ← Game Dev 参考手册
 #   http://localhost:8000/mengto-skills-study/patterns-reference.html    ← 设计模式速查
 #   http://localhost:8000/mengto-skills-study/custom-skills-reference.html ← 原创 Skills
+#   http://localhost:8000/female-portrait-director-demo/                 ← 项目 4a · 上游技能演示
+#   http://localhost:8000/female-portrait-director-demo/playground/     ← 项目 4b · Playground（推荐）
+#   http://localhost:8000/female-portrait-style-gallery/                ← 项目 4c · 静态风格画廊
 
 # craftzdog-homepage 需要独立运行（Next.js 项目）:
 #   cd craftzdog-homepage && npm install && npm run dev
@@ -111,6 +114,21 @@ python -m http.server 8000
 │   │   └── dog.glb               ← 3D 像素狗模型
 │   └── pages/                    ← Next.js 页面结构
 │
+├── female-portrait-director-demo/ ← 项目 4a · 上游技能演示（20 风格 + 导演式扩写）
+│   ├── index.html
+│   ├── playground/                ← 项目 4b · 交互式 Playground（MiniMax API 生图）
+│   │   ├── index.html
+│   │   ├── app.js
+│   │   ├── styles.js
+│   │   └── prompts.js
+│   ├── skill/                     ← 上游 Skill 源码
+│   └── examples/                  ← 上游示例
+│
+├── female-portrait-style-gallery/ ← 项目 4c · 静态风格画廊（20 风格参考图浏览）
+│   ├── index.html
+│   ├── gallery.js
+│   └── assets/styles/             ← 20 风格参考图
+│
 └── mengto-skills-study/            ← 项目 2/3 · MengTo/Skills 研究 + 设计模式
     ├── README.md                   ← 项目 2 入口
     ├── index.html                  ← 研究总览
@@ -130,7 +148,7 @@ python -m http.server 8000
                                       atomic-state-update
 ```
 
-**当前 3 个项目（+1 个 3D Skill），9 个研究工具 HTML,1 个可交付页面。** 未来每个新项目按 `项目名/` 单目录形式加入。
+**当前 4 个项目（+1 个 3D Skill），9 个研究工具 HTML,1 个可交付页面。** 未来每个新项目按 `项目名/` 单目录形式加入。
 
 ---
 
@@ -141,6 +159,10 @@ python -m http.server 8000
 | 1 | [finesse-skill-study](./finesse-skill-study/) | 学习 UI 设计 Skill 并实战一个家庭果园品牌页 | 已完成 v0 → v9 |
 | 2 | [mengto-skills-study](./mengto-skills-study/) | 研究 MengTo/Skills（118 Skills → 3 参考手册 + 设计模式 + 5 个原创 Skills） | 已完成 v0.11 → v0.12 |
 | 3 | [craftzdog-homepage](./craftzdog-homepage/) | 3D 模型加载到网页的能力（GLB + Three.js + React） | 已完成 |
+| 4 | [female-portrait-director-demo](./female-portrait-director-demo/) | 女性人像提示词导演 Skill（20 种风格 + 3 种演示形式） | 已完成 |
+| 4a | [原始技能演示](./female-portrait-director-demo/) | 上游项目 index.html · 20 风格技能展示 + 导演式扩写工作流 | ✓ |
+| 4b | [交互式 Playground](./female-portrait-director-demo/playground/) | 20 风格参数填充 + MiniMax API 生图 + 提示词一键复制 | ✓ |
+| 4c | [静态风格画廊](./female-portrait-style-gallery/) | 20 风格参考图 gallery 浏览器，支持分类筛选和详情弹窗 | ✓ |
 
 > **项目 3 运行方式**：
 > ```bash
@@ -159,6 +181,9 @@ python -m http.server 8000
 | - | [项目 2 · 工作流实战](./mengto-skills-study/workflow-demo.html) | 招牌 4 步闭环完整演示 | ✓ |
 | - | [项目 2 · 技能矩阵](./mengto-skills-study/SKILL-MATRIX.md) | 全部 118 个技能的分类索引 | 建设中 |
 | - | [webgl-3d-object](./mengto-skills-study/agent-skills/web-design/webgl-3d-object/) | Three.js 程序化 3D 物体（几何体 + 材质 + 灯光） | Skill 已沉淀 |
+| - | [项目 4 · 女性人像导演](./female-portrait-director-demo/) | 上游 20 风格 + 导演式扩写工作流 | ✓ |
+| - | [项目 4 · Playground](./female-portrait-director-demo/playground/) | 交互式测试场：20 风格 + MiniMax API 生图 + 提示词复制 | ✓ |
+| - | [项目 4 · 静态风格画廊](./female-portrait-style-gallery/) | 20 风格参考图 gallery 浏览器，支持分类筛选 | ✓ |
 
 (更多项目待加入。)
 
@@ -185,8 +210,8 @@ python -m http.server 8000
 ## 致谢
 
 - 上游 Skill: **[finesse-skill](https://github.com/mouse-lin/finesse-skill)** @ mouse-lin —— MIT
-- AI 图像生成: **[Pollinations.ai](https://pollinations.ai)**(免费,免 key)
-- 编辑工具链: Claude Code · Pollinations.ai · OpenStreetMap
+- AI 图像生成: **[Pollinations.ai](https://pollinations.ai)**(免费,免 key) · **[MiniMax](https://platform.minimaxi.com)**(需 API Key)
+- 编辑工具链: Claude Code · Pollinations.ai · MiniMax · OpenStreetMap
 
 ---
 

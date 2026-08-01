@@ -1,0 +1,998 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Playground · 女性人像提示词导演测试场</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-primary: #faf9f7;
+      --bg-secondary: #ffffff;
+      --bg-tertiary: #f5f3f0;
+      --bg-dark: #1a1a1a;
+      --bg-code: #0f0f0f;
+      --text-primary: #1a1a1a;
+      --text-secondary: #555555;
+      --text-muted: #999999;
+      --accent: #c9a87c;
+      --accent-dark: #a08050;
+      --accent-light: #f5ebd9;
+      --border: #e8e5e0;
+      --border-strong: #d0ccc4;
+      --success: #10b981;
+      --error: #dc2626;
+      --warning: #f59e0b;
+      --info: #3b82f6;
+      --shadow: 0 2px 8px rgba(0,0,0,0.04);
+      --shadow-md: 0 4px 16px rgba(0,0,0,0.06);
+      --shadow-lg: 0 8px 32px rgba(0,0,0,0.1);
+      --radius: 12px;
+      --radius-sm: 8px;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    .zh { font-family: 'Noto Serif SC', serif; }
+    .mono { font-family: 'JetBrains Mono', monospace; }
+
+    /* Header */
+    header {
+      background: var(--bg-secondary);
+      border-bottom: 1px solid var(--border);
+      padding: 16px 24px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(12px);
+      background: rgba(255, 255, 255, 0.92);
+    }
+
+    .header-inner {
+      max-width: 1400px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 24px;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+      color: var(--text-primary);
+    }
+
+    .logo-icon {
+      width: 36px;
+      height: 36px;
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    .logo-text {
+      font-family: 'Noto Serif SC', serif;
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    .logo-sub {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .btn {
+      padding: 8px 16px;
+      border-radius: var(--radius-sm);
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      border: 1px solid var(--border);
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      transition: all 0.2s ease;
+      font-family: inherit;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      text-decoration: none;
+    }
+
+    .btn:hover {
+      border-color: var(--accent);
+      color: var(--accent-dark);
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%);
+      color: white;
+      border-color: transparent;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(201, 168, 124, 0.3);
+      color: white;
+    }
+
+    .btn-ghost {
+      border-color: transparent;
+      background: transparent;
+    }
+
+    .btn-icon {
+      padding: 8px;
+      width: 36px;
+      height: 36px;
+      justify-content: center;
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    /* Layout */
+    .app-layout {
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      min-height: calc(100vh - 65px);
+    }
+
+    /* Sidebar */
+    .sidebar {
+      background: var(--bg-secondary);
+      border-right: 1px solid var(--border);
+      padding: 24px 0;
+      overflow-y: auto;
+      max-height: calc(100vh - 65px);
+    }
+
+    .sidebar-section {
+      padding: 0 24px;
+      margin-bottom: 24px;
+    }
+
+    .sidebar-title {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .search-box {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--bg-primary);
+      font-size: 13px;
+      margin-bottom: 12px;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .search-box:focus {
+      border-color: var(--accent);
+    }
+
+    .style-list {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .style-item {
+      padding: 10px 12px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: all 0.15s ease;
+      border: 1px solid transparent;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .style-item:hover {
+      background: var(--bg-tertiary);
+    }
+
+    .style-item.active {
+      background: var(--accent-light);
+      border-color: var(--accent);
+    }
+
+    .style-item-name {
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    .style-item-id {
+      font-size: 10px;
+      color: var(--text-muted);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .style-cat-tag {
+      font-size: 9px;
+      padding: 2px 6px;
+      background: var(--bg-tertiary);
+      color: var(--text-muted);
+      border-radius: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    /* Main */
+    .main {
+      padding: 32px;
+      overflow-y: auto;
+      max-height: calc(100vh - 65px);
+    }
+
+    .main-inner {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .panel {
+      background: var(--bg-secondary);
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+
+    .panel-title {
+      font-family: 'Noto Serif SC', serif;
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .panel-subtitle {
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-top: -8px;
+      margin-bottom: 16px;
+    }
+
+    /* Form */
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    @media (max-width: 768px) {
+      .form-grid { grid-template-columns: 1fr; }
+    }
+
+    .form-field {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .form-field.full {
+      grid-column: 1 / -1;
+    }
+
+    .form-label {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      margin-bottom: 6px;
+    }
+
+    .form-label .required {
+      color: var(--error);
+    }
+
+    .form-input, .form-select, .form-textarea {
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--bg-secondary);
+      font-size: 14px;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.2s;
+      width: 100%;
+    }
+
+    .form-input:focus, .form-select:focus, .form-textarea:focus {
+      border-color: var(--accent);
+    }
+
+    .form-textarea {
+      resize: vertical;
+      min-height: 70px;
+      line-height: 1.5;
+    }
+
+    .form-hint {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    /* Prompt output */
+    .prompt-tabs {
+      display: flex;
+      gap: 4px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 16px;
+    }
+
+    .prompt-tab {
+      padding: 8px 16px;
+      background: transparent;
+      border: none;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      color: var(--text-secondary);
+      font-family: inherit;
+      transition: all 0.15s;
+    }
+
+    .prompt-tab.active {
+      color: var(--accent-dark);
+      border-bottom-color: var(--accent);
+    }
+
+    .prompt-tab:hover:not(.active) {
+      color: var(--text-primary);
+    }
+
+    .prompt-display {
+      background: var(--bg-code);
+      color: #e8e5e0;
+      border-radius: var(--radius-sm);
+      padding: 20px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      line-height: 1.7;
+      white-space: pre-wrap;
+      word-break: break-word;
+      max-height: 400px;
+      overflow-y: auto;
+    }
+
+    .prompt-display p {
+      margin-bottom: 12px;
+    }
+
+    .prompt-display p:last-child {
+      margin-bottom: 0;
+    }
+
+    .prompt-display.hidden {
+      display: none;
+    }
+
+    .negative-display {
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      border-radius: var(--radius-sm);
+      padding: 16px;
+      color: #991b1b;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    /* Generated image */
+    .image-result {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    @media (max-width: 768px) {
+      .image-result { grid-template-columns: 1fr; }
+    }
+
+    .image-card {
+      background: var(--bg-tertiary);
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .image-card-title {
+      padding: 12px 16px;
+      font-size: 13px;
+      font-weight: 600;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg-secondary);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .image-card-body {
+      aspect-ratio: 3/4;
+      background: var(--bg-tertiary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .image-card-body img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .image-placeholder {
+      text-align: center;
+      color: var(--text-muted);
+      padding: 24px;
+    }
+
+    .image-placeholder-icon {
+      font-size: 48px;
+      margin-bottom: 12px;
+      opacity: 0.5;
+    }
+
+    .image-card-footer {
+      padding: 12px 16px;
+      font-size: 12px;
+      color: var(--text-secondary);
+      background: var(--bg-secondary);
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    /* Loading */
+    .loading-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(255, 255, 255, 0.9);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 12px;
+      z-index: 10;
+    }
+
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid var(--accent-light);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .loading-text {
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+
+    /* Toast */
+    .toast-container {
+      position: fixed;
+      top: 80px;
+      right: 24px;
+      z-index: 200;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      pointer-events: none;
+    }
+
+    .toast {
+      background: var(--bg-dark);
+      color: white;
+      padding: 12px 20px;
+      border-radius: var(--radius-sm);
+      box-shadow: var(--shadow-lg);
+      font-size: 13px;
+      animation: slideIn 0.2s ease, fadeOut 0.3s ease 2.7s forwards;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      pointer-events: auto;
+    }
+
+    .toast.success { background: var(--success); }
+    .toast.error { background: var(--error); }
+    .toast.warning { background: var(--warning); }
+    .toast.info { background: var(--info); }
+
+    @keyframes slideIn {
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+
+    @keyframes fadeOut {
+      to { opacity: 0; transform: translateX(100%); }
+    }
+
+    /* Modal */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 300;
+      padding: 24px;
+    }
+
+    .modal-overlay.active {
+      display: flex;
+    }
+
+    .modal {
+      background: var(--bg-secondary);
+      border-radius: var(--radius);
+      max-width: 540px;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: var(--shadow-lg);
+    }
+
+    .modal-header {
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .modal-title {
+      font-family: 'Noto Serif SC', serif;
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    .modal-body {
+      padding: 24px;
+    }
+
+    .modal-footer {
+      padding: 16px 24px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+    }
+
+    /* Status indicator */
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+    .status-dot.ready { background: var(--success); }
+    .status-dot.unconfigured { background: var(--warning); }
+    .status-dot.error { background: var(--error); }
+
+    /* Reference image preview */
+    .reference-preview {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 8px;
+    }
+
+    .reference-thumb {
+      width: 60px;
+      height: 60px;
+      border-radius: 6px;
+      object-fit: cover;
+      border: 1px solid var(--border);
+    }
+
+    /* Empty state */
+    .empty-state {
+      text-align: center;
+      padding: 48px 24px;
+      color: var(--text-muted);
+    }
+
+    .empty-state-icon {
+      font-size: 56px;
+      margin-bottom: 16px;
+      opacity: 0.4;
+    }
+
+    /* History */
+    .history-item {
+      padding: 10px 12px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      border: 1px solid var(--border);
+      margin-bottom: 8px;
+      transition: all 0.15s;
+    }
+
+    .history-item:hover {
+      border-color: var(--accent);
+    }
+
+    .history-style {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--accent-dark);
+      margin-bottom: 4px;
+    }
+
+    .history-preview {
+      font-size: 11px;
+      color: var(--text-muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .history-time {
+      font-size: 10px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    /* Responsive */
+    @media (max-width: 900px) {
+      .app-layout {
+        grid-template-columns: 1fr;
+      }
+      .sidebar {
+        max-height: none;
+        border-right: none;
+        border-bottom: 1px solid var(--border);
+      }
+    }
+
+    /* Utility */
+    .hidden { display: none !important; }
+    .flex-row { display: flex; align-items: center; gap: 8px; }
+    .text-mono { font-family: 'JetBrains Mono', monospace; }
+    .text-sm { font-size: 13px; }
+    .text-xs { font-size: 11px; }
+    .text-muted { color: var(--text-muted); }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <header>
+    <div class="header-inner">
+      <a href="../index.html" class="logo">
+        <div class="logo-icon">导</div>
+        <div>
+          <div class="logo-text zh">提示词导演 · Playground</div>
+          <div class="logo-sub">20 种风格 · API 生图测试</div>
+        </div>
+      </a>
+
+      <div class="header-actions">
+        <div class="flex-row">
+          <span class="status-dot" id="api-status-dot"></span>
+          <span class="text-sm text-muted" id="api-status-text">未配置</span>
+        </div>
+        <button class="btn btn-ghost btn-icon" onclick="openSettings()" title="设置">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="3"/>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+          </svg>
+        </button>
+        <button class="btn btn-primary" onclick="generateImage()" id="btn-generate">
+          <span>生成图片</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- App Layout -->
+  <div class="app-layout">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-section">
+        <div class="sidebar-title">
+          <span>选择风格</span>
+          <span class="text-xs text-muted" id="style-count">0</span>
+        </div>
+        <input type="text" class="search-box" id="style-search" placeholder="搜索风格...">
+        <div class="style-list" id="style-list"></div>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-title">
+          <span>历史记录</span>
+          <button class="btn btn-ghost" onclick="clearHistory()" style="padding: 2px 6px; font-size: 11px;">清空</button>
+        </div>
+        <div id="history-list">
+          <div class="text-xs text-muted" style="padding: 12px; text-align: center;">暂无历史</div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main -->
+    <main class="main">
+      <div class="main-inner">
+        <!-- Style Info -->
+        <div class="panel">
+          <div class="panel-title">
+            <span id="current-style-name">请选择风格</span>
+            <span class="style-cat-tag" id="current-style-cat"></span>
+          </div>
+          <div class="panel-subtitle" id="current-style-desc"></div>
+          <div class="text-xs text-muted text-mono" id="current-style-id"></div>
+        </div>
+
+        <!-- Parameters Form -->
+        <div class="panel">
+          <div class="panel-title">参数配置</div>
+          <div class="panel-subtitle">填写以下参数，可保留空缺使用默认值</div>
+
+          <div class="form-grid">
+            <div class="form-field">
+              <label class="form-label">场景方向 <span class="required">*</span></label>
+              <input type="text" class="form-input" id="param-scene" placeholder="如：咖啡馆靠窗座位">
+            </div>
+
+            <div class="form-field">
+              <label class="form-label">服装方向 <span class="required">*</span></label>
+              <input type="text" class="form-input" id="param-outfit" placeholder="如：白色针织开衫 + 浅色内搭">
+            </div>
+
+            <div class="form-field">
+              <label class="form-label">气质标签</label>
+              <input type="text" class="form-input" id="param-mood" placeholder="如：温柔、自然、安静">
+            </div>
+
+            <div class="form-field">
+              <label class="form-label">五官方向</label>
+              <input type="text" class="form-input" id="param-face" placeholder="如：柔和鹅蛋脸、古典东方美人">
+            </div>
+
+            <div class="form-field">
+              <label class="form-label">身形方向</label>
+              <input type="text" class="form-input" id="param-body" placeholder="如：自然协调身形">
+            </div>
+
+            <div class="form-field">
+              <label class="form-label">画幅比例</label>
+              <select class="form-select" id="param-aspect">
+                <option value="9:16">9:16 (竖版)</option>
+                <option value="3:4">3:4 (竖版)</option>
+                <option value="2:3">2:3 (竖版)</option>
+                <option value="1:1">1:1 (方形)</option>
+                <option value="4:3">4:3 (横版)</option>
+                <option value="3:2">3:2 (横版)</option>
+                <option value="16:9">16:9 (横版)</option>
+                <option value="21:9">21:9 (超宽)</option>
+              </select>
+              <div class="form-hint">仅 MiniMax API 支持的画幅比例</div>
+            </div>
+
+            <div class="form-field">
+              <label class="form-label">镜头方向</label>
+              <input type="text" class="form-input" id="param-camera" placeholder="如：半身到大腿构图，平视机位">
+            </div>
+
+            <div class="form-field">
+              <label class="form-label">光线氛围</label>
+              <input type="text" class="form-input" id="param-light" placeholder="如：柔和窗光">
+            </div>
+
+            <div class="form-field">
+              <label class="form-label">滤镜效果</label>
+              <input type="text" class="form-input" id="param-filter" placeholder="如：电影生活剧照滤镜">
+            </div>
+
+            <div class="form-field">
+              <label class="form-label">年龄特征</label>
+              <input type="text" class="form-input" id="param-age" placeholder="如：24-28 岁年轻成年东方女性">
+            </div>
+
+            <div class="form-field full">
+              <label class="form-label">补充要求</label>
+              <textarea class="form-textarea" id="param-extra" placeholder="其他附加要求或限制"></textarea>
+            </div>
+          </div>
+
+          <div style="display: flex; gap: 12px; margin-top: 20px;">
+            <button class="btn btn-primary" onclick="generatePrompt()" style="flex: 1;">
+              <span>📝 生成提示词</span>
+            </button>
+            <button class="btn" onclick="loadExample()">
+              <span>📋 加载示例</span>
+            </button>
+            <button class="btn" onclick="clearForm()">
+              <span>🗑 清空</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Generated Prompt -->
+        <div class="panel">
+          <div class="panel-title">
+            <span>生成的提示词</span>
+            <button class="btn" onclick="copyPrompt('positive')">
+              <span id="copy-positive-btn">📋 复制提示词</span>
+            </button>
+          </div>
+
+          <div class="prompt-tabs">
+            <button class="prompt-tab active" onclick="switchPromptTab('positive')">正向提示词</button>
+            <button class="prompt-tab" onclick="switchPromptTab('negative')">负面约束</button>
+            <button class="prompt-tab" onclick="switchPromptTab('raw')">完整 JSON</button>
+          </div>
+
+          <div class="prompt-display" id="prompt-positive">
+            <div class="empty-state">
+              <div class="empty-state-icon">📝</div>
+              <div>点击"生成提示词"查看结果</div>
+            </div>
+          </div>
+
+          <div class="negative-display hidden" id="prompt-negative">
+            <div class="empty-state">
+              <div class="empty-state-icon">🚫</div>
+              <div>点击"生成提示词"查看负面约束</div>
+            </div>
+          </div>
+
+          <pre class="prompt-display hidden" id="prompt-raw" style="margin: 0;"></pre>
+        </div>
+
+        <!-- Generated Image -->
+        <div class="panel">
+          <div class="panel-title">
+            <span>生成结果</span>
+            <div class="flex-row">
+              <button class="btn" onclick="downloadImage()" id="btn-download" disabled>
+                <span>⬇ 下载</span>
+              </button>
+              <button class="btn" onclick="regenerateImage()" id="btn-regen" disabled>
+                <span>🔄 重新生成</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="image-result">
+            <div class="image-card">
+              <div class="image-card-title">
+                <span>生成图</span>
+                <span class="text-xs text-muted" id="image-meta"></span>
+              </div>
+              <div class="image-card-body" id="image-body">
+                <div class="image-placeholder">
+                  <div class="image-placeholder-icon">🎨</div>
+                  <div class="text-sm">点击"生成图片"开始</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="image-card">
+              <div class="image-card-title">
+                <span>参考示例</span>
+                <span class="text-xs text-muted">来自上游仓库</span>
+              </div>
+              <div class="image-card-body">
+                <img id="ref-image" src="" alt="参考示例" style="display:none;">
+                <div class="image-placeholder" id="ref-placeholder">
+                  <div class="image-placeholder-icon">🖼</div>
+                  <div class="text-sm">选择风格后显示参考示例</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Settings Modal -->
+  <div class="modal-overlay" id="settings-modal">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title zh">API 配置</div>
+        <button class="btn btn-ghost btn-icon" onclick="closeSettings()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="form-field" style="margin-bottom: 16px;">
+          <label class="form-label">MiniMax API Key <span class="required">*</span></label>
+          <input type="password" class="form-input" id="api-key-input" placeholder="eyJhbGciOi...">
+          <div class="form-hint">密钥仅保存在浏览器本地存储，不会上传到任何服务器</div>
+        </div>
+        </div>
+
+        <div class="form-field" style="margin-bottom: 16px;">
+          <label class="form-label">API Endpoint</label>
+          <input type="text" class="form-input" id="api-endpoint-input" value="https://api.minimaxi.com/v1/image_generation">
+          <div class="form-hint">中国版: api.minimaxi.com · 国际版: api.minimax.io</div>
+        </div>
+
+        <div class="form-field" style="margin-bottom: 16px;">
+          <label class="form-label">模型</label>
+          <select class="form-select" id="api-model-input">
+            <option value="image-01">image-01</option>
+          </select>
+        </div>
+
+        <div class="form-field" style="margin-bottom: 16px;">
+          <label class="form-label">生成数量</label>
+          <select class="form-select" id="api-n-input">
+            <option value="1">1 张</option>
+            <option value="2">2 张</option>
+            <option value="4">4 张</option>
+          </select>
+        </div>
+
+        <button class="btn btn-primary" style="width: 100%;" onclick="testApiConnection()">
+          <span>测试连接</span>
+        </button>
+      </div>
+      <div class="modal-footer">
+        <button class="btn" onclick="closeSettings()">取消</button>
+        <button class="btn btn-primary" onclick="saveSettings()">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <script src="styles.js"></script>
+  <script src="prompts.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
