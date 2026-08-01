@@ -93,6 +93,14 @@ describe('计算工作台关键交互', () => {
     expect(screen.getByText(/定义域：/)).toBeVisible();
   });
 
+  it('函数绘图不会把超限常量投影为伪曲线或非有限 SVG 坐标', () => {
+    renderTool('graph-calc');
+    fireEvent.change(screen.getByLabelText('函数表达式（每行一个）'), { target: { value: '1e308' } });
+    const chart = screen.getByRole('img', { name: '函数曲线图' });
+    expect(chart.querySelector('path[data-expression="1e308"]')).toBeNull();
+    expect(chart.innerHTML).not.toMatch(/Infinity|NaN/u);
+  });
+
   it('时间工具完成时间戳转换、日期加减与时区转换', async () => {
     const user = userEvent.setup();
     renderTool('time-calc');

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   buildPlotSeries,
+  buildPlotSeriesWithDiagnostics,
   calculateDate,
   convertTimezone,
   convertUnit,
@@ -12,6 +13,8 @@ import {
   parseUnixTimestamp,
   simplifyAlgebra,
   solveAlgebra,
+  MAX_DEEP_PLOT_EVALUATIONS,
+  MAX_PLOT_MAGNITUDE,
 } from '../src/engines/calculator';
 
 describe('安全科学计算器', () => {
@@ -128,6 +131,34 @@ describe('函数绘图采样', () => {
     const points = buildPlotSeries(expression, [-1, 1], 100);
     expect(points).toHaveLength(100);
     expect(points.every((point) => point !== null)).toBe(true);
+  });
+
+  it.each(['x', 'sin(1000 * x)'])('5000 点连续函数 %s 仅做每区间一次中点预检', (expression) => {
+    const { points, diagnostics } = buildPlotSeriesWithDiagnostics(expression, [-1, 1], 5000);
+    expect(points).toHaveLength(5000);
+    expect(points.every((point) => point !== null)).toBe(true);
+    expect(diagnostics.baseEvaluations).toBe(5000);
+    expect(diagnostics.midpointEvaluations).toBe(4999);
+    expect(diagnostics.deepEvaluations).toBe(0);
+    expect(diagnostics.totalEvaluations).toBe(9999);
+  });
+
+  it('所有疑似区间共享每条曲线的深探测求值预算', () => {
+    const { diagnostics } = buildPlotSeriesWithDiagnostics(
+      '1000000 / (1 + 1000000 * sin(2000 * x)^2)',
+      [-1, 1],
+      5000,
+    );
+    expect(diagnostics.deepEvaluations).toBe(MAX_DEEP_PLOT_EVALUATIONS);
+    expect(diagnostics.totalEvaluations)
+      .toBeLessThanOrEqual(5000 + 4999 + MAX_DEEP_PLOT_EVALUATIONS);
+  });
+
+  it('超出安全投影上限的有限常量返回 gap 而不是伪曲线', () => {
+    const boundaryPoints = buildPlotSeries('1000000', [-1, 1], 5);
+    expect(boundaryPoints.every((point) => point !== null && Math.abs(point.y) <= MAX_PLOT_MAGNITUDE)).toBe(true);
+    expect(buildPlotSeries('1000001', [-1, 1], 5)).toEqual([null]);
+    expect(buildPlotSeries('1e308', [-1, 1], 5)).toEqual([null]);
   });
 
   it('拒绝反向定义域和过少采样点', () => {

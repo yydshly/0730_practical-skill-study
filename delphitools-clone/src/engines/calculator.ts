@@ -1,8 +1,18 @@
 export type PlotPoint = { x: number; y: number };
 export type PlotSample = PlotPoint | null;
+export type PlotDiagnostics = {
+  baseEvaluations: number;
+  midpointEvaluations: number;
+  deepEvaluations: number;
+  totalEvaluations: number;
+};
+export type PlotSeriesWithDiagnostics = { points: PlotSample[]; diagnostics: PlotDiagnostics };
 export type DateUnit = 'second' | 'minute' | 'hour' | 'day' | 'month' | 'year';
 export type UnixTimestampUnit = 'auto' | 'seconds' | 'milliseconds';
 export type UnitCategory = 'length' | 'mass' | 'temperature' | 'data' | 'area' | 'volume' | 'speed';
+
+export const MAX_PLOT_MAGNITUDE = 1_000_000;
+export const MAX_DEEP_PLOT_EVALUATIONS = 4096;
 
 type Token =
   | { type: 'number'; value: number }
@@ -429,38 +439,62 @@ function evaluatePlotPoint(expression: string, x: number): PlotPoint | null {
 }
 
 const MAX_DISCONTINUITY_DEPTH = 12;
-const MAX_DISCONTINUITY_PROBES = MAX_DISCONTINUITY_DEPTH * 3;
 const REQUIRED_DIVERGENCE_STEPS = 3;
 
-function intervalHasDiscontinuity(expression: string, initialLeft: PlotPoint, initialRight: PlotPoint): boolean {
-  let left = initialLeft;
-  let right = initialRight;
-  let probes = 0;
-  let largestObserved = Math.max(Math.abs(left.y), Math.abs(right.y));
-  let divergenceSteps = 0;
+type MutablePlotDiagnostics = Omit<PlotDiagnostics, 'totalEvaluations'>;
 
-  for (let depth = 0; depth < MAX_DISCONTINUITY_DEPTH && probes + 3 <= MAX_DISCONTINUITY_PROBES; depth += 1) {
-    const width = right.x - left.x;
-    const quarter = evaluatePlotPoint(expression, left.x + width / 4);
-    const middle = evaluatePlotPoint(expression, left.x + width / 2);
-    const threeQuarter = evaluatePlotPoint(expression, left.x + width * 3 / 4);
-    probes += 3;
-    if (!quarter || !middle || !threeQuarter) return true;
+function evaluateTrackedPlotPoint(
+  expression: string,
+  x: number,
+  diagnostics: MutablePlotDiagnostics,
+  kind: keyof MutablePlotDiagnostics,
+): PlotPoint | null {
+  diagnostics[kind] += 1;
+  return evaluatePlotPoint(expression, x);
+}
+
+function isSuspectedDiscontinuity(left: PlotPoint, middle: PlotPoint, right: PlotPoint): boolean {
+  const endpointScale = Math.max(1, Math.abs(left.y), Math.abs(right.y));
+  const largeSignChange = Math.sign(left.y) !== Math.sign(right.y)
+    && Math.min(Math.abs(left.y), Math.abs(right.y)) > 10;
+  const pronouncedMiddlePeak = Math.abs(middle.y) > Math.max(50, endpointScale * 8);
+  return largeSignChange || pronouncedMiddlePeak;
+}
+
+function deepProbeDiscontinuity(
+  expression: string,
+  initialLeft: PlotPoint,
+  initialMiddle: PlotPoint,
+  initialRight: PlotPoint,
+  diagnostics: MutablePlotDiagnostics,
+): boolean {
+  let left = initialLeft;
+  let middle = initialMiddle;
+  let right = initialRight;
+  let largestObserved = Math.max(Math.abs(left.y), Math.abs(right.y));
+  let divergenceSteps = Math.abs(middle.y) > largestObserved * 1.5 ? 1 : 0;
+  if (Math.abs(middle.y) > largestObserved) largestObserved = Math.abs(middle.y);
+
+  for (let depth = 0; depth < MAX_DISCONTINUITY_DEPTH; depth += 1) {
+    if (diagnostics.deepEvaluations + 2 > MAX_DEEP_PLOT_EVALUATIONS) return false;
+    const quarter = evaluateTrackedPlotPoint(
+      expression,
+      (left.x + middle.x) / 2,
+      diagnostics,
+      'deepEvaluations',
+    );
+    const threeQuarter = evaluateTrackedPlotPoint(
+      expression,
+      (middle.x + right.x) / 2,
+      diagnostics,
+      'deepEvaluations',
+    );
+    if (!quarter || !threeQuarter) return true;
 
     const points = [left, quarter, middle, threeQuarter, right];
     const magnitudes = points.map((point) => Math.abs(point.y));
     const peakMagnitude = Math.max(...magnitudes);
     const peakIndex = magnitudes.indexOf(peakMagnitude);
-
-    if (depth === 0) {
-      const endpointScale = Math.max(1, Math.abs(left.y), Math.abs(right.y));
-      const largeSignChange = Math.sign(left.y) !== Math.sign(right.y)
-        && Math.min(Math.abs(left.y), Math.abs(right.y)) > 10;
-      const linearMiddle = (left.y + right.y) / 2;
-      const visiblyCurved = Math.abs(middle.y - linearMiddle) > Math.max(10, endpointScale * 0.5);
-      const pronouncedPeak = peakMagnitude > Math.max(50, endpointScale * 8);
-      if (!largeSignChange && !visiblyCurved && !pronouncedPeak) return false;
-    }
 
     if (peakMagnitude > largestObserved * 1.5) {
       largestObserved = peakMagnitude;
@@ -471,42 +505,79 @@ function intervalHasDiscontinuity(expression: string, initialLeft: PlotPoint, in
       if (peakMagnitude > largestObserved) largestObserved = peakMagnitude;
     }
 
-    if (peakIndex === 0) {
-      right = quarter;
-    } else if (peakIndex === points.length - 1) {
-      left = threeQuarter;
-    } else {
-      left = points[peakIndex - 1];
-      right = points[peakIndex + 1];
-    }
+    const bracketStart = Math.max(0, Math.min(points.length - 3, peakIndex - 1));
+    [left, middle, right] = points.slice(bracketStart, bracketStart + 3) as [PlotPoint, PlotPoint, PlotPoint];
   }
 
   return false;
 }
 
-export function buildPlotSeries(expression: string, domain: readonly [number, number], samples: number): PlotSample[] {
+function intervalHasDiscontinuity(
+  expression: string,
+  left: PlotPoint,
+  right: PlotPoint,
+  diagnostics: MutablePlotDiagnostics,
+): boolean {
+  const middle = evaluateTrackedPlotPoint(
+    expression,
+    (left.x + right.x) / 2,
+    diagnostics,
+    'midpointEvaluations',
+  );
+  if (!middle) return true;
+  if (!isSuspectedDiscontinuity(left, middle, right)) return false;
+  return deepProbeDiscontinuity(expression, left, middle, right, diagnostics);
+}
+
+function safePlotSample(point: PlotSample): PlotSample {
+  return point && Math.abs(point.y) <= MAX_PLOT_MAGNITUDE ? point : null;
+}
+
+export function buildPlotSeriesWithDiagnostics(
+  expression: string,
+  domain: readonly [number, number],
+  samples: number,
+): PlotSeriesWithDiagnostics {
   const [minimum, maximum] = domain;
   if (!Number.isFinite(minimum) || !Number.isFinite(maximum) || minimum >= maximum) throw new Error('定义域必须是从小到大的有限数字');
   if (!Number.isInteger(samples) || samples < 2 || samples > 5000) throw new Error('采样点数量必须是 2 到 5000 的整数');
   tokenize(expression);
+  const diagnostics: MutablePlotDiagnostics = { baseEvaluations: 0, midpointEvaluations: 0, deepEvaluations: 0 };
   const sampled: PlotSample[] = [];
   const step = (maximum - minimum) / (samples - 1);
   for (let index = 0; index < samples; index += 1) {
     const rawX = index === samples - 1 ? maximum : minimum + index * step;
     const x = Math.abs(rawX) < 1e-12 ? 0 : normalizeNumber(rawX);
-    sampled.push(evaluatePlotPoint(expression, x));
+    sampled.push(evaluateTrackedPlotPoint(expression, x, diagnostics, 'baseEvaluations'));
   }
-  const result: PlotSample[] = [];
+  if (!sampled.some((point) => point !== null)) throw new Error('表达式在当前定义域内没有可绘制的有限结果');
+
+  const rawResult: PlotSample[] = [];
   for (let index = 0; index < sampled.length; index += 1) {
     const point = sampled[index];
     const previous = sampled[index - 1];
-    if (point && previous && intervalHasDiscontinuity(expression, previous, point) && result[result.length - 1] !== null) result.push(null);
+    if (point && previous && intervalHasDiscontinuity(expression, previous, point, diagnostics) && rawResult[rawResult.length - 1] !== null) rawResult.push(null);
+    if (point !== null || rawResult[rawResult.length - 1] !== null) rawResult.push(point);
+  }
+  const result: PlotSample[] = [];
+  for (const rawPoint of rawResult) {
+    const point = safePlotSample(rawPoint);
     if (point !== null || result[result.length - 1] !== null) result.push(point);
   }
   while (result[0] === null) result.shift();
   while (result[result.length - 1] === null) result.pop();
-  if (!result.some((point) => point !== null)) throw new Error('表达式在当前定义域内没有可绘制的有限结果');
-  return result;
+  if (!result.some((point) => point !== null)) result.push(null);
+  return {
+    points: result,
+    diagnostics: {
+      ...diagnostics,
+      totalEvaluations: diagnostics.baseEvaluations + diagnostics.midpointEvaluations + diagnostics.deepEvaluations,
+    },
+  };
+}
+
+export function buildPlotSeries(expression: string, domain: readonly [number, number], samples: number): PlotSample[] {
+  return buildPlotSeriesWithDiagnostics(expression, domain, samples).points;
 }
 
 function validDate(input: Date | string | number): Date {
