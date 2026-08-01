@@ -49,24 +49,59 @@ export function assertAcceptedFile(file: File, accepted: string[]): void {
   if (!isAccepted) throw new Error(acceptedFileMessage(accepted));
 }
 
-function readWithFileReader(file: File, method: 'readAsText' | 'readAsDataURL'): Promise<string> {
+function abortError(): DOMException {
+  return new DOMException('操作已取消', 'AbortError');
+}
+
+function readWithFileReader(file: File, method: 'readAsText' | 'readAsDataURL', signal?: AbortSignal): Promise<string> {
   return new Promise((resolve, reject) => {
+    if (signal?.aborted) {
+      reject(abortError());
+      return;
+    }
     const reader = new FileReader();
-    reader.onerror = () => reject(new Error(`读取文件失败，请重试：${reader.error?.message ?? '浏览器无法读取该文件'}`));
-    reader.onload = () => resolve(String(reader.result));
-    reader[method](file);
+    let settled = false;
+    const cleanup = () => {
+      reader.onload = null;
+      reader.onerror = null;
+      reader.onabort = null;
+      signal?.removeEventListener('abort', handleSignalAbort);
+    };
+    const finish = (callback: () => void) => {
+      if (settled) return;
+      settled = true;
+      cleanup();
+      callback();
+    };
+    const rejectAbort = () => finish(() => reject(abortError()));
+    const handleSignalAbort = () => {
+      try {
+        reader.abort();
+      } finally {
+        rejectAbort();
+      }
+    };
+    reader.onerror = () => finish(() => reject(new Error(`读取文件失败，请重试：${reader.error?.message ?? '浏览器无法读取该文件'}`)));
+    reader.onabort = rejectAbort;
+    reader.onload = () => finish(() => resolve(String(reader.result)));
+    signal?.addEventListener('abort', handleSignalAbort, { once: true });
+    try {
+      reader[method](file);
+    } catch (reason) {
+      finish(() => reject(reason));
+    }
   });
 }
 
-export function readFileAsDataUrl(file: File): Promise<string> {
-  return readWithFileReader(file, 'readAsDataURL');
+export function readFileAsDataUrl(file: File, signal?: AbortSignal): Promise<string> {
+  return readWithFileReader(file, 'readAsDataURL', signal);
 }
 
-export function readFileAsText(file: File): Promise<string> {
-  return readWithFileReader(file, 'readAsText');
+export function readFileAsText(file: File, signal?: AbortSignal): Promise<string> {
+  return readWithFileReader(file, 'readAsText', signal);
 }
 
-export function loadImage(file: File): Promise<HTMLImageElement> {
+export function loadImage(file: File, signal?: AbortSignal): Promise<HTMLImageElement> {
   let objectUrl: string;
   try {
     objectUrl = URL.createObjectURL(file);
@@ -76,15 +111,45 @@ export function loadImage(file: File): Promise<HTMLImageElement> {
 
   return new Promise((resolve, reject) => {
     const image = new Image();
-    const release = () => URL.revokeObjectURL(objectUrl);
-    image.onload = () => {
+    let settled = false;
+    let released = false;
+    const release = () => {
+      if (released) return;
+      released = true;
+      URL.revokeObjectURL(objectUrl);
+    };
+    const cleanup = () => {
+      image.onload = null;
+      image.onerror = null;
+      signal?.removeEventListener('abort', handleAbort);
+    };
+    const finish = (callback: () => void) => {
+      if (settled) return;
+      settled = true;
+      cleanup();
       release();
-      resolve(image);
+      callback();
+    };
+    const handleAbort = () => {
+      image.src = '';
+      finish(() => reject(abortError()));
+    };
+    image.onload = () => {
+      finish(() => resolve(image));
     };
     image.onerror = () => {
-      release();
-      reject(new Error('图片加载失败，请确认文件完整后重试'));
+      image.src = '';
+      finish(() => reject(new Error('图片加载失败，请确认文件完整后重试')));
     };
-    image.src = objectUrl;
+    if (signal?.aborted) {
+      handleAbort();
+      return;
+    }
+    signal?.addEventListener('abort', handleAbort, { once: true });
+    try {
+      image.src = objectUrl;
+    } catch (reason) {
+      finish(() => reject(reason));
+    }
   });
 }

@@ -1,11 +1,11 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { CSSProperties, KeyboardEvent, PointerEvent as ReactPointerEvent } from 'react';
 
 import type { EditorAction, EditorDocument, EditorLayer } from '../../engines/editor';
 
 type Point = { clientX: number; clientY: number };
 type CanvasSize = { width: number; height: number };
-type HandleDirection = 'nw' | 'n' | 'ne' | 'e' | 'se' | 's' | 'sw' | 'w';
+export type HandleDirection = 'nw' | 'n' | 'ne' | 'e' | 'se' | 's' | 'sw' | 'w';
 
 type CanvasStageProps = {
   document: EditorDocument;
@@ -13,9 +13,9 @@ type CanvasStageProps = {
 };
 
 type DragState =
-  | { kind: 'move'; id: string; start: { x: number; y: number }; layer: EditorLayer }
-  | { kind: 'resize'; id: string; direction: HandleDirection; start: { x: number; y: number }; layer: EditorLayer }
-  | { kind: 'rotate'; id: string; startAngle: number; layer: EditorLayer };
+  | { kind: 'move'; id: string; start: { x: number; y: number }; layer: EditorLayer; preview: EditorLayer; pointerId: number; captureTarget: HTMLElement }
+  | { kind: 'resize'; id: string; direction: HandleDirection; start: { x: number; y: number }; layer: EditorLayer; preview: EditorLayer; pointerId: number; captureTarget: HTMLElement }
+  | { kind: 'rotate'; id: string; startAngle: number; layer: EditorLayer; preview: EditorLayer; pointerId: number; captureTarget: HTMLElement };
 
 const HANDLES: Array<{ direction: HandleDirection; label: string }> = [
   { direction: 'nw', label: '左上' }, { direction: 'n', label: '上方' }, { direction: 'ne', label: '右上' },
@@ -28,6 +28,44 @@ export function clientPointToCanvas(rect: DOMRect, canvas: CanvasSize, point: Po
   return {
     x: Math.round((point.clientX - rect.left) * canvas.width / rect.width * 100) / 100,
     y: Math.round((point.clientY - rect.top) * canvas.height / rect.height * 100) / 100,
+  };
+}
+
+function rounded(value: number): number {
+  return Math.round(value * 100) / 100;
+}
+
+export function resizeFromHandle(layer: EditorLayer, direction: HandleDirection, globalDelta: { x: number; y: number }): EditorLayer {
+  const radians = layer.rotation * Math.PI / 180;
+  const cosine = Math.cos(radians);
+  const sine = Math.sin(radians);
+  const localDelta = {
+    x: cosine * globalDelta.x + sine * globalDelta.y,
+    y: -sine * globalDelta.x + cosine * globalDelta.y,
+  };
+  const west = direction.includes('w');
+  const east = direction.includes('e');
+  const north = direction.includes('n');
+  const south = direction.includes('s');
+  const width = Math.max(1, west ? layer.width - localDelta.x : east ? layer.width + localDelta.x : layer.width);
+  const height = Math.max(1, north ? layer.height - localDelta.y : south ? layer.height + localDelta.y : layer.height);
+  const widthChange = width - layer.width;
+  const heightChange = height - layer.height;
+  const localCenterShift = {
+    x: east ? widthChange / 2 : west ? -widthChange / 2 : 0,
+    y: south ? heightChange / 2 : north ? -heightChange / 2 : 0,
+  };
+  const globalCenterShift = {
+    x: cosine * localCenterShift.x - sine * localCenterShift.y,
+    y: sine * localCenterShift.x + cosine * localCenterShift.y,
+  };
+  const center = { x: layer.x + layer.width / 2, y: layer.y + layer.height / 2 };
+  return {
+    ...layer,
+    x: rounded(center.x + globalCenterShift.x - width / 2),
+    y: rounded(center.y + globalCenterShift.y - height / 2),
+    width: rounded(width),
+    height: rounded(height),
   };
 }
 
@@ -60,7 +98,9 @@ export function CanvasStage({ document, dispatch }: CanvasStageProps) {
   const surfaceRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const dragRef = useRef<DragState | null>(null);
-  const selected = document.layers.find((layer) => layer.id === document.selectedLayerId);
+  const [previewLayer, setPreviewLayer] = useState<EditorLayer | null>(null);
+  const displayedLayers = document.layers.map((layer) => previewLayer?.id === layer.id ? previewLayer : layer);
+  const selected = displayedLayers.find((layer) => layer.id === document.selectedLayerId);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -83,53 +123,86 @@ export function CanvasStage({ document, dispatch }: CanvasStageProps) {
     return rect ? clientPointToCanvas(rect, document.canvas, event, window.devicePixelRatio) : { x: 0, y: 0 };
   };
 
+  const capture = (event: ReactPointerEvent): { pointerId: number; captureTarget: HTMLElement } => {
+    const captureTarget = event.currentTarget as HTMLElement;
+    captureTarget.setPointerCapture?.(event.pointerId);
+    return { pointerId: event.pointerId, captureTarget };
+  };
+
+  const release = (drag: DragState): void => {
+    try {
+      drag.captureTarget.releasePointerCapture?.(drag.pointerId);
+    } catch {
+      // 浏览器可能已经在系统级取消时释放了捕获。
+    }
+  };
+
+  const clearDrag = (shouldRelease: boolean): void => {
+    const drag = dragRef.current;
+    dragRef.current = null;
+    setPreviewLayer(null);
+    if (drag && shouldRelease) release(drag);
+  };
+
   const beginMove = (event: ReactPointerEvent, layer: EditorLayer) => {
     event.stopPropagation();
     dispatch({ type: 'select', id: layer.id });
     if (layer.locked) return;
-    dragRef.current = { kind: 'move', id: layer.id, start: point(event), layer: { ...layer } };
+    const copy = { ...layer } as EditorLayer;
+    dragRef.current = { kind: 'move', id: layer.id, start: point(event), layer: copy, preview: copy, ...capture(event) };
+    setPreviewLayer(copy);
   };
 
   const beginResize = (event: ReactPointerEvent, direction: HandleDirection, layer: EditorLayer) => {
     event.stopPropagation();
-    dragRef.current = { kind: 'resize', id: layer.id, direction, start: point(event), layer: { ...layer } };
+    const copy = { ...layer } as EditorLayer;
+    dragRef.current = { kind: 'resize', id: layer.id, direction, start: point(event), layer: copy, preview: copy, ...capture(event) };
+    setPreviewLayer(copy);
   };
 
   const beginRotate = (event: ReactPointerEvent, layer: EditorLayer) => {
     event.stopPropagation();
     const current = point(event);
     const center = { x: layer.x + layer.width / 2, y: layer.y + layer.height / 2 };
-    dragRef.current = { kind: 'rotate', id: layer.id, startAngle: Math.atan2(current.y - center.y, current.x - center.x) * 180 / Math.PI - layer.rotation, layer: { ...layer } };
+    const copy = { ...layer } as EditorLayer;
+    dragRef.current = { kind: 'rotate', id: layer.id, startAngle: Math.atan2(current.y - center.y, current.x - center.x) * 180 / Math.PI - layer.rotation, layer: copy, preview: copy, ...capture(event) };
+    setPreviewLayer(copy);
   };
 
-  const handlePointerMove = (event: ReactPointerEvent) => {
-    const drag = dragRef.current;
-    if (!drag) return;
-    const current = point(event);
+  const previewAt = (drag: DragState, current: { x: number; y: number }): EditorLayer => {
     if (drag.kind === 'move') {
-      dispatch({ type: 'move', id: drag.id, x: drag.layer.x + current.x - drag.start.x, y: drag.layer.y + current.y - drag.start.y, source: 'canvas' });
-      return;
+      return { ...drag.layer, x: rounded(drag.layer.x + current.x - drag.start.x), y: rounded(drag.layer.y + current.y - drag.start.y) } as EditorLayer;
     }
     if (drag.kind === 'rotate') {
       const center = { x: drag.layer.x + drag.layer.width / 2, y: drag.layer.y + drag.layer.height / 2 };
       const angle = Math.atan2(current.y - center.y, current.x - center.x) * 180 / Math.PI;
-      dispatch({ type: 'rotate', id: drag.id, rotation: angle - drag.startAngle, source: 'canvas' });
+      return { ...drag.layer, rotation: rounded((angle - drag.startAngle + 360) % 360) } as EditorLayer;
+    }
+    return resizeFromHandle(drag.layer, drag.direction, { x: current.x - drag.start.x, y: current.y - drag.start.y });
+  };
+
+  const handlePointerMove = (event: ReactPointerEvent) => {
+    const drag = dragRef.current;
+    if (!drag || event.pointerId !== drag.pointerId) return;
+    if (event.buttons === 0) {
+      clearDrag(true);
       return;
     }
-    const dx = current.x - drag.start.x;
-    const dy = current.y - drag.start.y;
-    const west = drag.direction.includes('w');
-    const east = drag.direction.includes('e');
-    const north = drag.direction.includes('n');
-    const south = drag.direction.includes('s');
-    const width = west ? drag.layer.width - dx : east ? drag.layer.width + dx : drag.layer.width;
-    const height = north ? drag.layer.height - dy : south ? drag.layer.height + dy : drag.layer.height;
-    dispatch({
-      type: 'resize', id: drag.id, width, height,
-      x: west ? drag.layer.x + dx : drag.layer.x,
-      y: north ? drag.layer.y + dy : drag.layer.y,
-      source: 'canvas',
-    });
+    const preview = previewAt(drag, point(event));
+    drag.preview = preview;
+    setPreviewLayer(preview);
+  };
+
+  const finishDrag = (event: ReactPointerEvent): void => {
+    const drag = dragRef.current;
+    if (!drag || event.pointerId !== drag.pointerId) return;
+    const preview = previewAt(drag, point(event));
+    dragRef.current = null;
+    setPreviewLayer(null);
+    release(drag);
+    if (drag.kind === 'move') dispatch({ type: 'move', id: drag.id, x: preview.x, y: preview.y, source: 'canvas' });
+    else if (drag.kind === 'rotate') dispatch({ type: 'rotate', id: drag.id, rotation: preview.rotation, source: 'canvas' });
+    else dispatch({ type: 'resize', id: drag.id, x: preview.x, y: preview.y, width: preview.width, height: preview.height, source: 'canvas' });
   };
 
   const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
@@ -157,14 +230,19 @@ export function CanvasStage({ document, dispatch }: CanvasStageProps) {
         className={document.canvas.transparent ? 'editor-stage__surface editor-stage__surface--transparent' : 'editor-stage__surface'}
         style={{ aspectRatio: `${document.canvas.width} / ${document.canvas.height}` }}
         onPointerMove={handlePointerMove}
-        onPointerUp={() => { dragRef.current = null; }}
-        onPointerCancel={() => { dragRef.current = null; }}
+        onPointerUp={finishDrag}
+        onPointerCancel={(event) => {
+          if (dragRef.current?.pointerId === event.pointerId) clearDrag(true);
+        }}
+        onLostPointerCapture={(event) => {
+          if (dragRef.current?.pointerId === event.pointerId) clearDrag(false);
+        }}
         onPointerDown={(event) => {
           if (event.target === event.currentTarget || event.target === canvasRef.current) dispatch({ type: 'select', id: null });
         }}
       >
         <canvas ref={canvasRef} aria-label={`画布 ${document.canvas.width} × ${document.canvas.height}`} />
-        {document.layers.filter((layer) => !layer.hidden).map((layer) => (
+        {displayedLayers.filter((layer) => !layer.hidden).map((layer) => (
           <button
             key={layer.id}
             type="button"

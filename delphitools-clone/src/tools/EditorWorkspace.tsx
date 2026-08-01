@@ -33,6 +33,10 @@ function isFormTarget(target: EventTarget | null): boolean {
   return Boolean(element?.closest('input, textarea, select, [contenteditable="true"]'));
 }
 
+function isAbortError(reason: unknown): boolean {
+  return reason instanceof DOMException && reason.name === 'AbortError';
+}
+
 function MobileDrawer({ label, closeLabel, onClose, children }: { label: string; closeLabel: string; onClose: () => void; children: ReactNode }) {
   const closeRef = useRef<HTMLButtonElement>(null);
   useEffect(() => { closeRef.current?.focus(); }, []);
@@ -56,10 +60,25 @@ export function EditorWorkspace({ tool }: EditorWorkspaceProps) {
   const layerTriggerRef = useRef<HTMLButtonElement>(null);
   const inspectorTriggerRef = useRef<HTMLButtonElement>(null);
   const importVersion = useRef(0);
+  const importAbortRef = useRef<AbortController | null>(null);
+  const exportVersion = useRef(0);
+  const exportAbortRef = useRef<AbortController | null>(null);
 
-  useEffect(() => () => { importVersion.current += 1; }, []);
+  useEffect(() => () => {
+    importVersion.current += 1;
+    exportVersion.current += 1;
+    importAbortRef.current?.abort();
+    exportAbortRef.current?.abort();
+    importAbortRef.current = null;
+    exportAbortRef.current = null;
+  }, []);
 
   const dispatch = useCallback((action: EditorAction) => {
+    if (action.type !== 'select') {
+      exportVersion.current += 1;
+      exportAbortRef.current?.abort();
+      exportAbortRef.current = null;
+    }
     baseDispatch(action);
     if (action.type !== 'select') setExportState({ kind: 'idle', message: '画布已更新，可重新导出 PNG' });
   }, []);
@@ -73,13 +92,16 @@ export function EditorWorkspace({ tool }: EditorWorkspaceProps) {
     const file = event.target.files?.[0];
     event.target.value = '';
     if (!file) return;
+    importAbortRef.current?.abort();
+    const controller = new AbortController();
+    importAbortRef.current = controller;
     const version = ++importVersion.current;
     setImageStatus('正在本地解码图片');
     setExportState({ kind: 'idle', message: '正在添加图片图层' });
     try {
       if (!file.type.startsWith('image/')) throw new Error('请选择图片文件');
-      const [source, image] = await Promise.all([readFileAsDataUrl(file), loadImage(file)]);
-      if (version !== importVersion.current) return;
+      const [source, image] = await Promise.all([readFileAsDataUrl(file, controller.signal), loadImage(file, controller.signal)]);
+      if (version !== importVersion.current || controller.signal.aborted) return;
       const naturalWidth = image.naturalWidth || image.width;
       const naturalHeight = image.naturalHeight || image.height;
       if (!naturalWidth || !naturalHeight) throw new Error('图片尺寸无效，请重新选择完整图片');
@@ -88,21 +110,31 @@ export function EditorWorkspace({ tool }: EditorWorkspaceProps) {
       setImageStatus(`已添加图片：${file.name}`);
       setShowCanvasSettings(false);
     } catch (reason) {
-      if (version !== importVersion.current) return;
+      if (version !== importVersion.current || controller.signal.aborted || isAbortError(reason)) return;
       const message = reason instanceof Error ? reason.message : '图片解码失败，请重试';
       setImageStatus(message);
       setExportState({ kind: 'error', message });
+    } finally {
+      if (importAbortRef.current === controller) importAbortRef.current = null;
     }
   };
 
   const exportPng = async () => {
+    exportAbortRef.current?.abort();
+    const controller = new AbortController();
+    exportAbortRef.current = controller;
+    const version = ++exportVersion.current;
     setExportState({ kind: 'loading', message: '正在本地渲染 PNG' });
     try {
-      const blob = await renderDocument(document);
+      const blob = await renderDocument(document, { signal: controller.signal });
+      if (version !== exportVersion.current || controller.signal.aborted) return;
       setExportState({ kind: 'success', message: 'PNG 已生成，可下载', blob });
     } catch (reason) {
+      if (version !== exportVersion.current || controller.signal.aborted || isAbortError(reason)) return;
       const message = reason instanceof Error ? reason.message : 'PNG 导出失败，请重试';
       setExportState({ kind: 'error', message });
+    } finally {
+      if (exportAbortRef.current === controller) exportAbortRef.current = null;
     }
   };
 

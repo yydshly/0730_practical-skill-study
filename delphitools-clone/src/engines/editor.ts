@@ -97,7 +97,8 @@ export type EditorAction =
 
 type RenderOptions = {
   canvasFactory?: () => HTMLCanvasElement;
-  imageLoader?: (source: string) => Promise<CanvasImageSource>;
+  imageLoader?: (source: string, signal?: AbortSignal) => Promise<CanvasImageSource>;
+  signal?: AbortSignal;
 };
 
 const TYPE_NAMES: Record<EditorLayerType, string> = {
@@ -214,14 +215,29 @@ function updateLayer(document: EditorDocument, id: string, updater: (layer: Edit
   return commit(document, { ...snapshot(document), layers });
 }
 
+export function allocateLayerId(preferred: string | undefined, usedIds: ReadonlySet<string>, nextLayerNumber: number): { id: string; nextLayerNumber: number } {
+  const requested = preferred?.trim();
+  let candidateNumber = Math.max(1, Math.floor(finite(nextLayerNumber, 1)));
+  if (requested && !usedIds.has(requested)) {
+    const automaticMatch = /^layer-(\d+)$/.exec(requested);
+    if (automaticMatch) candidateNumber = Math.max(candidateNumber, Number(automaticMatch[1]) + 1);
+    return { id: requested, nextLayerNumber: candidateNumber };
+  }
+  let candidate = `layer-${candidateNumber}`;
+  while (usedIds.has(candidate)) candidate = `layer-${++candidateNumber}`;
+  return { id: candidate, nextLayerNumber: candidateNumber + 1 };
+}
+
 export function createDocument(inputs: EditorLayerInput[] = [], canvas: Partial<EditorCanvas> = {}): EditorDocument {
   const usedIds = new Set<string>();
-  const layers = inputs.map((input, index) => {
-    let fallbackId = `layer-${index + 1}`;
-    while (usedIds.has(input.id?.trim() || fallbackId)) fallbackId = `layer-${index + 2}`;
-    const layer = createLayer(input, fallbackId, index);
+  const layers: EditorLayer[] = [];
+  let nextLayerNumber = 1;
+  inputs.forEach((input, index) => {
+    const allocated = allocateLayerId(input.id, usedIds, nextLayerNumber);
+    nextLayerNumber = allocated.nextLayerNumber;
+    const layer = createLayer({ ...input, id: allocated.id }, allocated.id, index);
     usedIds.add(layer.id);
-    return layer;
+    layers.push(layer);
   });
   return {
     canvas: {
@@ -232,7 +248,7 @@ export function createDocument(inputs: EditorLayerInput[] = [], canvas: Partial<
     },
     layers,
     selectedLayerId: null,
-    nextLayerNumber: layers.length + 1,
+    nextLayerNumber,
     history: [],
     future: [],
   };
@@ -246,15 +262,13 @@ export function editorReducer(document: EditorDocument, action: EditorAction): E
     return selectedLayerId === document.selectedLayerId ? document : { ...document, selectedLayerId };
   }
   if (action.type === 'add') {
-    let id = action.id?.trim() || `layer-${document.nextLayerNumber}`;
-    let counter = document.nextLayerNumber;
-    while (document.layers.some((layer) => layer.id === id)) id = `layer-${++counter}`;
-    const layer = createLayer({ ...action, id, type: action.layerType }, id, document.layers.length);
+    const allocated = allocateLayerId(action.id, new Set(document.layers.map((layer) => layer.id)), document.nextLayerNumber);
+    const layer = createLayer({ ...action, id: allocated.id, type: action.layerType }, allocated.id, document.layers.length);
     return commit(document, {
       ...snapshot(document),
       layers: [...document.layers.map(cloneLayer), layer],
       selectedLayerId: layer.id,
-      nextLayerNumber: counter + 1,
+      nextLayerNumber: allocated.nextLayerNumber,
     });
   }
   if (action.type === 'move') {
@@ -361,21 +375,61 @@ export function redo(document: EditorDocument): EditorDocument {
   return restore(document, next, [...document.history, snapshot(document)].slice(-HISTORY_LIMIT), document.future.slice(0, -1));
 }
 
-function loadRenderableImage(source: string): Promise<{ image: HTMLImageElement; release: () => void }> {
+function abortError(): DOMException {
+  return new DOMException('操作已取消', 'AbortError');
+}
+
+function isAbortError(reason: unknown): boolean {
+  return reason instanceof DOMException && reason.name === 'AbortError';
+}
+
+function throwIfAborted(signal?: AbortSignal): void {
+  if (signal?.aborted) throw abortError();
+}
+
+function loadRenderableImage(source: string, signal?: AbortSignal): Promise<{ image: HTMLImageElement; release: () => void }> {
   return new Promise((resolve, reject) => {
     const image = new Image();
+    let settled = false;
     const release = () => {
       image.onload = null;
       image.onerror = null;
+      signal?.removeEventListener('abort', handleAbort);
       image.src = '';
     };
+    const finish = (callback: () => void) => {
+      if (settled) return;
+      settled = true;
+      callback();
+    };
+    const handleAbort = () => finish(() => {
+      release();
+      reject(abortError());
+    });
     if (/^https?:/i.test(source)) image.crossOrigin = 'anonymous';
-    image.onload = () => resolve({ image, release });
-    image.onerror = () => {
+    image.onload = () => finish(() => {
+      image.onload = null;
+      image.onerror = null;
+      signal?.removeEventListener('abort', handleAbort);
+      resolve({ image, release });
+    });
+    image.onerror = () => finish(() => {
       release();
       reject(new Error('浏览器无法解码图片'));
-    };
-    image.src = source;
+    });
+    if (signal?.aborted) {
+      handleAbort();
+      return;
+    }
+    signal?.addEventListener('abort', handleAbort, { once: true });
+    try {
+      image.src = source;
+    } catch (reason) {
+      finish(() => {
+        release();
+        reject(reason);
+      });
+    }
   });
 }
 
@@ -425,24 +479,41 @@ function drawLayer(context: CanvasRenderingContext2D, layer: Exclude<EditorLayer
   context.restore();
 }
 
-function encodePng(canvas: HTMLCanvasElement): Promise<Blob> {
+function encodePng(canvas: HTMLCanvasElement, signal?: AbortSignal): Promise<Blob> {
   return new Promise((resolve, reject) => {
+    let settled = false;
+    const cleanup = () => signal?.removeEventListener('abort', handleAbort);
+    const finish = (callback: () => void) => {
+      if (settled) return;
+      settled = true;
+      cleanup();
+      callback();
+    };
+    const handleAbort = () => finish(() => reject(abortError()));
+    if (signal?.aborted) {
+      handleAbort();
+      return;
+    }
+    signal?.addEventListener('abort', handleAbort, { once: true });
     try {
       canvas.toBlob((blob) => {
+        if (settled) return;
         if (!blob || blob.type !== 'image/png') {
-          reject(new Error('当前浏览器无法真实编码 PNG，请换用支持 Canvas 的浏览器'));
+          finish(() => reject(new Error('当前浏览器无法真实编码 PNG，请换用支持 Canvas 的浏览器')));
           return;
         }
-        resolve(blob);
+        finish(() => resolve(blob));
       }, 'image/png');
     } catch (reason) {
+      if (settled) return;
       const detail = reason instanceof Error ? reason.message : String(reason);
-      reject(new Error(`PNG 导出失败，画布可能包含不允许跨域读取的图片：${detail}`));
+      finish(() => reject(new Error(`PNG 导出失败，画布可能包含不允许跨域读取的图片：${detail}`)));
     }
   });
 }
 
 export async function renderDocument(document: EditorDocument, options: RenderOptions = {}): Promise<Blob> {
+  throwIfAborted(options.signal);
   const canvas = options.canvasFactory?.() ?? window.document.createElement('canvas');
   canvas.width = document.canvas.width;
   canvas.height = document.canvas.height;
@@ -455,25 +526,30 @@ export async function renderDocument(document: EditorDocument, options: RenderOp
   }
 
   for (const layer of document.layers) {
+    throwIfAborted(options.signal);
     if (layer.hidden) continue;
     if (layer.type === 'image') {
       try {
         if (options.imageLoader) {
-          const image = await options.imageLoader(layer.source);
+          const image = await options.imageLoader(layer.source, options.signal);
+          throwIfAborted(options.signal);
           drawLayer(context, layer as never, image);
         } else {
-          const resource = await loadRenderableImage(layer.source);
+          const resource = await loadRenderableImage(layer.source, options.signal);
           try {
+            throwIfAborted(options.signal);
             drawLayer(context, layer as never, resource.image);
           } finally {
             resource.release();
           }
         }
       } catch (reason) {
+        if (isAbortError(reason)) throw reason;
         const detail = reason instanceof Error ? reason.message : String(reason);
         throw new Error(`图片图层“${layer.name}”解码失败，请重新导入本地图片：${detail}`);
       }
     } else drawLayer(context, layer);
   }
-  return encodePng(canvas);
+  throwIfAborted(options.signal);
+  return encodePng(canvas, options.signal);
 }

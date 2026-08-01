@@ -1,10 +1,12 @@
 /** @vitest-environment jsdom */
 
 import { describe, expect, it, vi } from 'vitest';
+import { PNG_BASE64, bytesFromBase64 } from './fixtures/image-fixtures';
 
 import {
   HISTORY_LIMIT,
   addImageLayer,
+  allocateLayerId,
   createDocument,
   editorReducer,
   moveLayer,
@@ -17,6 +19,22 @@ import {
 } from '../src/engines/editor';
 
 describe('Substrata 可序列化状态机', () => {
+  it('重复显式 ID 会改用真正可用的候选 ID，且不会与自动 ID 冲突', () => {
+    const usedIds = new Set(['same', 'layer-1']);
+    expect(allocateLayerId('same', usedIds, 1)).toEqual({ id: 'layer-2', nextLayerNumber: 3 });
+
+    const document = createDocument([
+      { id: 'same', type: 'rectangle' },
+      { id: 'same', type: 'circle' },
+      { id: 'layer-1', type: 'arrow' },
+      { type: 'text', text: '自动编号' },
+    ]);
+
+    expect(document.layers.map((layer) => layer.id)).toEqual(['same', 'layer-1', 'layer-2', 'layer-3']);
+    expect(new Set(document.layers.map((layer) => layer.id)).size).toBe(4);
+    expect(document.nextLayerNumber).toBe(4);
+  });
+
   it('移动图层后撤销可以恢复原位置', () => {
     const initial = createDocument([
       { id: 'a', type: 'rectangle', x: 10, y: 20, width: 100, height: 80 },
@@ -116,26 +134,37 @@ describe('Substrata 可序列化状态机', () => {
 });
 
 describe('Substrata PNG 渲染', () => {
+  type ContextCall = { name: string; args: unknown[] };
+
+  function blobBytes(blob: Blob): Promise<Uint8Array> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onerror = () => reject(reader.error);
+      reader.onload = () => resolve(new Uint8Array(reader.result as ArrayBuffer));
+      reader.readAsArrayBuffer(blob);
+    });
+  }
+
   function canvasHarness() {
-    const calls: string[] = [];
+    const calls: ContextCall[] = [];
+    const record = (name: string) => vi.fn((...args: unknown[]) => { calls.push({ name, args }); });
     const context = {
-      clearRect: vi.fn(() => calls.push('clear')),
-      fillRect: vi.fn(() => calls.push('rectangle')),
-      strokeRect: vi.fn(),
-      beginPath: vi.fn(),
-      ellipse: vi.fn(() => calls.push('circle')),
-      moveTo: vi.fn(),
-      lineTo: vi.fn(),
-      closePath: vi.fn(),
-      stroke: vi.fn(() => calls.push('arrow')),
-      fill: vi.fn(),
-      fillText: vi.fn(() => calls.push('text')),
-      drawImage: vi.fn(() => calls.push('image')),
-      save: vi.fn(),
-      restore: vi.fn(),
-      translate: vi.fn(),
-      rotate: vi.fn(),
-      globalAlpha: 1,
+      clearRect: record('clearRect'),
+      fillRect: record('fillRect'),
+      strokeRect: record('strokeRect'),
+      beginPath: record('beginPath'),
+      ellipse: record('ellipse'),
+      moveTo: record('moveTo'),
+      lineTo: record('lineTo'),
+      closePath: record('closePath'),
+      stroke: record('stroke'),
+      fill: record('fill'),
+      fillText: record('fillText'),
+      drawImage: record('drawImage'),
+      save: record('save'),
+      restore: record('restore'),
+      translate: record('translate'),
+      rotate: record('rotate'),
       fillStyle: '',
       strokeStyle: '',
       lineWidth: 1,
@@ -143,9 +172,19 @@ describe('Substrata PNG 渲染', () => {
       textAlign: 'left',
       textBaseline: 'top',
     };
+    let globalAlpha = 1;
+    Object.defineProperty(context, 'globalAlpha', {
+      configurable: true,
+      get: () => globalAlpha,
+      set: (value: number) => { globalAlpha = value; calls.push({ name: 'globalAlpha', args: [value] }); },
+    });
     const canvas = document.createElement('canvas');
     vi.spyOn(canvas, 'getContext').mockReturnValue(context as unknown as CanvasRenderingContext2D);
-    vi.spyOn(canvas, 'toBlob').mockImplementation((callback) => callback(new Blob(['png'], { type: 'image/png' })));
+    vi.spyOn(canvas, 'toBlob').mockImplementation((callback) => {
+      const bytes = bytesFromBase64(PNG_BASE64);
+      const buffer = bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) as ArrayBuffer;
+      callback(new Blob([buffer], { type: 'image/png' }));
+    });
     return { canvas, context, calls };
   }
 
@@ -161,8 +200,62 @@ describe('Substrata PNG 渲染', () => {
 
     expect(harness.canvas.width).toBe(640);
     expect(harness.canvas.height).toBe(480);
-    expect(harness.calls).toEqual(['rectangle', 'rectangle', 'text']);
+    expect(harness.calls.filter((call) => call.name === 'fillRect' || call.name === 'fillText').map((call) => call.name)).toEqual(['fillRect', 'fillRect', 'fillText']);
     expect(blob.type).toBe('image/png');
+  });
+
+  it('记录两层最终顺序、撤销后坐标以及 transform、rotate 和 globalAlpha', async () => {
+    const harness = canvasHarness();
+    let document = createDocument([
+      { id: 'shape', type: 'rectangle', x: 10, y: 20, width: 100, height: 80, rotation: 45, opacity: 0.4 },
+      { id: 'title', type: 'text', x: 200, y: 30, width: 120, height: 40, text: '顶层' },
+    ], { transparent: true });
+    document = moveLayer(document, 'shape', 90, 100);
+    document = undo(document);
+    document = reorderLayer(document, 'shape', 'front');
+
+    await renderDocument(document, { canvasFactory: () => harness.canvas });
+
+    const drawingOrder = harness.calls.filter((call) => ['fillText', 'fillRect'].includes(call.name)).map((call) => call.name);
+    expect(drawingOrder).toEqual(['fillText', 'fillRect']);
+    expect(harness.calls).toContainEqual({ name: 'translate', args: [60, 60] });
+    expect(harness.calls).not.toContainEqual({ name: 'translate', args: [140, 140] });
+    expect(harness.calls).toContainEqual({ name: 'rotate', args: [Math.PI / 4] });
+    expect(harness.calls).toContainEqual({ name: 'globalAlpha', args: [0.4] });
+  });
+
+  it('绘制圆形、箭头和可见图片，并完整跳过隐藏图层', async () => {
+    const harness = canvasHarness();
+    const image = { fixture: 'visible-image' } as unknown as CanvasImageSource;
+    const document = createDocument([
+      { id: 'circle', type: 'circle', width: 80, height: 60 },
+      { id: 'hidden', type: 'rectangle', hidden: true, width: 999, height: 999 },
+      { id: 'arrow', type: 'arrow', width: 120, height: 40 },
+      { id: 'image', type: 'image', source: 'fixture.png', width: 90, height: 70 },
+    ], { transparent: true });
+
+    await renderDocument(document, { canvasFactory: () => harness.canvas, imageLoader: async () => image });
+
+    expect(harness.calls.some((call) => call.name === 'ellipse' && call.args[2] === 40 && call.args[3] === 30)).toBe(true);
+    expect(harness.calls.filter((call) => call.name === 'lineTo')).toHaveLength(3);
+    expect(harness.calls).toContainEqual({ name: 'drawImage', args: [image, -45, -35, 90, 70] });
+    expect(harness.calls.some((call) => call.name === 'fillRect' && call.args.includes(999))).toBe(false);
+    const landmarks = harness.calls.filter((call) => ['ellipse', 'lineTo', 'drawImage'].includes(call.name)).map((call) => call.name);
+    expect(landmarks[0]).toBe('ellipse');
+    expect(landmarks[landmarks.length - 1]).toBe('drawImage');
+  });
+
+  it('toBlob 测试夹具包含有效 PNG 签名和 1×1 IHDR 尺寸', async () => {
+    const harness = canvasHarness();
+    const blob = await renderDocument(createDocument([], { width: 1, height: 1, transparent: true }), { canvasFactory: () => harness.canvas });
+    const bytes = await blobBytes(blob);
+    const expectedFixture = bytesFromBase64(PNG_BASE64);
+
+    expect([...bytes.slice(0, 8)]).toEqual([...expectedFixture.slice(0, 8)]);
+    expect(String.fromCharCode(...bytes.slice(12, 16))).toBe('IHDR');
+    const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+    expect(view.getUint32(16)).toBe(1);
+    expect(view.getUint32(20)).toBe(1);
   });
 
   it('透明画布会清空底色，图片解码失败给出中文图层错误', async () => {
@@ -210,5 +303,62 @@ describe('Substrata PNG 渲染', () => {
     expect(instances[0].onload).toBeNull();
     expect(instances[0].onerror).toBeNull();
     expect(instances[0].src).toBe('');
+  });
+
+  it('取消图片渲染会向加载器传递 AbortSignal，并保留 AbortError', async () => {
+    const harness = canvasHarness();
+    const controller = new AbortController();
+    const loader = vi.fn((_source: string, _signal?: AbortSignal) => new Promise<CanvasImageSource>((_resolve, reject) => {
+      controller.signal.addEventListener('abort', () => reject(new DOMException('操作已取消', 'AbortError')), { once: true });
+    }));
+    const document = createDocument([{ id: 'pending', type: 'image', name: '待解码图片', source: 'pending.png' }]);
+    const rendering = renderDocument(document, { canvasFactory: () => harness.canvas, imageLoader: loader, signal: controller.signal });
+
+    controller.abort();
+
+    await expect(rendering).rejects.toMatchObject({ name: 'AbortError' });
+    expect(loader).toHaveBeenCalledWith('pending.png', controller.signal);
+  });
+
+  it('取消默认图片解码会清空 src 和事件处理器', async () => {
+    const harness = canvasHarness();
+    const instances: PendingImage[] = [];
+    class PendingImage {
+      onload: (() => void) | null = null;
+      onerror: (() => void) | null = null;
+      crossOrigin: string | null = null;
+      currentSource = '';
+      constructor() { instances.push(this); }
+      set src(value: string) { this.currentSource = value; }
+      get src() { return this.currentSource; }
+    }
+    vi.stubGlobal('Image', PendingImage as unknown as typeof Image);
+    const controller = new AbortController();
+    const rendering = renderDocument(
+      createDocument([{ id: 'pending', type: 'image', name: '待取消图片', source: 'https://assets.example/pending.png' }]),
+      { canvasFactory: () => harness.canvas, signal: controller.signal },
+    );
+
+    controller.abort();
+
+    await expect(rendering).rejects.toMatchObject({ name: 'AbortError' });
+    expect(instances[0].src).toBe('');
+    expect(instances[0].onload).toBeNull();
+    expect(instances[0].onerror).toBeNull();
+  });
+
+  it('取消等待中的 PNG 编码会立即结束，不等待迟到的 toBlob', async () => {
+    const harness = canvasHarness();
+    vi.mocked(harness.canvas.toBlob).mockImplementation(() => undefined);
+    const controller = new AbortController();
+    const rendering = renderDocument(createDocument(), { canvasFactory: () => harness.canvas, signal: controller.signal });
+
+    controller.abort();
+
+    const outcome = await Promise.race([
+      rendering.then(() => 'success', (reason: unknown) => reason instanceof DOMException ? reason.name : 'error'),
+      new Promise<string>((resolve) => setTimeout(() => resolve('still-pending'), 20)),
+    ]);
+    expect(outcome).toBe('AbortError');
   });
 });

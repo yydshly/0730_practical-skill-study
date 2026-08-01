@@ -17,6 +17,7 @@ const originalClipboard = navigator.clipboard;
 const originalCreateObjectUrl = URL.createObjectURL;
 const originalRevokeObjectUrl = URL.revokeObjectURL;
 const originalImage = globalThis.Image;
+const originalFileReader = globalThis.FileReader;
 const originalExecCommand = document.execCommand;
 
 afterEach(() => {
@@ -26,6 +27,7 @@ afterEach(() => {
   Object.defineProperty(URL, 'revokeObjectURL', { configurable: true, value: originalRevokeObjectUrl });
   Object.defineProperty(document, 'execCommand', { configurable: true, value: originalExecCommand });
   vi.stubGlobal('Image', originalImage);
+  vi.stubGlobal('FileReader', originalFileReader);
   document.body.replaceChildren();
 });
 
@@ -93,6 +95,59 @@ describe('本地文件工具', () => {
 
     expect(image).toBeInstanceOf(TestImage);
     expect(revoke).toHaveBeenCalledWith('blob:preview');
+  });
+
+  it('取消文件读取会终止 FileReader 并以 AbortError 结束', async () => {
+    const instances: PendingReader[] = [];
+    class PendingReader {
+      result: string | ArrayBuffer | null = null;
+      error: DOMException | null = null;
+      onload: (() => void) | null = null;
+      onerror: (() => void) | null = null;
+      onabort: (() => void) | null = null;
+      abort = vi.fn(() => this.onabort?.());
+      readAsDataURL = vi.fn();
+      readAsText = vi.fn();
+      constructor() { instances.push(this); }
+    }
+    vi.stubGlobal('FileReader', PendingReader as unknown as typeof FileReader);
+    const controller = new AbortController();
+    const reading = readFileAsDataUrl(new File(['png'], 'pending.png', { type: 'image/png' }), controller.signal);
+
+    controller.abort();
+
+    await expect(reading).rejects.toMatchObject({ name: 'AbortError' });
+    expect(instances[0].abort).toHaveBeenCalledTimes(1);
+    expect(instances[0].onload).toBeNull();
+    expect(instances[0].onerror).toBeNull();
+    expect(instances[0].onabort).toBeNull();
+  });
+
+  it('取消图片解码会立即清理事件、src 并释放对象 URL', async () => {
+    const revoke = vi.fn();
+    Object.defineProperty(URL, 'createObjectURL', { configurable: true, value: vi.fn(() => 'blob:pending-image') });
+    Object.defineProperty(URL, 'revokeObjectURL', { configurable: true, value: revoke });
+    const instances: PendingImage[] = [];
+    class PendingImage {
+      onload: (() => void) | null = null;
+      onerror: (() => void) | null = null;
+      currentSource = '';
+      constructor() { instances.push(this); }
+      set src(value: string) { this.currentSource = value; }
+      get src() { return this.currentSource; }
+    }
+    vi.stubGlobal('Image', PendingImage as unknown as typeof Image);
+    const controller = new AbortController();
+    const loading = loadImage(new File(['png'], 'pending.png', { type: 'image/png' }), controller.signal);
+
+    controller.abort();
+
+    await expect(loading).rejects.toMatchObject({ name: 'AbortError' });
+    expect(instances[0].src).toBe('');
+    expect(instances[0].onload).toBeNull();
+    expect(instances[0].onerror).toBeNull();
+    expect(revoke).toHaveBeenCalledTimes(1);
+    expect(revoke).toHaveBeenCalledWith('blob:pending-image');
   });
 });
 
