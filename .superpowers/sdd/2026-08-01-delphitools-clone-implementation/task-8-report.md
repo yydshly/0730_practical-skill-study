@@ -15,13 +15,13 @@
 | 要求 | 证据 | 状态 | 下一动作 |
 | --- | --- | --- | --- |
 | 确定性几何/编码接口与安全上限 | `tests/image.test.ts`，25/25 | pass | 已完成 |
-| 13 条真实中文图片工具成功路径 | `tests/image-workspace-success.test.tsx`，19/19 | pass | 每条入口均覆盖导入/参数/处理/Blob MIME 与文件名/下载或对应结果 |
-| 空白/处理中/成功/失败、竞态与旧结果清理 | 原路由测试 32/32；新增可控 Promise、失败清理与浏览器解码测试 | pass | 已完成 |
+| 13 条中文图片工具路由接线与 Blob MIME | `tests/image-workspace-success.test.tsx`，21/21 | pass | 使用可控 Canvas/Image 模拟验证导入/参数/处理接线、Blob MIME、文件名、下载或对应结果；不作为真实浏览器编码证据 |
+| 空白/处理中/成功/失败、竞态与旧结果清理 | 原路由测试 32/32；新增可控 Promise、失败清理与完整解码失败状态接线测试 | pass | 已完成 |
 | 对象 URL 清理、解码错误与下载 | 替换结果和卸载释放测试、公共文件组件测试 | pass | 已完成 |
 | 本地格式能力表与禁用原因 | 引擎测试、格式转换器 DOM 与浏览器观察 | pass | 已完成 |
 | 桌面/移动、浅色/深色、占位 SVG | 1440px、390px、深色主题、900px 占位 SVG 浏览器证据 | pass | 已完成 Task 8 可稳定验证范围 |
 | 真实浏览器文件选择/上传 | 浏览器控制层在 `setFiles` 阶段持续 466 秒后超时 | defer | Task 11 在稳定文件选择控制层下重测；本修复轮次未重复该不稳定动作 |
-| 聚焦、全量测试与生产构建 | 84/84、260/260、Vite build | pass | 已完成 |
+| 聚焦、全量测试与生产构建 | 86/86、262/262、Vite build | pass | 已完成 |
 
 ## TDD 记录
 
@@ -40,6 +40,14 @@
 - 全量验证：14 个测试文件，235/235 通过。
 - 生产构建：TypeScript 与 Vite 成功，141 个模块完成转换。
 
+### 修复轮次 2：RED / GREEN
+
+- RED：`npm.cmd test -- tests/image-workspace-success.test.tsx`，21 个测试中 2 个按预期失败。文件编码成功后没有可见“重新开始”；Data URL 解码成功后通用重置仍保留输入和已验证复制结果。新的剪贴板成功旅程直接通过，证明生产路径已接通 `navigator.clipboard.read()` 和 `ClipboardItem.getType()`，本阻塞属于测试覆盖缺口而非新增生产缺陷。
+- GREEN：新增 Base64 专属 `resetBase64`。每次重置递增验证版本以废弃在途任务，并清空 Data URL 输入、已验证 Data URL、原图预览、下载输出和状态/错误；文件编码与 Data URL 解码成功后均提供可见“重新开始”。
+- paste-image 路由测试改为由 `clipboard.read()` 返回图片 ClipboardItem，`getType()` 返回真实 PNG Blob，再经过读取、图片解码接线、结果和下载，断言 API 调用、`image/png` MIME 与 `剪贴板图片.png` 文件名。
+- JPEG/WebP fixture 已替换为 Pillow 稳定编码器在内存生成的 1×1 RGB 图片，并由 Pillow 完整回读验证。此证据只说明 fixture 可被独立解码器严格解析，不等同于生产浏览器解码或编码验证。
+- 修复轮次 2 聚焦验证：4 个测试文件，86/86；全量验证：15 个测试文件，262/262；生产构建：TypeScript 与 Vite 成功。
+
 ### 修复轮次 1：RED
 
 - 首轮命令：`npm.cmd test -- tests/image.test.ts tests/image-workspace.test.tsx tests/image-workspace-success.test.tsx`。
@@ -48,9 +56,9 @@
 
 ### 修复轮次 1：GREEN
 
-- 引擎：25/25；覆盖真实最小 PNG/JPEG/WebP 字节、MIME/魔数一致性、旋转后轴对齐包围盒、单个/平铺边界以及 20×20/400 输出硬限制。
+- 引擎：25/25；覆盖稳定 PNG/JPEG/WebP fixture 字节、MIME/魔数一致性、旋转后轴对齐包围盒、单个/平铺边界以及 20×20/400 输出硬限制。
 - 原工作台路由：32/32；对象 URL 替换/卸载释放和失败后旧结果清理继续通过。
-- 新增成功与竞态：19/19；13 条路由各有一次核心成功交互，并覆盖可控 Promise 逆序完成、浏览器真实解码失败、Base64 校验失败和水印读取失败。
+- 新增成功与竞态：19/19；13 条路由各有一次核心成功交互，并覆盖可控 Promise 逆序完成、模拟完整解码失败分支、Base64 校验失败和水印读取失败。
 - 公共文件组件：8/8。
 - Task 8 聚焦验证：4 个测试文件，84/84。
 - 全量验证：15 个测试文件，260/260。
@@ -60,13 +68,14 @@
 
 - 完成 `matte-generator`、`scroll-generator`、`social-cropper`、`watermarker`、`artwork-enhancer`、`favicon-genny`、`image-clipper`、`image-converter`、`image-splitter`、`image-stitcher`、`paste-image`、`placeholder-genny`、`base64-image-encoder` 共 13 条路由。
 - 几何引擎覆盖 contain/cover、社交比例居中裁剪、无像素遗漏网格、长图尾片、多图拼接、透明边界、水印布局、favicon 尺寸、SVG 转义及严格 Data URL 编解码。
-- Data URL 仅接受魔数与声明 MIME 一致的 PNG、JPEG、WebP；`data:image/png;base64,aGk=` 会被拒绝。工作台还会通过浏览器图片解码做第二层确认，只有验证结果才出现复制和下载，扩展名与 MIME 由已验证内容决定。
+- 引擎对 Data URL 做 PNG/JPEG/WebP 魔数嗅探并核对声明 MIME；`data:image/png;base64,aGk=` 会在此层被拒绝。生产工作台随后调用浏览器 `Image` 做完整图片解码确认，只有通过两层检查的结果才出现复制和下载，扩展名与 MIME 由已验证内容决定。单元测试中的可控 Image 模拟只验证这条状态与路由接线，不宣称完成真实浏览器解码。
 - 水印边距、角落位置和平铺步长基于旋转后的轴对齐包围盒；绘制中心与布局中心一致，文字水印缩放时字体高度同步缩放。
 - 所有图片任务用递增版本忽略较慢旧解码；新任务、失败的水印读取和 Base64 失败都会清理专属旧输出。占位图导入复用同一次受版本保护的解码。
 - 网格分割在引擎和 UI 各自校验每边不超过 20、总数不超过 400，在创建 Canvas/`Promise.all` 前拒绝绕过 HTML `max` 的输入。
 - 自定义社交比例同时支持 `:` 和 `/`，导出文件名统一清洗为安全的 `4x5` 形式。
-- 浏览器 Canvas 管线生成真实 Blob；PNG、JPEG 与 WebP 通过运行时能力探测启用。GIF、BMP、TIFF、ICO 因 Canvas 无法可靠编码而禁用，并显示中文原因，不通过改扩展名伪造。
+- 生产实现通过浏览器 Canvas API 请求生成 Blob；PNG、JPEG 与 WebP 由运行时能力探测决定是否启用。自动化中的可控 Canvas 模拟只验证路由接线与 Blob MIME 合同，不作为真实浏览器编码证据。GIF、BMP、TIFF、ICO 因 Canvas 无法可靠编码而禁用，并显示中文原因，不通过改扩展名伪造。
 - 图片始终在浏览器本地解码、处理与导出。结果替换和组件卸载都会释放对象 URL；新失败会清除旧成功结果。
+- Base64 专属重置会清空输入、验证结果、原图预览和下载，并通过递增验证版本阻止已重置的在途任务回写旧状态。
 - 切图和 favicon 提供逐个文件下载。当前依赖中没有 ZIP 库，因此没有额外引入打包依赖。
 - 单边超过 16384 像素或总像素超过 8000 万的输出会被拒绝，避免过大 Canvas 导致页面失去响应。
 - 构建主包约 1.27 MB，保留 Vite 大包警告；路由懒加载与拆包由 Task 11 统一处理。
@@ -75,9 +84,9 @@
 
 ### 自动化与构建
 
-- `npm.cmd test -- tests/image.test.ts tests/image-workspace.test.tsx tests/image-workspace-success.test.tsx tests/file-components.test.tsx`：84/84 通过。
-- `npm.cmd test`：15 个测试文件、260/260 通过。
-- `npm.cmd run build`：成功；CSS 14.48 kB，JavaScript 1269.18 kB，141 个模块。主包超过 500 kB 的既有警告继续交由 Task 11 拆包处理。
+- `npm.cmd test -- tests/image.test.ts tests/image-workspace.test.tsx tests/image-workspace-success.test.tsx tests/file-components.test.tsx`：86/86 通过。
+- `npm.cmd test`：15 个测试文件、262/262 通过。
+- `npm.cmd run build`：成功；CSS 14.48 kB，JavaScript 1269.32 kB，141 个模块。主包超过 500 kB 的既有警告继续交由 Task 11 拆包处理。
 
 ### 浏览器证据
 

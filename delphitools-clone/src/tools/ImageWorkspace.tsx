@@ -595,7 +595,15 @@ function Base64Tool() {
     job.setImages([]);
     job.setOutputs([]);
   };
-  return <WorkspaceFrame {...job}><Dropzone onFiles={encodeFiles} onValidationError={clearVerifiedResult} /><div className="image-controls image-controls--stack"><label>图片 Data URL<textarea aria-label="图片 Data URL" rows={7} value={dataUrl} onChange={(event) => updateInput(event.target.value)} placeholder="data:image/png;base64,..." /></label><div className="image-inline-actions"><button type="button" onClick={decode}>解析 Data URL</button>{verifiedDataUrl && <ResultPanel text={verifiedDataUrl} copyLabel="复制 Data URL" />}</div></div></WorkspaceFrame>;
+  const resetBase64 = () => {
+    verificationVersion.current += 1;
+    setDataUrl('');
+    setVerifiedDataUrl('');
+    job.setImages([]);
+    job.setOutputs([]);
+    job.setStatus({ kind: 'idle', message: '已重置，请重新输入或选择图片' });
+  };
+  return <WorkspaceFrame {...job} reset={resetBase64}><Dropzone onFiles={encodeFiles} onValidationError={clearVerifiedResult} /><div className="image-controls image-controls--stack"><label>图片 Data URL<textarea aria-label="图片 Data URL" rows={7} value={dataUrl} onChange={(event) => updateInput(event.target.value)} placeholder="data:image/png;base64,..." /></label><div className="image-inline-actions"><button type="button" onClick={decode}>解析 Data URL</button>{verifiedDataUrl && <ResultPanel text={verifiedDataUrl} copyLabel="复制 Data URL" onReset={resetBase64} />}</div></div></WorkspaceFrame>;
 }
 
 function ToolContent({ toolId }: { toolId: ToolId }) {

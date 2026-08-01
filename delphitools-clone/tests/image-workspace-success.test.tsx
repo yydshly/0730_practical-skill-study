@@ -7,13 +7,14 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { App } from '../src/app/App';
-import { IMAGE_FIXTURES, fixtureFile } from './fixtures/image-fixtures';
+import { IMAGE_FIXTURES, bytesFromBase64, fixtureFile } from './fixtures/image-fixtures';
 
 type DownloadRecord = { name: string; blob?: Blob };
 
 const originalImage = globalThis.Image;
 const originalCreateObjectURL = URL.createObjectURL;
 const originalRevokeObjectURL = URL.revokeObjectURL;
+const originalClipboard = navigator.clipboard;
 
 let downloads: DownloadRecord[];
 let urlBlobs: Map<string, Blob>;
@@ -113,6 +114,7 @@ afterEach(() => {
   Object.defineProperty(globalThis, 'Image', { configurable: true, value: originalImage });
   Object.defineProperty(URL, 'createObjectURL', { configurable: true, value: originalCreateObjectURL });
   Object.defineProperty(URL, 'revokeObjectURL', { configurable: true, value: originalRevokeObjectURL });
+  Object.defineProperty(navigator, 'clipboard', { configurable: true, value: originalClipboard });
 });
 
 describe('13 条图片路由的核心成功交互', () => {
@@ -206,11 +208,20 @@ describe('13 条图片路由的核心成功交互', () => {
     await expectDownload('下载纵向拼接结果', '图片拼接.png', 'image/png');
   });
 
-  it('剪贴板图片工具通过本地导入路径准备并下载原 MIME 文件', async () => {
+  it('剪贴板图片工具读取真实图片 Blob、完成解码并下载原 MIME 文件', async () => {
+    const bytes = bytesFromBase64(IMAGE_FIXTURES.png.base64);
+    const buffer = bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) as ArrayBuffer;
+    const clipboardBlob = new Blob([buffer], { type: 'image/png' });
+    const getType = vi.fn().mockResolvedValue(clipboardBlob);
+    const read = vi.fn().mockResolvedValue([{ types: ['image/png'], getType }]);
+    Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { read } });
     renderTool('paste-image');
-    await upload(fixtureFile('png', '本地截图.png'));
+    await userEvent.click(screen.getByRole('button', { name: '粘贴剪贴板图片' }));
+    await screen.findByText('已读取 1 张图片，可开始处理');
+    expect(read).toHaveBeenCalledTimes(1);
+    expect(getType).toHaveBeenCalledWith('image/png');
     await userEvent.click(screen.getByRole('button', { name: '准备下载' }));
-    await expectDownload('下载剪贴板图片', '本地截图.png', 'image/png');
+    await expectDownload('下载剪贴板图片', '剪贴板图片.png', 'image/png');
   });
 
   it('占位图导入 PNG 尺寸、修改文字并导出 SVG', async () => {
@@ -336,5 +347,35 @@ describe('图片工作台状态、竞态与资源上限', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent('请选择图片文件');
     expect(screen.queryByRole('button', { name: '复制 Data URL' })).toBeNull();
     expect(screen.queryByRole('button', { name: '下载解码图片' })).toBeNull();
+  });
+
+  it('Base64 文件编码成功后可重新开始并清空输入、验证结果与预览', async () => {
+    renderTool('base64-image-encoder');
+    fireEvent.change(screen.getByLabelText('选择文件'), { target: { files: [fixtureFile('png', '待编码.png')] } });
+    await screen.findByText('已编码并验证 image/png 图片');
+    expect(screen.getByRole('button', { name: '复制 Data URL' })).toBeVisible();
+    expect(screen.getByAltText('待编码.png 原图')).toBeVisible();
+    await userEvent.click(screen.getByRole('button', { name: '重新开始' }));
+    expect(screen.getByLabelText('图片 Data URL')).toHaveValue('');
+    expect(screen.queryByRole('button', { name: '复制 Data URL' })).toBeNull();
+    expect(screen.queryByRole('button', { name: /下载/ })).toBeNull();
+    expect(screen.queryByLabelText('原图预览')).toBeNull();
+    expect(screen.getByText('已重置，请重新输入或选择图片')).toBeVisible();
+  });
+
+  it('Base64 Data URL 解码成功后重置不残留复制、下载或预览', async () => {
+    renderTool('base64-image-encoder');
+    fireEvent.change(screen.getByLabelText('图片 Data URL'), { target: { value: `data:image/webp;base64,${IMAGE_FIXTURES.webp.base64}` } });
+    await userEvent.click(screen.getByRole('button', { name: '解析 Data URL' }));
+    await screen.findByText('已解析 image/webp 图片');
+    expect(screen.getByRole('button', { name: '复制 Data URL' })).toBeVisible();
+    expect(screen.getByRole('button', { name: '下载解码图片' })).toBeVisible();
+    expect(screen.getByLabelText('原图预览')).toBeVisible();
+    await userEvent.click(screen.getAllByRole('button', { name: '重新开始' })[0]);
+    expect(screen.getByLabelText('图片 Data URL')).toHaveValue('');
+    expect(screen.queryByRole('button', { name: '复制 Data URL' })).toBeNull();
+    expect(screen.queryByRole('button', { name: '下载解码图片' })).toBeNull();
+    expect(screen.queryByLabelText('原图预览')).toBeNull();
+    expect(screen.getByText('已重置，请重新输入或选择图片')).toBeVisible();
   });
 });
