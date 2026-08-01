@@ -361,6 +361,56 @@ a2986bb fix: skill-reference — 补全 12 个缺失 DETAIL_DATA，添加 copy �
 
 ---
 
+---
+
+## Project 4 · female-portrait-director 研究完成（v0.13）
+
+**里程碑**: `f7078e0` · 2026-08-01
+
+### 三个演示 + 上游源码
+
+| 演示 | 路径 | 说明 |
+|---|---|---|
+| 4a · 上游技能演示 | `female-portrait-director-demo/index.html` | 20 风格展示 + 导演式扩写工作流 |
+| 4b · 交互式 Playground | `female-portrait-director-demo/playground/` | 20 风格参数填充 + MiniMax API 生图 + 提示词一键复制 |
+| 4c · 静态风格画廊 | `female-portrait-style-gallery/` | 20 风格参考图 gallery 浏览器，支持分类筛选 |
+
+### Playground 核心能力
+
+- **20 种风格全部可测试**（含全部 20 个 prompt 模板 + 示例参数）
+- **MiniMax API 集成**：中国版 `api.minimaxi.com` / 国际版 `api.minimax.io`，API Key 本地存储
+- **5-paragraph prompt 结构**：人物 → 动作 → 服装 → 场景 → 光线
+- **画幅验证**：`4:5` → `3:4` 修复（MiniMax 不支持 4:5），前端加验证拦截
+- **参考图**：9 张上游 PNG + 12 张 SVG 占位图（风格色+图标）
+- **历史记录**：最近 20 次生成参数可恢复
+- **一键复制**：正向提示词 / 负面约束 / JSON 参数三种格式
+
+### Playground 文件结构
+
+```
+playground/
+├── index.html       ← 主页面（布局、设置弹窗、风格侧边栏、参数表单、结果区）
+├── app.js           ← 状态管理、Toast、Prompt 生成、API 调用、历史记录
+├── styles.js        ← 20 风格定义（id/name/category/keywords/description/reference）
+├── prompts.js       ← 20 个 prompt 模板 + buildPrompt() + negative 约束
+└── generate_refs.js ← SVG 参考图生成脚本（Node.js）
+```
+
+### Playground API 验证
+
+```javascript
+const VALID_ASPECTS = ['1:1', '16:9', '4:3', '3:2', '2:3', '3:4', '9:16', '21:9'];
+// generateImage() 调用前检查，不在列表内则 toast 报错
+```
+
+### 本次提交
+
+```
+f7078e0 feat: add female-portrait-director project with 3 demos (skill demo, playground, gallery)
+```
+
+---
+
 ## 已知遗留
 
 - GitHub Pages 用的是 **legacy build**（build_type: "legacy"），未来若切到 GitHub Actions 构建可能要重新配置
