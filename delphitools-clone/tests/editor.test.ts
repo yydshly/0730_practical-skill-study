@@ -35,6 +35,48 @@ describe('Substrata 可序列化状态机', () => {
     expect(document.nextLayerNumber).toBe(4);
   });
 
+  it('超大显式 layer 后缀不会污染自动编号，createDocument 会快速返回唯一 ID', () => {
+    const hugeId = 'layer-9007199254740992';
+    expect(allocateLayerId(hugeId, new Set(), 1)).toEqual({ id: hugeId, nextLayerNumber: 1 });
+
+    const startedAt = performance.now();
+    const document = createDocument([
+      { id: hugeId, type: 'rectangle' },
+      { type: 'text' },
+    ]);
+
+    expect(performance.now() - startedAt).toBeLessThan(250);
+    expect(document.layers.map((layer) => layer.id)).toEqual([hugeId, 'layer-1']);
+    expect(new Set(document.layers.map((layer) => layer.id)).size).toBe(2);
+    expect(document.nextLayerNumber).toBe(2);
+    expect(Number.isSafeInteger(document.nextLayerNumber)).toBe(true);
+  });
+
+  it.each([
+    `layer-${Number.MAX_SAFE_INTEGER - 1}`,
+    `layer-${Number.MAX_SAFE_INTEGER}`,
+    'layer-NaN',
+    'layer-Infinity',
+    `layer-${'9'.repeat(400)}`,
+  ])('边界显式 ID %s 可保留，但自动编号继续使用安全小编号', (explicitId) => {
+    expect(allocateLayerId(explicitId, new Set(), 1)).toEqual({ id: explicitId, nextLayerNumber: 1 });
+    const document = createDocument([
+      { id: explicitId, type: 'rectangle' },
+      { type: 'text' },
+      { type: 'circle' },
+    ]);
+
+    expect(document.layers.map((layer) => layer.id)).toEqual([explicitId, 'layer-1', 'layer-2']);
+    expect(document.nextLayerNumber).toBe(3);
+    expect(Number.isSafeInteger(document.nextLayerNumber)).toBe(true);
+  });
+
+  it('不安全的 nextLayerNumber 会回到小编号并在冲突时持续前进', () => {
+    const usedIds = new Set(['duplicate', 'layer-1']);
+    expect(allocateLayerId('duplicate', usedIds, Number.NaN)).toEqual({ id: 'layer-2', nextLayerNumber: 3 });
+    expect(allocateLayerId(undefined, usedIds, Number.MAX_SAFE_INTEGER)).toEqual({ id: 'layer-2', nextLayerNumber: 3 });
+  });
+
   it('移动图层后撤销可以恢复原位置', () => {
     const initial = createDocument([
       { id: 'a', type: 'rectangle', x: 10, y: 20, width: 100, height: 80 },

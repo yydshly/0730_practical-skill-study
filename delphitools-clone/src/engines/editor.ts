@@ -1,4 +1,6 @@
 export const HISTORY_LIMIT = 50;
+const MAX_TRACKED_LAYER_SUFFIX = 100_000;
+const MAX_AUTOMATIC_LAYER_NUMBER = MAX_TRACKED_LAYER_SUFFIX + 1;
 
 export type EditorCanvas = {
   width: number;
@@ -217,15 +219,26 @@ function updateLayer(document: EditorDocument, id: string, updater: (layer: Edit
 
 export function allocateLayerId(preferred: string | undefined, usedIds: ReadonlySet<string>, nextLayerNumber: number): { id: string; nextLayerNumber: number } {
   const requested = preferred?.trim();
-  let candidateNumber = Math.max(1, Math.floor(finite(nextLayerNumber, 1)));
+  let candidateNumber = Number.isSafeInteger(nextLayerNumber) && nextLayerNumber >= 1 && nextLayerNumber <= MAX_AUTOMATIC_LAYER_NUMBER
+    ? nextLayerNumber
+    : 1;
   if (requested && !usedIds.has(requested)) {
     const automaticMatch = /^layer-(\d+)$/.exec(requested);
-    if (automaticMatch) candidateNumber = Math.max(candidateNumber, Number(automaticMatch[1]) + 1);
+    if (automaticMatch) {
+      const suffix = Number(automaticMatch[1]);
+      if (Number.isFinite(suffix) && Number.isSafeInteger(suffix) && suffix >= 1 && suffix <= MAX_TRACKED_LAYER_SUFFIX) {
+        candidateNumber = Math.max(candidateNumber, suffix + 1);
+      }
+    }
     return { id: requested, nextLayerNumber: candidateNumber };
   }
-  let candidate = `layer-${candidateNumber}`;
-  while (usedIds.has(candidate)) candidate = `layer-${++candidateNumber}`;
-  return { id: candidate, nextLayerNumber: candidateNumber + 1 };
+  for (let attempt = 0; attempt < MAX_AUTOMATIC_LAYER_NUMBER; attempt += 1) {
+    const candidate = `layer-${candidateNumber}`;
+    const followingNumber = candidateNumber === MAX_AUTOMATIC_LAYER_NUMBER ? 1 : candidateNumber + 1;
+    if (!usedIds.has(candidate)) return { id: candidate, nextLayerNumber: followingNumber };
+    candidateNumber = followingNumber;
+  }
+  throw new Error('图层数量已达到安全上限，无法继续分配唯一 ID');
 }
 
 export function createDocument(inputs: EditorLayerInput[] = [], canvas: Partial<EditorCanvas> = {}): EditorDocument {
