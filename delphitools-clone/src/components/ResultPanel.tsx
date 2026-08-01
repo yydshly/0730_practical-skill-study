@@ -6,14 +6,15 @@ import { StatusMessage } from './StatusMessage';
 
 type ResultPanelProps = {
   text?: string;
-  download?: { blob: Blob; name: string };
+  copyLabel?: string;
+  download?: { blob: Blob; name: string; label?: string };
   onReset?: () => void;
   children?: React.ReactNode;
 };
 
 type OperationState = { status: 'success' | 'error'; message: string } | null;
 
-export function ResultPanel({ text, download, onReset, children }: ResultPanelProps) {
+export function ResultPanel({ text, copyLabel = '复制结果', download, onReset, children }: ResultPanelProps) {
   const [operation, setOperation] = useState<OperationState>(null);
 
   const handleCopy = async () => {
@@ -40,8 +41,8 @@ export function ResultPanel({ text, download, onReset, children }: ResultPanelPr
     <section className="result-panel" aria-label="处理结果">
       {children}
       <div className="result-panel__actions">
-        {text !== undefined && <button type="button" onClick={handleCopy}>复制结果</button>}
-        {download && <button type="button" onClick={handleDownload}>下载文件</button>}
+        {text !== undefined && <button type="button" onClick={handleCopy}>{copyLabel}</button>}
+        {download && <button type="button" onClick={handleDownload}>{download.label ?? '下载文件'}</button>}
         {onReset && <button type="button" onClick={onReset}>重新开始</button>}
       </div>
       {operation && <StatusMessage status={operation.status} message={operation.message} />}

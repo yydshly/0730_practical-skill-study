@@ -3,6 +3,7 @@ import type { ToolId } from '../core/types';
 import { NotFoundPage } from './NotFoundPage';
 import { ToolLayout } from '../components/ToolLayout';
 import { ColorWorkspace, isColorToolId } from '../tools/ColorWorkspace';
+import { isTextToolId, TextWorkspace } from '../tools/TextWorkspace';
 
 type ToolPageProps = {
   toolId: string;
@@ -17,5 +18,7 @@ export function ToolPage({ toolId }: ToolPageProps) {
 
   const tool = getToolById(toolId);
   if (!tool) return <NotFoundPage />;
-  return isColorToolId(tool.id) ? <ColorWorkspace tool={tool} /> : <ToolLayout tool={tool} />;
+  if (isColorToolId(tool.id)) return <ColorWorkspace tool={tool} />;
+  if (isTextToolId(tool.id)) return <TextWorkspace tool={tool} />;
+  return <ToolLayout tool={tool} />;
 }
