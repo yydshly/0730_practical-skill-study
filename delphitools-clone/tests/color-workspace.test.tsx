@@ -87,14 +87,15 @@ describe('颜色工具工作区', () => {
     unmount();
   });
 
-  it('颜色路由呈现可操作的转换工作区，其他路由保留原工作区边界', () => {
+  it('颜色路由呈现可操作的转换工作区且不接管二维码路由', () => {
     const { unmount } = renderTool('colour-converter');
     expect(screen.getByRole('textbox', { name: '输入颜色' })).toHaveValue('#3b82f6');
     expect(screen.getByText('HEX')).toBeVisible();
     unmount();
 
     renderTool('qr-genny');
-    expect(screen.getByText('正在构建此工具')).toBeVisible();
+    expect(screen.getByLabelText('二维码内容')).toBeVisible();
+    expect(document.querySelector('.color-workspace')).toBeNull();
   });
 
   it('图片工具拒绝空选择且不会创建 Object URL', () => {
