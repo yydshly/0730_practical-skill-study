@@ -47,8 +47,8 @@
 | [`/female-portrait-director-demo/`](https://yydshly.github.io/0730_practical-skill-study/female-portrait-director-demo/) | 项目 4a · 上游技能演示（20 风格 + 导演式扩写） |
 | [`/female-portrait-director-demo/playground/`](https://yydshly.github.io/0730_practical-skill-study/female-portrait-director-demo/playground/) | 项目 4b · Playground（推荐 · MiniMax API 生图） |
 | [`/female-portrait-style-gallery/`](https://yydshly.github.io/0730_practical-skill-study/female-portrait-style-gallery/) | 项目 4c · 静态风格画廊（20 风格参考图浏览） |
-| [`gc-minimal-zine-poster`](https://github.com/LiamGvchi/gc-minimal-zine-poster) | 项目 5 · 极简 ZINE 海报技能仓库与研究说明 |
-| [`gc-minimal-zine-poster/demo/`](https://github.com/LiamGvchi/gc-minimal-zine-poster/tree/main/demo) | 项目 5 · Prompt Compiler、10 个产品场景与完整文字版海报 Demo（源码入口） |
+| [`/gc-minimal-zine-poster/`](https://yydshly.github.io/0730_practical-skill-study/gc-minimal-zine-poster/) | 项目 5 · 极简 ZINE 海报技能仓库与研究说明 |
+| [`/gc-minimal-zine-poster/demo/`](https://yydshly.github.io/0730_practical-skill-study/gc-minimal-zine-poster/demo/) | 项目 5 · Prompt Compiler、10 个产品场景与完整文字版海报在线 Demo |
 
 > 部署开关：`Settings → Pages → Source: master · /(root)`（首次部署需仓库 owner 手动开启）
 
@@ -135,7 +135,7 @@ python -m http.server 8000
 │   ├── gallery.js
 │   └── assets/styles/             ← 20 风格参考图
 │
-├── gc-minimal-zine-poster/        ← 项目 5 · 极简 ZINE 海报技能研究（独立 GitHub 仓库）
+├── gc-minimal-zine-poster/        ← 项目 5 · 极简 ZINE 海报技能研究（外层 Pages 静态镜像）
 │   ├── README.md                   ← 技能说明、安装与使用方法
 │   ├── SKILL.md                    ← Prompt 编译与图像生成规则
 │   └── demo/                       ← Prompt Compiler + 场景产品展示 + 文字版海报

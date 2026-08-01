@@ -1,0 +1,365 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>GC Minimal Zine Poster Demo</title>
+    <link rel="stylesheet" href="./styles.css" />
+    <script type="module" src="./js/app.js"></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main-content">跳到主要内容</a>
+
+    <noscript>
+      <div class="noscript-banner">
+        此演示需要启用 JavaScript 才能编译 Prompt、切换变体并查看本地样张。
+      </div>
+    </noscript>
+
+    <header class="site-header">
+      <div class="masthead">
+        <p class="eyebrow">gc-minimal-zine-poster-v0-1</p>
+        <h1>Minimal Zine Poster v0.1 Research Demo</h1>
+        <p class="masthead-copy">
+          STANDARD MODE · 静态预生成样张边界：中间海报区只会切换本地 JPEG 样图，不会在浏览器内生成新图片。
+        </p>
+      </div>
+
+      <dl class="masthead-meta" aria-label="Demo metadata">
+        <div>
+          <dt>Skill</dt>
+          <dd>gc-minimal-zine-poster-v0-1</dd>
+        </div>
+        <div>
+          <dt>Version</dt>
+          <dd>v0.1</dd>
+        </div>
+        <div>
+          <dt>Mode</dt>
+          <dd>STANDARD MODE</dd>
+        </div>
+      </dl>
+    </header>
+
+    <main id="main-content">
+      <div class="app-shell">
+      <section class="panel panel-input" aria-labelledby="input-panel-title">
+        <div class="panel-heading">
+          <p class="panel-kicker">Input</p>
+          <h2 id="input-panel-title">Research Input</h2>
+        </div>
+
+        <div class="field-stack">
+          <label class="field-label" for="input-type">输入类型</label>
+          <select id="input-type" name="input-type">
+            <option value="theme">主题 Theme</option>
+            <option value="sentence">句子 Sentence</option>
+            <option value="object">物件 Object</option>
+            <option value="mood">情绪 Mood</option>
+            <option value="article">文章角度 Article Idea</option>
+            <option value="photo">照片线索 Photo Cue</option>
+          </select>
+        </div>
+
+        <div class="field-stack">
+          <label class="field-label" for="brief-input">Brief / 核心描述</label>
+          <textarea
+            id="brief-input"
+            name="brief-input"
+            rows="6"
+            placeholder="输入主题、句子、物件或一句简短的内容线索。"
+          ></textarea>
+          <p class="field-hint">
+            Standard Mode 会把你的输入压缩成 4 段 Prompt，并用本地预生成样张做静态展示。
+          </p>
+        </div>
+
+        <div class="field-stack">
+          <div class="stack-heading">
+            <h3>Preset Research Seeds</h3>
+            <p>点击任一预设把主题带入输入框，再编译 Prompt。</p>
+          </div>
+          <div id="preset-list" class="preset-list" role="list" aria-label="Preset list"></div>
+        </div>
+
+        <div class="action-row">
+          <button id="compile-button" class="primary-action" type="button">Compile Prompt</button>
+          <button id="variation-button" class="secondary-action" type="button">New Variation</button>
+        </div>
+
+        <section class="summary-card" aria-labelledby="subject-summary-title">
+          <div>
+            <p class="panel-kicker">Summary</p>
+            <h3 id="subject-summary-title">Core Subject</h3>
+          </div>
+          <p id="core-subject-summary" class="summary-copy"></p>
+        </section>
+
+        <section class="status-card" aria-labelledby="status-title">
+          <div>
+            <p class="panel-kicker">Workflow</p>
+            <h3 id="status-title">Interaction Loop</h3>
+          </div>
+          <p id="workflow-status" class="status-text" aria-live="polite"></p>
+        </section>
+      </section>
+
+      <section class="panel panel-poster" aria-labelledby="poster-panel-title">
+        <div class="panel-heading">
+          <p class="panel-kicker">Poster Result</p>
+          <h2 id="poster-panel-title">Generated Sample</h2>
+        </div>
+
+        <article class="poster-card">
+          <div class="poster-meta">
+            <span class="sample-pill">GENERATED SAMPLE</span>
+            <div>
+              <h3 id="poster-title">Poster Sample</h3>
+              <p id="poster-caption" class="poster-caption"></p>
+            </div>
+          </div>
+
+          <div class="poster-frame">
+            <img id="poster-image" alt="" loading="eager" />
+          </div>
+
+          <dl class="poster-facts" id="poster-facts"></dl>
+
+          <div class="asset-controls">
+            <div class="stack-heading">
+              <h3>Local Asset Switcher</h3>
+              <p>切换不同的本地生成样张，核对题材、配色与 recipe 的对应关系。</p>
+            </div>
+            <div id="asset-switcher" class="asset-switcher" role="list" aria-label="Generated samples"></div>
+          </div>
+
+          <div class="dialog-actions">
+            <button type="button" class="secondary-action" data-open-dialog>
+              Open Original Sample
+            </button>
+          </div>
+        </article>
+      </section>
+
+      <section class="panel panel-inspector" aria-labelledby="inspector-panel-title">
+        <div class="panel-heading">
+          <p class="panel-kicker">Inspector</p>
+          <h2 id="inspector-panel-title">Prompt Compiler</h2>
+        </div>
+
+        <section class="inspector-card inspector-card-fields" aria-labelledby="fields-title">
+          <div class="stack-heading">
+            <h3 id="fields-title">PROMPT COMPILER</h3>
+            <p>九个字段全部来自 compiler 输出，UI 只负责显示。</p>
+          </div>
+          <dl id="field-output" class="field-output"></dl>
+        </section>
+
+        <section class="inspector-card inspector-card-prompt" aria-labelledby="prompt-title">
+          <div class="stack-heading stack-heading-inline">
+            <div>
+              <h3 id="prompt-title">Prompt Output</h3>
+              <p>四段结构，保留空行，方便审读与复制。</p>
+            </div>
+            <button id="copy-prompt" class="secondary-action" type="button">Copy Prompt</button>
+          </div>
+          <pre id="prompt-output" class="prompt-output"></pre>
+        </section>
+
+        <section class="inspector-card inspector-card-recipe" aria-labelledby="recipe-title">
+          <div class="stack-heading">
+            <h3 id="recipe-title">VARIATION RECIPE</h3>
+            <p>当前选中的 recipe 与视觉 slot。</p>
+          </div>
+          <div id="recipe-output" class="recipe-output"></div>
+        </section>
+
+        <section class="inspector-card inspector-card-quality" aria-labelledby="quality-title">
+          <div class="stack-heading">
+            <h3 id="quality-title">QUALITY GATE</h3>
+            <p>用于核对 Standard Mode 的非谈判性条件。</p>
+          </div>
+          <ul id="quality-output" class="quality-output"></ul>
+        </section>
+      </section>
+      </div>
+
+        <section id="scenario-gallery" class="panel scenario-gallery" aria-labelledby="scenario-gallery-title">
+          <div class="scenario-gallery-heading">
+            <div>
+              <p class="panel-kicker">Use Cases / Product Applications</p>
+              <h2 id="scenario-gallery-title">Scenario Product Gallery</h2>
+              <p class="scenario-gallery-intro">
+                同一个 Prompt Compiler，面对不同产品时会如何落地？选择一个真实场景，查看它的输入、适配原因、交付物和本地生成样张。
+              </p>
+            </div>
+            <dl class="scenario-gallery-stats" aria-label="Scenario gallery summary">
+              <div>
+                <dt>Scenarios</dt>
+                <dd>10</dd>
+              </div>
+              <div>
+                <dt>Local assets</dt>
+                <dd>10 JPEG</dd>
+              </div>
+              <div>
+                <dt>Runtime API</dt>
+                <dd>None</dd>
+              </div>
+            </dl>
+          </div>
+
+          <div class="scenario-gallery-layout">
+            <section class="scenario-catalog" aria-labelledby="scenario-catalog-title">
+              <div class="stack-heading">
+                <h3 id="scenario-catalog-title">Choose a product situation</h3>
+                <p>卡片只负责选择场景；右侧详情会同步切换到对应的真实本地样张。</p>
+              </div>
+              <div id="scenario-grid" class="scenario-grid" role="list" aria-label="Scenario product situations"></div>
+            </section>
+
+            <aside id="scenario-detail" class="scenario-detail" aria-labelledby="scenario-active-title">
+              <div class="scenario-detail-heading">
+                <div>
+                  <p id="scenario-active-category" class="panel-kicker"></p>
+                  <h3 id="scenario-active-title"></h3>
+                  <p id="scenario-active-product" class="scenario-product-line"></p>
+                </div>
+                <span class="sample-pill">GENERATED SCENARIO SAMPLE</span>
+              </div>
+
+              <div class="scenario-detail-image-frame">
+                <img id="scenario-active-image" alt="" loading="eager" />
+              </div>
+              <p id="scenario-active-caption" class="scenario-active-caption"></p>
+
+              <dl class="scenario-detail-facts">
+                <div>
+                  <dt>Audience / 使用者</dt>
+                  <dd id="scenario-active-audience"></dd>
+                </div>
+                <div>
+                  <dt>Accent / 色彩锚点</dt>
+                  <dd id="scenario-active-accent"></dd>
+                </div>
+              </dl>
+
+              <div class="scenario-detail-copy">
+                <div>
+                  <span class="scenario-label">Visual goal / 视觉目标</span>
+                  <p id="scenario-active-description"></p>
+                </div>
+                <div>
+                  <span class="scenario-label">Input example / 输入示例</span>
+                  <p id="scenario-active-brief"></p>
+                </div>
+                <div>
+                  <span class="scenario-label">Why it fits / 为什么适合</span>
+                  <p id="scenario-active-why"></p>
+                </div>
+              </div>
+
+              <div class="scenario-deliverables-block">
+                <span class="scenario-label">Suggested deliverables / 建议交付物</span>
+                <ul id="scenario-active-deliverables" class="scenario-deliverables"></ul>
+              </div>
+            </aside>
+          </div>
+            </section>
+
+    <section id="text-sample" class="panel text-sample" aria-labelledby="text-sample-title-heading">
+      <div class="text-sample-heading">
+        <div>
+          <p class="panel-kicker">From Blank Space to Finished Poster</p>
+          <h2 id="text-sample-title-heading">从留白到成品</h2>
+          <p class="text-sample-intro">
+            左边是 Skill 生成的原始视觉，右边是在同一张样图上补入真实产品文字后的完整海报。
+          </p>
+        </div>
+        <div class="text-sample-heading-note">
+          <span>ONE IMAGE</span>
+          <strong>+ TYPOGRAPHY</strong>
+        </div>
+      </div>
+
+      <div class="text-sample-layout">
+        <article class="text-sample-panel text-sample-original">
+          <div class="text-sample-panel-heading">
+            <div>
+              <span class="sample-pill">ORIGINAL SAMPLE</span>
+              <h3>原始生成样张</h3>
+            </div>
+            <span class="text-sample-panel-code">01 / IMAGE</span>
+          </div>
+          <div class="text-sample-poster">
+            <img id="text-sample-original-image" alt="" loading="lazy" />
+          </div>
+          <p class="text-sample-panel-note">
+            这里保留大面积纸张留白，左下角只有一个阅读场景主体。它提供的是视觉方向，不是最终排版稿。
+          </p>
+        </article>
+
+        <article id="text-sample-composed" class="text-sample-panel text-sample-composed">
+          <div class="text-sample-panel-heading">
+            <div>
+              <span class="sample-pill">FULL COPY SAMPLE</span>
+              <h3>完整文字版成品</h3>
+            </div>
+            <span class="text-sample-panel-code">02 / TYPE</span>
+          </div>
+          <div class="text-sample-poster text-sample-poster-composed">
+            <img id="text-sample-composed-image" alt="" loading="lazy" />
+            <div class="text-sample-copy text-sample-copy-safe-zone">
+              <p id="text-sample-eyebrow" class="text-sample-eyebrow"></p>
+              <h4 id="text-sample-title"></h4>
+              <div class="text-sample-info">
+                <p id="text-sample-date"></p>
+                <p id="text-sample-location"></p>
+              </div>
+              <p id="text-sample-description" class="text-sample-description"></p>
+              <p id="text-sample-footer" class="text-sample-footer"></p>
+            </div>
+          </div>
+          <p id="text-sample-caption" class="text-sample-panel-note"></p>
+        </article>
+      </div>
+    </section>
+    </main>
+
+    <footer class="site-footer">
+      <p>
+        Demo boundary: prompt compilation is deterministic and synchronous; the poster pane shows real local JPEGs generated ahead of time.
+      </p>
+      <p id="toast" class="toast" aria-live="polite"></p>
+    </footer>
+
+    <dialog id="asset-dialog" aria-labelledby="asset-dialog-title">
+      <div class="dialog-layout">
+        <div class="dialog-header">
+          <div>
+            <p class="panel-kicker">Sample Viewer</p>
+            <h2 id="asset-dialog-title">Original Sample & Upstream References</h2>
+          </div>
+          <button type="button" class="icon-button" data-close-dialog aria-label="Close dialog">
+            ×
+          </button>
+        </div>
+
+        <div class="dialog-primary">
+          <figure class="dialog-figure">
+            <img id="dialog-image" alt="" loading="lazy" />
+            <figcaption id="dialog-caption"></figcaption>
+          </figure>
+        </div>
+
+        <section class="dialog-references" aria-labelledby="reference-title">
+          <div class="stack-heading">
+            <h3 id="reference-title">Upstream skill references</h3>
+            <p>这些参考图来自仓库内的 <code>../examples/</code>，用于风格校对而非实时生成。</p>
+          </div>
+          <div id="reference-grid" class="reference-grid"></div>
+        </section>
+      </div>
+    </dialog>
+  </body>
+</html>
