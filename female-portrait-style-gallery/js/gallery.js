@@ -1,10 +1,19 @@
-const REQUIRED_TEXT_FIELDS = ['description', 'image', 'prompt'];
+const REQUIRED_TEXT_FIELDS = ['description', 'image', 'geminiImage', 'geminiDescription', 'prompt'];
 const REQUIRED_DETAIL_FIELDS = ['scene', 'outfit', 'camera', 'light'];
 const TWO_DIGIT_NUMBER = /^\d{2}$/;
 const LOCAL_PNG_PATH = /^assets\/styles\/[^/\\]+\.png$/i;
+const GEMINI_IMAGE_PATH = /^assets\/styles\/gemini\/[^/\\]+\.(?:png|jpe?g)$/i;
 
 function isNonEmptyString(value) {
   return typeof value === 'string' && value.trim().length > 0;
+}
+
+export function getSampleAsset(style, source = 'original') {
+  return source === 'gemini' ? style.geminiImage : style.image;
+}
+
+export function getSampleDescription(style, source = 'original') {
+  return source === 'gemini' ? style.geminiDescription : style.description;
 }
 
 export function validateCatalog(styles, { categories = [] } = {}) {
@@ -54,6 +63,10 @@ export function validateCatalog(styles, { categories = [] } = {}) {
 
     if (isNonEmptyString(record.image) && !LOCAL_PNG_PATH.test(record.image)) {
       errors.push(`${label} 的 image 必须是 assets/styles/ 下的 PNG: ${record.image}`);
+    }
+
+    if (isNonEmptyString(record.geminiImage) && !GEMINI_IMAGE_PATH.test(record.geminiImage)) {
+      errors.push(`${label} 的 geminiImage 必须是 assets/styles/gemini/ 下的 PNG 或 JPEG: ${record.geminiImage}`);
     }
 
     const details = record.details && typeof record.details === 'object'

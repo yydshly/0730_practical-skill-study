@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 import {
   filterStyles,
   formatResultCount,
+  getSampleAsset,
+  getSampleDescription,
   validateCatalog
 } from '../js/gallery.js';
 import { CATEGORIES, STYLES, getStyleById } from '../js/styles.js';
@@ -16,6 +18,8 @@ const fixture = [
     keywords: ['咖啡馆'],
     description: '温和自然',
     image: 'assets/styles/01.png',
+    geminiImage: 'assets/styles/gemini/01.png',
+    geminiDescription: 'Gemini 样例保留了窗边阅读和柔和自然光。',
     prompt: 'sample',
     details: { scene: '咖啡馆', outfit: '针织衫', camera: '半身', light: '窗光' }
   },
@@ -27,6 +31,8 @@ const fixture = [
     keywords: ['街拍'],
     description: '现代都市',
     image: 'assets/styles/02.png',
+    geminiImage: 'assets/styles/gemini/02.png',
+    geminiDescription: 'Gemini 样例强调了雨后街头的反光与步态。',
     prompt: 'sample',
     details: { scene: '街道', outfit: '西装', camera: '全身', light: '黄昏' }
   }
@@ -108,6 +114,8 @@ test('rejects all missing required catalog fields', () => {
     keywords: [],
     description: '',
     image: '',
+    geminiImage: '',
+    geminiDescription: '',
     prompt: '',
     details: { scene: '', outfit: ' ', camera: '', light: '' }
   }], { categories: CATEGORIES }), {
@@ -118,6 +126,8 @@ test('rejects all missing required catalog fields', () => {
       'clean-lifestyle 缺少 keywords',
       'clean-lifestyle 缺少 description',
       'clean-lifestyle 缺少 image',
+      'clean-lifestyle 缺少 geminiImage',
+      'clean-lifestyle 缺少 geminiDescription',
       'clean-lifestyle 缺少 prompt',
       'clean-lifestyle 缺少 details.scene',
       'clean-lifestyle 缺少 details.outfit',
@@ -125,6 +135,39 @@ test('rejects all missing required catalog fields', () => {
       'clean-lifestyle 缺少 details.light'
     ]
   });
+});
+
+test('rejects a Gemini image outside the Gemini asset directory', () => {
+  assert.deepEqual(validateCatalog([{
+    ...fixture[0],
+    geminiImage: 'assets/styles/01.png'
+  }], { categories: CATEGORIES }), {
+    valid: false,
+    errors: [
+      'clean-lifestyle 的 geminiImage 必须是 assets/styles/gemini/ 下的 PNG 或 JPEG: assets/styles/01.png'
+    ]
+  });
+});
+
+test('accepts a Gemini JPEG asset downloaded from Gemini', () => {
+  assert.deepEqual(validateCatalog([{
+    ...fixture[0],
+    geminiImage: 'assets/styles/gemini/01-clean-lifestyle.jpg'
+  }], { categories: CATEGORIES }), {
+    valid: true,
+    errors: []
+  });
+});
+
+test('resolves the selected sample asset and description without mutating the style', () => {
+  const style = fixture[0];
+
+  assert.equal(getSampleAsset(style, 'original'), style.image);
+  assert.equal(getSampleAsset(style, 'gemini'), style.geminiImage);
+  assert.equal(getSampleDescription(style, 'original'), style.description);
+  assert.equal(getSampleDescription(style, 'gemini'), style.geminiDescription);
+  assert.equal(getSampleAsset(style, 'unknown'), style.image);
+  assert.equal(getSampleDescription(style, 'unknown'), style.description);
 });
 
 test('rejects malformed numbering and image paths', () => {
@@ -161,6 +204,7 @@ test('contains twenty valid styles across the nine library categories', () => {
   ]);
   assert.deepEqual(validateCatalog(STYLES, { categories: CATEGORIES }), { valid: true, errors: [] });
   assert.equal(new Set(STYLES.map((style) => style.image)).size, 20);
+  assert.equal(new Set(STYLES.map((style) => style.geminiImage)).size, 20);
 });
 
 test('resolves a known style image and returns undefined for an unknown id', () => {

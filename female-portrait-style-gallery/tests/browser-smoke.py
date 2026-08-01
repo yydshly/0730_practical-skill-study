@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 from playwright.sync_api import sync_playwright
@@ -5,7 +6,7 @@ from playwright.sync_api import sync_playwright
 
 ROOT = Path(__file__).resolve().parents[1]
 EVIDENCE = ROOT / "docs" / "evidence"
-URL = "http://127.0.0.1:43173/"
+URL = "http://127.0.0.1:43173/female-portrait-style-gallery/"
 CHROME = Path(r"C:\Program Files\Google\Chrome\Application\chrome.exe")
 
 
@@ -30,8 +31,13 @@ def exercise_mobile_journey(page):
 
     trigger = page.locator(".style-card__button").first
     trigger.click()
+    page.locator('#style-dialog [data-sample-source="gemini"]').click()
+    expect("assets/styles/gemini/04-gufeng-xianxia.png" in page.locator("#dialog-image").get_attribute("src"), "dialog Gemini sample should replace the image")
+    page.locator('#style-dialog [data-sample-source="original"]').click()
+    expect("assets/styles/04-gufeng-xianxia.png" in page.locator("#dialog-image").get_attribute("src"), "dialog should switch back to the original image")
     expect(page.locator("#style-dialog").evaluate("element => element.open"), "390px 详情弹窗未打开")
     page.locator("#copy-prompt").click()
+    page.wait_for_timeout(180)
     expect("复制" in page.locator("#toast").inner_text(), "390px 复制操作缺少反馈")
     page.keyboard.press("Escape")
     expect(not page.locator("#style-dialog").evaluate("element => element.open"), "390px Esc 未关闭弹窗")
@@ -75,6 +81,10 @@ def exercise_gallery(page, url, capture=False):
 
     expect(page.locator(".style-card").count() == 20, f"{url} 应显示 20 张风格卡片")
     expect(page.locator(".style-card__prompt").count() == 20, "每张卡片应显示提示词摘要")
+    expect(page.locator(".sample-switcher--card").count() == 20, "each card should expose a sample switcher")
+    expect(page.locator('[data-sample-source="gemini"]').count() == 21, "20 cards plus one dialog Gemini control should exist")
+    expect(page.locator("#global-sample-switcher").count() == 1, "one global sample switcher should be visible")
+    expect(page.locator('[data-global-source="gemini"]').count() == 1, "global Gemini control should be visible")
     for prompt in page.locator(".style-card__prompt").all():
         clamp = prompt.evaluate(
             """element => {
@@ -108,6 +118,28 @@ def exercise_gallery(page, url, capture=False):
 
     first_copy = page.locator(".card-copy-button").first
     first_copy.click()
+    first_card = page.locator(".style-card").first
+    first_card.locator('[data-sample-source="gemini"]').click()
+    expect("assets/styles/gemini/01-clean-lifestyle.png" in first_card.locator("img").get_attribute("src"), "card Gemini sample should replace the image")
+    expect(first_card.locator('[data-sample-source="gemini"]').get_attribute("aria-pressed") == "true", "card Gemini control should be pressed")
+    first_card.locator('[data-sample-source="original"]').click()
+    expect("assets/styles/01-clean-lifestyle.png" in first_card.locator("img").get_attribute("src"), "card should switch back to the original image")
+    for card_index, gemini_path in [(9, "assets/styles/gemini/10-travel-vacation.png"), (17, "assets/styles/gemini/18-soft-ccd-energetic-voluptuous.png")]:
+        sample_card = page.locator(".style-card").nth(card_index)
+        sample_card.locator('[data-sample-source="gemini"]').click()
+        expect(gemini_path in sample_card.locator("img").get_attribute("src"), "additional Gemini sample should load")
+    page.locator('[data-global-source="gemini"]').click()
+    expect(page.locator('[data-global-source="gemini"]').get_attribute("aria-pressed") == "true", "global Gemini control should be pressed")
+    for image in page.locator(".style-card img").all():
+        expect("assets/styles/gemini/" in image.get_attribute("src"), "global Gemini switch should update every card")
+    page.locator("#style-search").fill("咖啡")
+    expect(page.locator(".style-card").count() == 1, "global source should survive search filtering")
+    expect("assets/styles/gemini/" in page.locator(".style-card img").first.get_attribute("src"), "filtered cards should keep the global Gemini source")
+    page.locator("#style-search").fill("")
+    page.locator('[data-global-source="original"]').click()
+    expect(page.locator('[data-global-source="original"]').get_attribute("aria-pressed") == "true", "global original control should be pressed")
+    for image in page.locator(".style-card img").all():
+        expect("assets/styles/gemini/" not in image.get_attribute("src"), "global original switch should restore every card")
     expect(not page.locator("#style-dialog").evaluate("element => element.open"), "卡片复制不应打开详情")
     expect("复制" in page.locator("#toast").inner_text(), "卡片复制应显示反馈")
 
@@ -127,12 +159,17 @@ def exercise_gallery(page, url, capture=False):
 
     trigger = page.locator(".style-card__button").first
     trigger.click()
+    page.locator('#style-dialog [data-sample-source="gemini"]').click()
+    expect("assets/styles/gemini/04-gufeng-xianxia.png" in page.locator("#dialog-image").get_attribute("src"), "dialog Gemini sample should replace the image")
+    page.locator('#style-dialog [data-sample-source="original"]').click()
+    expect("assets/styles/04-gufeng-xianxia.png" in page.locator("#dialog-image").get_attribute("src"), "dialog should switch back to the original image")
     expect(page.locator("#style-dialog").evaluate("element => element.open"), "详情弹窗未打开")
     expect(page.locator("#dialog-title").inner_text() == "古风仙侠美人图", "详情内容与卡片不一致")
     expect("云海" in page.locator("#dialog-prompt").inner_text(), "详情提示词不完整")
     if capture:
         page.screenshot(path=EVIDENCE / "detail-dialog-1440.png")
     page.locator("#copy-prompt").click()
+    page.wait_for_timeout(180)
     expect("复制" in page.locator("#toast").inner_text(), "复制操作缺少反馈")
     page.keyboard.press("Escape")
     expect(not page.locator("#style-dialog").evaluate("element => element.open"), "Esc 未关闭弹窗")
@@ -141,6 +178,8 @@ def exercise_gallery(page, url, capture=False):
     page.locator("#style-search").fill("不存在的风格词")
     expect(page.locator("#empty-state").is_visible(), "空结果状态未显示")
     page.locator("#reset-filters").click()
+    page.locator(".style-card img").first.evaluate("img => { img.src = 'missing-browser-smoke.png'; }")
+    page.wait_for_timeout(120)
     expect(page.locator(".style-card").count() == 20, "重置后未恢复全部风格")
     expect(page.locator("#style-search").evaluate("element => element === document.activeElement"), "重置后搜索框未获得焦点")
     expect(page.locator(".image-fallback:visible").count() >= 1, "缺图时未显示可读占位")
@@ -171,7 +210,8 @@ def main():
         page_errors = []
         page.on("pageerror", lambda error: page_errors.append(str(error)))
 
-        exercise_gallery(page, "http://127.0.0.1:43173/", capture=True)
+        capture = os.environ.get("CAPTURE_EVIDENCE") == "1"
+        exercise_gallery(page, URL, capture=capture)
         exercise_gallery(page, (ROOT / "index.html").as_uri())
         exercise_catalog_error(browser, (ROOT / "js" / "app.js").read_text(encoding="utf-8"))
 

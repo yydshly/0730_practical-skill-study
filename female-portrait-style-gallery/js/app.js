@@ -1,12 +1,21 @@
 (() => {
 'use strict';
-const REQUIRED_TEXT_FIELDS = ['description', 'image', 'prompt'];
+const REQUIRED_TEXT_FIELDS = ['description', 'image', 'geminiImage', 'geminiDescription', 'prompt'];
 const REQUIRED_DETAIL_FIELDS = ['scene', 'outfit', 'camera', 'light'];
 const TWO_DIGIT_NUMBER = /^\d{2}$/;
 const LOCAL_PNG_PATH = /^assets\/styles\/[^/\\]+\.png$/i;
+const GEMINI_IMAGE_PATH = /^assets\/styles\/gemini\/[^/\\]+\.(?:png|jpe?g)$/i;
 
 function isNonEmptyString(value) {
   return typeof value === 'string' && value.trim().length > 0;
+}
+
+function getSampleAsset(style, source = 'original') {
+  return source === 'gemini' ? style.geminiImage : style.image;
+}
+
+function getSampleDescription(style, source = 'original') {
+  return source === 'gemini' ? style.geminiDescription : style.description;
 }
 
 function validateCatalog(styles, { categories = [] } = {}) {
@@ -56,6 +65,10 @@ function validateCatalog(styles, { categories = [] } = {}) {
 
     if (isNonEmptyString(record.image) && !LOCAL_PNG_PATH.test(record.image)) {
       errors.push(`${label} 的 image 必须是 assets/styles/ 下的 PNG: ${record.image}`);
+    }
+
+    if (isNonEmptyString(record.geminiImage) && !GEMINI_IMAGE_PATH.test(record.geminiImage)) {
+      errors.push(`${label} 的 geminiImage 必须是 assets/styles/gemini/ 下的 PNG 或 JPEG: ${record.geminiImage}`);
     }
 
     const details = record.details && typeof record.details === 'object'
@@ -110,7 +123,10 @@ const CATEGORIES = [
 
 const SAFETY = '虚构的成年东亚女性，年龄约 25–32 岁，竖幅 2:3，全身着装完整；不出现未成年人、裸露、内衣、性暗示姿势、文字、标志或水印。';
 
-function defineStyle({ id, number, name, category, keywords, description, image, prompt, scene, outfit, camera, light }) {
+function defineStyle({
+  id, number, name, category, keywords, description, image, geminiImage,
+  geminiDescription, prompt, scene, outfit, camera, light
+}) {
   return {
     id,
     number,
@@ -119,6 +135,8 @@ function defineStyle({ id, number, name, category, keywords, description, image,
     keywords,
     description,
     image,
+    geminiImage,
+    geminiDescription,
     prompt: `${prompt} ${SAFETY}`,
     details: { scene, outfit, camera, light },
   };
@@ -130,6 +148,8 @@ const STYLES = [
     keywords: ['咖啡馆', '自然光', '清新', '日常', '胶片'],
     description: '像被偶然记录下来的安静午后，干净、亲近而不过度修饰。',
     image: 'assets/styles/01-clean-lifestyle.png',
+    geminiImage: 'assets/styles/gemini/01-clean-lifestyle.png',
+    geminiDescription: 'Gemini 更强调书页、针织面料与侧窗日光的温柔层次，画面更像生活方式杂志。',
     prompt: '安静午后的咖啡馆窗边，一位成年东亚女性低头阅读摊开的书，象牙白针织开衫搭配淡蓝上衣，自然松弛的坐姿，窗外街景柔化成背景，真实皮肤质感，轻微 35mm 胶片颗粒，生活方式摄影。',
     scene: '午后咖啡馆窗边', outfit: '象牙白针织开衫、淡蓝上衣', camera: '35mm 纪实视角', light: '柔和侧窗光',
   }),
@@ -138,6 +158,8 @@ const STYLES = [
     keywords: ['海边', '蓝调', '侧影', '清透', '曲线'],
     description: '克制的蓝调海风与利落侧影，呈现清透而自然的女性线条。',
     image: 'assets/styles/02-pure-desire-curve.png',
+    geminiImage: 'assets/styles/gemini/02-pure-desire-curve.png',
+    geminiDescription: 'Gemini 将蓝调海风和侧身站姿处理得更具空间感，留出更开阔的海岸氛围。',
     prompt: '蓝调时刻的海边步道，一位成年东亚女性以从容侧身站姿望向远处，雾蓝短袖针织上衣、白色高腰西装长裤与轻薄外搭，服装自然勾勒优雅轮廓，凉雾与海风，清透电影质感，克制高级。',
     scene: '蓝调海边步道', outfit: '雾蓝针织上衣、白色西装长裤', camera: '50mm 侧身中全景', light: '冷调暮色与柔雾',
   }),
@@ -146,6 +168,8 @@ const STYLES = [
     keywords: ['上海', '街拍', '西装', '雨后', '都市'],
     description: '雨后城市的锋利剪影，以步态和反光塑造现代编辑感。',
     image: 'assets/styles/03-urban-fashion.png',
+    geminiImage: 'assets/styles/gemini/03-urban-fashion.png',
+    geminiDescription: 'Gemini 突出湿路反光与西装廓形，雨后都市的锋利感更强。',
     prompt: '雨后黄昏的上海街头，一位成年东亚女性正阔步穿过画面，炭灰色廓形西装、白色罗纹上衣、剪裁长裤与皮革手提包，湿润路面映出城市灯光，现代时尚杂志摄影，真实自然。',
     scene: '雨后上海街头', outfit: '炭灰廓形西装、白色上衣、剪裁长裤', camera: '35mm 动态街拍', light: '暮色环境光与路面反射',
   }),
@@ -154,6 +178,8 @@ const STYLES = [
     keywords: ['仙侠', '云海', '古风', '长袍', '山景'],
     description: '云海之上的清逸古风肖像，衣袂与留白共同营造仙境气息。',
     image: 'assets/styles/04-gufeng-xianxia.png',
+    geminiImage: 'assets/styles/gemini/04-gufeng-xianxia.png',
+    geminiDescription: 'Gemini 拉开云海与山庭层次，让衣袂与远山共同形成轻盈的仙侠画面。',
     prompt: '云海之上的高山庭院，一位成年东亚女性身着月白色唐风灵感长袍，银线绣腰带，长袖随风轻扬，倚近石栏但不接触，远山层叠，雅致仙侠氛围，写实服装纹理与电影构图。',
     scene: '云海高山庭院', outfit: '月白唐风长袍、银线绣腰带', camera: '50mm 环境人像', light: '清冷黎明天光',
   }),
@@ -162,6 +188,8 @@ const STYLES = [
     keywords: ['电商', '服装', '棚拍', '全身', '商品'],
     description: '清楚呈现版型、材质与垂坠感的标准化商品视觉。',
     image: 'assets/styles/05-ecommerce-tryon.png',
+    geminiImage: 'assets/styles/gemini/05-ecommerce-tryon.png',
+    geminiDescription: 'Gemini 更凸显大衣的系带、材质与全身比例，接近电商目录的清晰展示。',
     prompt: '浅灰无缝影棚背景，一位成年东亚女性自然正面站立展示驼色系带羊毛大衣，内搭白色高领针织与黑色长裤，全身构图，服装边缘清晰，材质和垂坠真实，专业电商目录摄影。',
     scene: '浅灰无缝影棚', outfit: '驼色系带羊毛大衣、白色高领、黑色长裤', camera: '70mm 标准全身照', light: '均匀柔光箱布光',
   }),
@@ -170,6 +198,8 @@ const STYLES = [
     keywords: ['港风', '霓虹', '茶餐厅', '胶片', '复古'],
     description: '潮湿霓虹与轻微直闪，让夜色带上九十年代电影温度。',
     image: 'assets/styles/06-retro-hongkong.png',
+    geminiImage: 'assets/styles/gemini/06-retro-hongkong.png',
+    geminiDescription: 'Gemini 把红伞、霓虹和湿地反射组合成更浓的港风夜色。',
     prompt: '雨后的霓虹茶餐厅门外，一位成年东亚女性手持红伞，穿深樱桃色衬衫与高腰牛仔裤，琥珀和青绿色招牌光映在湿地面上，轻微相机直闪与胶片颗粒，九十年代香港电影氛围。',
     scene: '雨后霓虹茶餐厅', outfit: '深樱桃色衬衫、高腰牛仔裤', camera: '35mm 胶片快照', light: '琥珀青绿霓虹与轻直闪',
   }),
@@ -178,6 +208,8 @@ const STYLES = [
     keywords: ['法式', '公寓', '亚麻', '晨光', '慵懒'],
     description: '松弛的亚麻与缓慢晨光，像一页安静的法国生活杂志。',
     image: 'assets/styles/07-french-lazy.png',
+    geminiImage: 'assets/styles/gemini/07-french-lazy.png',
+    geminiDescription: 'Gemini 强化窗帘、木椅与晨光的松弛关系，呈现柔和的居家编辑感。',
     prompt: '阳光漫入的巴黎风格公寓，一位成年东亚女性倚坐复古木椅，宽松奶油色亚麻衬衫搭配灰褐色长裤，窗帘被微风吹动，自然未刻意摆拍，法式生活杂志质感。',
     scene: '巴黎风格旧公寓', outfit: '奶油色亚麻衬衫、灰褐长裤', camera: '50mm 松弛半身环境照', light: '温柔清晨窗光',
   }),
@@ -186,6 +218,8 @@ const STYLES = [
     keywords: ['新中式', '茶室', '竹影', '东方', '留白'],
     description: '以现代剪裁收束传统意象，在竹影和留白中显出东方秩序。',
     image: 'assets/styles/08-new-chinese.png',
+    geminiImage: 'assets/styles/gemini/08-new-chinese.png',
+    geminiDescription: 'Gemini 以竹影、白瓷和留白加强新中式空间的秩序感。',
     prompt: '极简现代茶室，一位成年东亚女性端坐于低案旁，墨黑色立领真丝上衣搭配玉绿色长裙，手边一只白瓷茶杯，墙面投下竹影，大面积留白，新中式编辑人像，安静端庄。',
     scene: '极简现代茶室', outfit: '墨黑立领真丝上衣、玉绿长裙', camera: '50mm 对称环境构图', light: '柔和天光与竹影',
   }),
@@ -194,6 +228,8 @@ const STYLES = [
     keywords: ['网球', '运动', '阳光', '活力', '户外'],
     description: '清晨硬朗阳光定格运动间歇，轻盈、健康而有行动感。',
     image: 'assets/styles/09-sporty-active.png',
+    geminiImage: 'assets/styles/gemini/09-sporty-active.png',
+    geminiDescription: 'Gemini 聚焦球场阳光、行走步态与鲜明运动色彩，显得更轻快有活力。',
     prompt: '清晨户外网球场，一位成年东亚女性手持球拍走向边线，白色拉链运动外套与绿色网球裙，裙内有不透明运动短裤，姿态自信自然，明亮阳光和清晰影子，运动品牌画报风格。',
     scene: '清晨户外网球场', outfit: '白色运动外套、绿色网球裙与安全短裤', camera: '35mm 动态全身照', light: '清脆晨间阳光',
   }),
@@ -202,6 +238,8 @@ const STYLES = [
     keywords: ['旅行', '地中海', '露台', '海景', '度假'],
     description: '海风、赤陶和蓝色地平线组成明亮松弛的假日记忆。',
     image: 'assets/styles/10-travel-vacation.png',
+    geminiImage: 'assets/styles/gemini/10-travel-vacation.png',
+    geminiDescription: 'Gemini 放大白色露台、赤陶裙摆和蓝海的高饱和假日印象。',
     prompt: '地中海白色灰泥露台，一位成年东亚女性身穿赤陶色裹身及踝连衣裙，手持编织草帽，远处是蓝色海面，微风吹动裙摆，明亮通透的高端旅行杂志摄影。',
     scene: '地中海白色露台', outfit: '赤陶色及踝裹身裙、编织草帽', camera: '35mm 环境全身照', light: '明亮柔化日光',
   }),
@@ -210,6 +248,8 @@ const STYLES = [
     keywords: ['影棚', '精修', '黑色西装', '专业', '质感'],
     description: '精确布光与克制修饰兼顾高级完成度和真实皮肤质感。',
     image: 'assets/styles/11-studio-retouched.png',
+    geminiImage: 'assets/styles/gemini/11-studio-retouched.png',
+    geminiDescription: 'Gemini 将黑缎西装和影棚轮廓光压得更利落，呈现更完成的商业肖像。',
     prompt: '炭灰无缝影棚，一位成年东亚女性身穿黑色缎面西装与象牙白内搭，半身正面肖像，神态沉静自信，皮肤精致但保留自然纹理，轮廓清楚，商业影楼高级精修质感。',
     scene: '炭灰专业影棚', outfit: '黑色缎面西装、象牙白内搭', camera: '85mm 半身肖像', light: '大号八角柔光箱与细微轮廓光',
   }),
@@ -218,6 +258,8 @@ const STYLES = [
     keywords: ['旗袍', '丰腴', '东方', '丝绒', '端庄'],
     description: '丝绒与暖木衬托成熟柔和的自然体态，端庄而富有力量。',
     image: 'assets/styles/12-oriental-voluptuous.png',
+    geminiImage: 'assets/styles/gemini/12-oriental-voluptuous.png',
+    geminiDescription: 'Gemini 让丝绒光泽和暖木背景更突出，体现端庄的古典调性。',
     prompt: '暖木色东方沙龙，一位拥有成熟柔和自然体态的成年东亚女性从容站立，穿梅子色长袖丝绒旗袍，端庄低开口领型，剪裁合身但不暴露，神态平静，古典肖像氛围。',
     scene: '暖木色东方沙龙', outfit: '梅子色长袖丝绒旗袍', camera: '70mm 三分之二身肖像', light: '暖侧光与柔和暗部',
   }),
@@ -226,6 +268,8 @@ const STYLES = [
     keywords: ['雪山', '冰蓝', '仙侠', '月光', '清冷'],
     description: '冰雾、月色和银饰构成疏离通透的高寒仙侠世界。',
     image: 'assets/styles/13-cold-xianxia-enhanced.png',
+    geminiImage: 'assets/styles/gemini/13-cold-xianxia-enhanced.png',
+    geminiDescription: 'Gemini 放大冰雾、月色和银饰的冷感，画面更接近史诗电影静帧。',
     prompt: '覆雪山脊与流动冰雾间，一位成年东亚女性身着冰蓝色古风长袍，银色发饰和淡色披风，衣料被风轻轻扬起，表情清冷克制，远景月色，史诗仙侠电影剧照般的写实画面。',
     scene: '月色雪山与冰雾', outfit: '冰蓝古风长袍、淡色披风、银饰', camera: '65mm 电影环境肖像', light: '冷月光与雾面反射',
   }),
@@ -234,6 +278,8 @@ const STYLES = [
     keywords: ['宫苑', '华贵', '汉服', '牡丹', '金红'],
     description: '朱红与古金铺陈盛景，让传统华服呈现明艳而不俗艳的贵气。',
     image: 'assets/styles/14-bright-luxury-gufeng.png',
+    geminiImage: 'assets/styles/gemini/14-bright-luxury-gufeng.png',
+    geminiDescription: 'Gemini 增强牡丹与朱红金线的层次，呈现富丽而克制的宫廷视觉。',
     prompt: '盛放牡丹的宫苑，一位成年东亚女性身着朱红与古金刺绣汉服，佩戴精致金色发簪，姿态端正大方，宫墙与花影形成层次，面容明媚，色彩富丽而克制，高规格古装电影美术。',
     scene: '牡丹盛放的宫苑', outfit: '朱红古金刺绣汉服、金色发簪', camera: '50mm 华丽环境人像', light: '温暖日光与金色反射',
   }),
@@ -242,6 +288,8 @@ const STYLES = [
     keywords: ['特写', '真实皮肤', '毛孔', '自然', '人脸'],
     description: '把毛孔、细小绒毛与眼神都留在画面里，真实本身就是风格。',
     image: 'assets/styles/15-ultra-close-real-face.png',
+    geminiImage: 'assets/styles/gemini/15-ultra-close-real-face.png',
+    geminiDescription: 'Gemini 保留窗边的细腻肤质与平静眼神，以近距离取景强调写实感。',
     prompt: '北向窗边的超近景面部肖像，一位成年东亚女性妆容极淡，眼神自然看向镜头，清楚保留真实毛孔、细小绒毛与肤色变化，不做塑料磨皮，背景极简柔化，安静的当代写实摄影。',
     scene: '北向窗边极简背景', outfit: '仅露出简洁中性色领口', camera: '85mm 微距感超近特写', light: '均匀北向窗光',
   }),
@@ -250,6 +298,8 @@ const STYLES = [
     keywords: ['水光妆', '贵女', '古风', '玉饰', '美妆'],
     description: '莹润妆面、玉饰与漆屏细节，呈现精致又有呼吸感的古典美。',
     image: 'assets/styles/16-ancient-lady-dewy-makeup.png',
+    geminiImage: 'assets/styles/gemini/16-ancient-lady-dewy-makeup.png',
+    geminiDescription: 'Gemini 突出水光肌、玉饰和漆屏的对比，形成更像美妆广告的精致画面。',
     prompt: '深色漆屏前的古风美妆特写，一位成年东亚女性佩戴温润玉饰，玫瑰色唇妆，淡金刺绣衣领，肌肤呈自然水光而非过度磨皮，神态端庄，传统贵女气质与现代美妆广告质感结合。',
     scene: '深色漆屏前', outfit: '淡金刺绣衣领、温润玉饰', camera: '100mm 美妆近景', light: '柔亮主光与精细眼神光',
   }),
@@ -258,6 +308,8 @@ const STYLES = [
     keywords: ['CCD', '墨金', '夜景', '直闪', '曲线'],
     description: '黑夜、金色倒影和柔化直闪，制造浓郁却仍然生活化的胶片瞬间。',
     image: 'assets/styles/17-black-pearl-dark-gold-ccd.png',
+    geminiImage: 'assets/styles/gemini/17-black-pearl-dark-gold-ccd.png',
+    geminiDescription: 'Gemini 将金色倒影和 CCD 直闪处理得更明显，暗部层次更浓郁。',
     prompt: '夜晚城市河岸，一位成年东亚女性倚近栏杆站立，珍珠灰衬衫搭配深色长裤，衣着完整并自然呈现柔和轮廓，湿润地面映出金色灯光，消费级 CCD 相机的柔化直闪与轻微噪点，墨黑金色调。',
     scene: '夜晚城市河岸', outfit: '珍珠灰衬衫、深色长裤', camera: 'CCD 35mm 等效生活快照', light: '柔化直闪与湿地金色反光',
   }),
@@ -266,6 +318,8 @@ const STYLES = [
     keywords: ['CCD', '花市', '元气', '柔光', '自然笑容'],
     description: '鲜花与自然笑容冲淡摆拍感，柔光 CCD 留下鲜活又亲近的气息。',
     image: 'assets/styles/18-soft-ccd-energetic-voluptuous.png',
+    geminiImage: 'assets/styles/gemini/18-soft-ccd-energetic-voluptuous.png',
+    geminiDescription: 'Gemini 用更鲜艳的花束、微笑和轻微过曝放大随手抓拍的鲜活感。',
     prompt: '白天花市入口，一位拥有健康柔和自然体态的成年东亚女性抱着一束鲜花自然微笑，珊瑚色衬衫和浅色牛仔裤，完整日常穿搭，随手抓拍般的姿态，柔和 CCD 闪光与略微过曝的清新色彩。',
     scene: '白天花市入口', outfit: '珊瑚色衬衫、浅色牛仔裤', camera: 'CCD 生活抓拍', light: '柔和补闪与明亮自然光',
   }),
@@ -274,6 +328,8 @@ const STYLES = [
     keywords: ['CCD', '冷白', '画廊', '清透', '极简'],
     description: '冷白空间和青色阴影压低情绪，让日常造型呈现清冽秩序。',
     image: 'assets/styles/19-cold-white-clear-ccd-curve.png',
+    geminiImage: 'assets/styles/gemini/19-cold-white-clear-ccd-curve.png',
+    geminiDescription: 'Gemini 将青色阴影、混凝土留白和冷白色调处理得更清冽。',
     prompt: '极简混凝土画廊，一位成年东亚女性肩背小包从容站立，淡灰罗纹针织上衣与白色阔腿长裤，衣着完整并自然呈现身体轮廓，清冷白色调、青色阴影、轻微 CCD 颗粒，通透明快。',
     scene: '极简混凝土画廊', outfit: '淡灰罗纹针织、白色阔腿长裤', camera: 'CCD 40mm 等效全身照', light: '冷白顶光与青色阴影',
   }),
@@ -282,6 +338,8 @@ const STYLES = [
     keywords: ['电影院', '低调', '电影感', '酒红', '光影'],
     description: '一盏暖灯划开深色空间，像故事开场前停留的一帧。',
     image: 'assets/styles/20-low-key-cinematic.png',
+    geminiImage: 'assets/styles/gemini/20-low-key-cinematic.png',
+    geminiDescription: 'Gemini 强调酒红帘幕、暖灯与深色负空间，戏剧性的电影感更强。',
     prompt: '独立电影院大堂，一位成年东亚女性站在酒红天鹅绒帘幕旁，穿端庄黑色长袖连衣裙，视线越过镜头，一盏暖色实景灯照亮侧脸，其余空间沉入炭黑与酒红阴影，低调电影摄影与细腻胶片颗粒。',
     scene: '独立电影院大堂', outfit: '端庄黑色长袖连衣裙', camera: '50mm 电影剧照构图', light: '暖色实景灯与深暗环境',
   }),
@@ -295,12 +353,13 @@ function getStyleById(id) {
 
 
 const CATEGORY_LABELS = new Map(CATEGORIES.map(({ id, label }) => [id, label]));
-const state = { category: 'all', query: '' };
+const state = { category: 'all', query: '', source: 'original' };
 
 const elements = {
   categories: document.querySelector('#category-list'),
   search: document.querySelector('#style-search'),
   count: document.querySelector('#result-count'),
+  globalSampleSwitcher: document.querySelector('#global-sample-switcher'),
   gallery: document.querySelector('#gallery'),
   empty: document.querySelector('#empty-state'),
   reset: document.querySelector('#reset-filters'),
@@ -309,6 +368,7 @@ const elements = {
   dialogImage: document.querySelector('#dialog-image'),
   dialogFallback: document.querySelector('#dialog-fallback'),
   dialogFallbackNumber: document.querySelector('#dialog-fallback-number'),
+  dialogSampleSwitcher: document.querySelector('#dialog-sample-switcher'),
   dialogNumber: document.querySelector('#dialog-number'),
   dialogCategory: document.querySelector('#dialog-category'),
   dialogTitle: document.querySelector('#dialog-title'),
@@ -325,6 +385,11 @@ const elements = {
 let activeStyle;
 let lastTrigger;
 let toastTimer;
+
+const SAMPLE_LABELS = {
+  original: '原始样例',
+  gemini: 'Gemini 样例'
+};
 
 function createFilterButton(id, label) {
   const button = document.createElement('button');
@@ -358,7 +423,56 @@ function handleImageError(image, fallback) {
   fallback.hidden = false;
 }
 
-function createStyleCard(style, index) {
+function updateGlobalSampleButtons(source = state.source) {
+  elements.globalSampleSwitcher.querySelectorAll('[data-global-source]').forEach((button) => {
+    button.setAttribute('aria-pressed', String(button.dataset.globalSource === source));
+  });
+}
+
+function updateSampleButtons(container, source) {
+  container.querySelectorAll('[data-sample-source]').forEach((button) => {
+    button.setAttribute('aria-pressed', String(button.dataset.sampleSource === source));
+  });
+}
+
+function setGlobalSource(source) {
+  if (!['original', 'gemini'].includes(source)) return;
+  state.source = source;
+  updateGlobalSampleButtons(source);
+  elements.gallery.querySelectorAll('.style-card').forEach((card) => {
+    card.querySelector(`[data-sample-source="${source}"]`)?.click();
+  });
+  if (activeStyle && elements.dialog.open) updateDialogSample(source);
+}
+
+function createSampleSwitcher(onChange, modifier = '') {
+  const switcher = document.createElement('div');
+  switcher.className = `sample-switcher${modifier ? ` ${modifier}` : ''}`;
+  switcher.setAttribute('role', 'group');
+  switcher.setAttribute('aria-label', '切换图片样例');
+
+  const label = document.createElement('span');
+  label.className = 'sample-switcher__label';
+  label.textContent = '样例来源';
+
+  const buttons = document.createElement('div');
+  buttons.className = 'sample-switcher__buttons';
+  Object.entries(SAMPLE_LABELS).forEach(([source, text]) => {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'sample-switcher__button';
+    button.dataset.sampleSource = source;
+    button.setAttribute('aria-pressed', String(source === 'original'));
+    button.textContent = text;
+    button.addEventListener('click', () => onChange(source));
+    buttons.append(button);
+  });
+
+  switcher.append(label, buttons);
+  return switcher;
+}
+
+function createStyleCard(style, index, initialSource = 'original') {
   const article = document.createElement('article');
   article.className = 'style-card';
 
@@ -384,7 +498,7 @@ function createStyleCard(style, index) {
   const fallbackText = document.createElement('small');
   fallbackText.textContent = 'IMAGE STUDY PENDING';
   fallback.append(fallbackNumber, fallbackText);
-  image.addEventListener('error', () => handleImageError(image, fallback), { once: true });
+  image.addEventListener('error', () => handleImageError(image, fallback));
 
   const caption = document.createElement('div');
   caption.className = 'style-card__caption';
@@ -399,11 +513,23 @@ function createStyleCard(style, index) {
   title.textContent = style.name;
   const description = document.createElement('p');
   description.className = 'style-card__description';
-  description.textContent = style.description;
+  description.textContent = getSampleDescription(style);
   caption.append(topline, title, description);
   visual.append(image, fallback);
   openButton.append(visual, caption);
-  openButton.addEventListener('click', () => openStyle(style, openButton));
+  let cardSource = initialSource;
+  const setCardSource = (source) => {
+    cardSource = source;
+    image.hidden = false;
+    fallback.hidden = true;
+    image.src = getSampleAsset(style, source);
+    image.alt = `${style.name}${source === 'gemini' ? ' Gemini' : ''}风格样例`;
+    description.textContent = getSampleDescription(style, source);
+    updateSampleButtons(sampleSwitcher, source);
+  };
+  openButton.addEventListener('click', () => openStyle(style, openButton, cardSource));
+
+  const sampleSwitcher = createSampleSwitcher(setCardSource, 'sample-switcher--card');
 
   const promptPanel = document.createElement('div');
   promptPanel.className = 'style-card__prompt';
@@ -416,7 +542,8 @@ function createStyleCard(style, index) {
   copyButton.addEventListener('click', () => copyText(style.prompt));
   promptPanel.append(promptText, copyButton);
 
-  article.append(openButton, promptPanel);
+  article.append(openButton, sampleSwitcher, promptPanel);
+  setCardSource(initialSource);
   return article;
 }
 
@@ -428,7 +555,7 @@ function render() {
     query: state.query
   });
   const fragment = document.createDocumentFragment();
-  matches.forEach((style, index) => fragment.append(createStyleCard(style, index)));
+  matches.forEach((style, index) => fragment.append(createStyleCard(style, index, state.source)));
   elements.gallery.replaceChildren(fragment);
   elements.count.textContent = formatResultCount(matches.length);
   elements.gallery.hidden = matches.length === 0;
@@ -463,23 +590,29 @@ function renderCatalogError(errors) {
   elements.empty.hidden = false;
 }
 
-function openStyle(style, trigger) {
+function updateDialogSample(source) {
+  if (!activeStyle) return;
+  elements.dialogDescription.textContent = getSampleDescription(activeStyle, source);
+  elements.dialogImage.hidden = false;
+  elements.dialogFallback.hidden = true;
+  elements.dialogImage.src = getSampleAsset(activeStyle, source);
+  elements.dialogImage.alt = `${activeStyle.name}${source === 'gemini' ? ' Gemini' : ''}风格大图`;
+  updateSampleButtons(elements.dialogSampleSwitcher, source);
+}
+
+function openStyle(style, trigger, source = 'original') {
   activeStyle = style;
   lastTrigger = trigger;
   elements.dialogNumber.textContent = `No. ${style.number}`;
   elements.dialogCategory.textContent = CATEGORY_LABELS.get(style.category);
   elements.dialogTitle.textContent = style.name;
-  elements.dialogDescription.textContent = style.description;
   elements.detailScene.textContent = style.details.scene;
   elements.detailOutfit.textContent = style.details.outfit;
   elements.detailCamera.textContent = style.details.camera;
   elements.detailLight.textContent = style.details.light;
   elements.dialogPrompt.textContent = style.prompt;
   elements.dialogFallbackNumber.textContent = style.number;
-  elements.dialogImage.hidden = false;
-  elements.dialogFallback.hidden = true;
-  elements.dialogImage.src = style.image;
-  elements.dialogImage.alt = `${style.name}风格大图`;
+  updateDialogSample(source);
   elements.dialog.showModal();
 }
 
@@ -521,6 +654,12 @@ elements.search.addEventListener('input', (event) => {
   render();
 });
 
+elements.globalSampleSwitcher.addEventListener('click', (event) => {
+  const button = event.target.closest('[data-global-source]');
+  if (!button) return;
+  setGlobalSource(button.dataset.globalSource);
+});
+
 elements.reset.addEventListener('click', () => {
   state.category = 'all';
   state.query = '';
@@ -535,6 +674,11 @@ elements.dialogImage.addEventListener('error', () => {
 
 elements.dialogClose.addEventListener('click', closeDialog);
 elements.copy.addEventListener('click', copyPrompt);
+elements.dialogSampleSwitcher.addEventListener('click', (event) => {
+  const button = event.target.closest('[data-sample-source]');
+  if (!button || !activeStyle) return;
+  updateDialogSample(button.dataset.sampleSource);
+});
 elements.dialog.addEventListener('click', (event) => {
   if (event.target === elements.dialog) closeDialog();
 });

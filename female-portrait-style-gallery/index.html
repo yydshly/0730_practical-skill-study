@@ -42,7 +42,16 @@
           <p class="eyebrow">The collection</p>
           <h2 id="collection-title">风格索引</h2>
         </div>
-        <p class="result-count" id="result-count" aria-live="polite">20 个风格</p>
+        <div class="collection__heading-meta">
+          <p class="result-count" id="result-count" aria-live="polite">20 个风格</p>
+          <div class="global-sample-switcher" id="global-sample-switcher" role="group" aria-label="切换整套图片样例">
+            <span class="global-sample-switcher__label">整套样例</span>
+            <div class="global-sample-switcher__buttons">
+              <button class="global-sample-switcher__button" type="button" data-global-source="original" aria-pressed="true">GPT 原始图</button>
+              <button class="global-sample-switcher__button" type="button" data-global-source="gemini" aria-pressed="false">Gemini 图</button>
+            </div>
+          </div>
+        </div>
       </div>
 
       <div class="tools" aria-label="筛选与搜索">
@@ -86,6 +95,13 @@
       <div class="dialog__content">
         <p class="dialog__meta"><span id="dialog-number"></span><span id="dialog-category"></span></p>
         <h2 id="dialog-title"></h2>
+        <div class="sample-switcher sample-switcher--dialog" id="dialog-sample-switcher" role="group" aria-label="切换图片样例">
+          <span class="sample-switcher__label">样例来源</span>
+          <div class="sample-switcher__buttons">
+            <button type="button" class="sample-switcher__button" data-sample-source="original" aria-pressed="true">原始样例</button>
+            <button type="button" class="sample-switcher__button" data-sample-source="gemini" aria-pressed="false">Gemini 样例</button>
+          </div>
+        </div>
         <p class="dialog__description" id="dialog-description"></p>
         <dl class="style-details">
           <div><dt>场景</dt><dd id="detail-scene"></dd></div>
