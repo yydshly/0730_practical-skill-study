@@ -47,6 +47,8 @@
 | [`/female-portrait-director-demo/`](https://yydshly.github.io/0730_practical-skill-study/female-portrait-director-demo/) | 项目 4a · 上游技能演示（20 风格 + 导演式扩写） |
 | [`/female-portrait-director-demo/playground/`](https://yydshly.github.io/0730_practical-skill-study/female-portrait-director-demo/playground/) | 项目 4b · Playground（推荐 · MiniMax API 生图） |
 | [`/female-portrait-style-gallery/`](https://yydshly.github.io/0730_practical-skill-study/female-portrait-style-gallery/) | 项目 4c · 静态风格画廊（20 风格参考图浏览） |
+| [`gc-minimal-zine-poster`](https://github.com/LiamGvchi/gc-minimal-zine-poster) | 项目 5 · 极简 ZINE 海报技能仓库与研究说明 |
+| [`gc-minimal-zine-poster/demo/`](https://github.com/LiamGvchi/gc-minimal-zine-poster/tree/main/demo) | 项目 5 · Prompt Compiler、10 个产品场景与完整文字版海报 Demo（源码入口） |
 
 > 部署开关：`Settings → Pages → Source: master · /(root)`（首次部署需仓库 owner 手动开启）
 
@@ -76,6 +78,7 @@ python -m http.server 8000
 #   http://localhost:8000/female-portrait-director-demo/                 ← 项目 4a · 上游技能演示
 #   http://localhost:8000/female-portrait-director-demo/playground/     ← 项目 4b · Playground（推荐）
 #   http://localhost:8000/female-portrait-style-gallery/                ← 项目 4c · 静态风格画廊
+#   http://localhost:8000/gc-minimal-zine-poster/demo/                  ← 项目 5 · Prompt Compiler + 场景产品展示 Demo
 
 # craftzdog-homepage 需要独立运行（Next.js 项目）:
 #   cd craftzdog-homepage && npm install && npm run dev
@@ -132,6 +135,11 @@ python -m http.server 8000
 │   ├── gallery.js
 │   └── assets/styles/             ← 20 风格参考图
 │
+├── gc-minimal-zine-poster/        ← 项目 5 · 极简 ZINE 海报技能研究（独立 GitHub 仓库）
+│   ├── README.md                   ← 技能说明、安装与使用方法
+│   ├── SKILL.md                    ← Prompt 编译与图像生成规则
+│   └── demo/                       ← Prompt Compiler + 场景产品展示 + 文字版海报
+│
 └── mengto-skills-study/            ← 项目 2/3 · MengTo/Skills 研究 + 设计模式
     ├── README.md                   ← 项目 2 入口
     ├── index.html                  ← 研究总览
@@ -151,7 +159,7 @@ python -m http.server 8000
                                       atomic-state-update
 ```
 
-**当前 4 个项目（+1 个 3D Skill），9 个研究工具 HTML,1 个可交付页面。** 未来每个新项目按 `项目名/` 单目录形式加入。
+**当前 5 个项目（+1 个 3D Skill），10 个研究工具 HTML,2 个可交付页面。** 未来每个新项目按 `项目名/` 单目录形式加入。
 
 ---
 
@@ -166,6 +174,7 @@ python -m http.server 8000
 | 4a | [原始技能演示](./female-portrait-director-demo/) | 上游项目 index.html · 20 风格技能展示 + 导演式扩写工作流 | ✓ |
 | 4b | [交互式 Playground](./female-portrait-director-demo/playground/) | 20 风格参数填充 + MiniMax API 生图 + 提示词一键复制 | ✓ |
 | 4c | [静态风格画廊](./female-portrait-style-gallery/) | 20 风格参考图 gallery 浏览器，支持分类筛选和详情弹窗 | ✓ |
+| 5 | [gc-minimal-zine-poster](./gc-minimal-zine-poster/) | 极简 ZINE 海报技能：Prompt Compiler、场景产品展示与文字版成品演示 | 已完成 v0.1 |
 
 > **项目 3 运行方式**：
 > ```bash
@@ -187,6 +196,7 @@ python -m http.server 8000
 | - | [项目 4 · 女性人像导演](./female-portrait-director-demo/) | 上游 20 风格 + 导演式扩写工作流 | ✓ |
 | - | [项目 4 · Playground](./female-portrait-director-demo/playground/) | 交互式测试场：20 风格 + MiniMax API 生图 + 提示词复制 | ✓ |
 | - | [项目 4 · 静态风格画廊](./female-portrait-style-gallery/) | 20 风格参考图 gallery 浏览器，支持分类筛选 | ✓ |
+| - | [项目 5 · GC Minimal Zine Poster Demo](./gc-minimal-zine-poster/demo/) | 9 字段 Prompt 编译器 + 10 个产品场景 + 从留白到成品文字版海报 | ✓ |
 
 (更多项目待加入。)
 
