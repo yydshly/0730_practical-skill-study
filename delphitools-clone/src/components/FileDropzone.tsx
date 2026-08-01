@@ -6,6 +6,7 @@ import { assertAcceptedFile } from '../core/files';
 type FileDropzoneProps = {
   accepted: string[];
   onFiles: (files: File[]) => void;
+  onError?: (message: string) => void;
   maxSizeBytes?: number;
   multiple?: boolean;
 };
@@ -14,7 +15,7 @@ function maxSizeMessage(maxSizeBytes: number): string {
   return `文件大小不能超过 ${maxSizeBytes} 字节`;
 }
 
-export function FileDropzone({ accepted, onFiles, maxSizeBytes, multiple = true }: FileDropzoneProps) {
+export function FileDropzone({ accepted, onFiles, onError, maxSizeBytes, multiple = true }: FileDropzoneProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const errorId = useId();
   const [error, setError] = useState('');
@@ -29,7 +30,9 @@ export function FileDropzone({ accepted, onFiles, maxSizeBytes, multiple = true 
       });
       setError('');
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : '文件无法处理，请重新选择');
+      const message = reason instanceof Error ? reason.message : '文件无法处理，请重新选择';
+      setError(message);
+      onError?.(message);
       return;
     }
 

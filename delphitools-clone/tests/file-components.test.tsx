@@ -47,6 +47,17 @@ function ResultHarness() {
 }
 
 describe('FileDropzone', () => {
+  it('文件校验失败时通知父工作区清除旧成功结果', () => {
+    const onError = vi.fn();
+    render(<FileDropzone accepted={['image/*']} onFiles={() => undefined} onError={onError} />);
+
+    fireEvent.change(screen.getByLabelText('选择文件'), {
+      target: { files: [new File(['文本'], 'note.txt', { type: 'text/plain' })] },
+    });
+
+    expect(onError).toHaveBeenCalledWith('请选择图片文件');
+  });
+
   it('通过真实拖放接收可用文件，并拒绝超出大小或类型不符的文件', () => {
     render(<DropzoneHarness />);
     const dropzone = screen.getByRole('button', { name: '选择或拖放文件' });
