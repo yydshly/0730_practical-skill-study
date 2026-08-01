@@ -280,6 +280,14 @@ function escapeXmlAttribute(value: string): string {
   return escapeHtml(value);
 }
 
+function readSvgViewBox(svg: string): [number, number, number, number] {
+  const values = svg.match(/\bviewBox="([^"]+)"/u)?.[1].trim().split(/[\s,]+/u).map(Number);
+  if (!values || values.length !== 4 || values.some((value) => !Number.isFinite(value)) || values[2] <= 0 || values[3] <= 0) {
+    throw new Error('二维码 SVG 缺少有效的 viewBox');
+  }
+  return values as [number, number, number, number];
+}
+
 export async function generateQrSvg(input: QrSvgInput): Promise<string> {
   const text = input.text.trim();
   if (!text) throw new Error('请输入二维码内容');
@@ -294,7 +302,13 @@ export async function generateQrSvg(input: QrSvgInput): Promise<string> {
     color: { dark: input.dark ?? '#000000', light: input.light ?? '#ffffff' },
   });
   if (!input.logoDataUrl) return svg;
-  const logo = `<rect x="132" y="132" width="96" height="96" rx="12" fill="${escapeXmlAttribute(input.light ?? '#ffffff')}"/><image href="${escapeXmlAttribute(input.logoDataUrl)}" x="140" y="140" width="80" height="80" preserveAspectRatio="xMidYMid meet"/>`;
+  const [minX, minY, viewWidth, viewHeight] = readSvgViewBox(svg);
+  const logoSize = Math.min(viewWidth, viewHeight) * 0.2;
+  const logoX = minX + (viewWidth - logoSize) / 2;
+  const logoY = minY + (viewHeight - logoSize) / 2;
+  const padding = logoSize * 0.1;
+  const backgroundSize = logoSize + padding * 2;
+  const logo = `<rect x="${logoX - padding}" y="${logoY - padding}" width="${backgroundSize}" height="${backgroundSize}" rx="${logoSize * 0.12}" fill="${escapeXmlAttribute(input.light ?? '#ffffff')}"/><image href="${escapeXmlAttribute(input.logoDataUrl)}" x="${logoX}" y="${logoY}" width="${logoSize}" height="${logoSize}" preserveAspectRatio="xMidYMid meet"/>`;
   return svg.replace('</svg>', `${logo}</svg>`);
 }
 

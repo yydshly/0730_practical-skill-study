@@ -151,6 +151,32 @@ describe('真实二维码和条形码 SVG', () => {
     expect(svg).toContain('data:image/png;base64,iVBORw0KGgo=');
   });
 
+  it('中心 Logo 完全位于二维码 viewBox 内并精确居中', async () => {
+    const svg = await generateQrSvg({
+      text: 'https://example.com/centered-logo',
+      errorCorrectionLevel: 'H',
+      logoDataUrl: 'data:image/png;base64,iVBORw0KGgo=',
+    });
+    const viewBox = svg.match(/\bviewBox="([^"]+)"/u)?.[1].split(/\s+/u).map(Number);
+    const imageTag = svg.match(/<image\b[^>]*>/u)?.[0] ?? '';
+    const attribute = (name: string) => Number(imageTag.match(new RegExp(`\\b${name}="([^"]+)"`, 'u'))?.[1]);
+
+    expect(viewBox).toHaveLength(4);
+    const [minX, minY, viewWidth, viewHeight] = viewBox!;
+    const x = attribute('x');
+    const y = attribute('y');
+    const width = attribute('width');
+    const height = attribute('height');
+
+    expect([x, y, width, height].every(Number.isFinite)).toBe(true);
+    expect(x).toBeGreaterThanOrEqual(minX);
+    expect(y).toBeGreaterThanOrEqual(minY);
+    expect(x + width).toBeLessThanOrEqual(minX + viewWidth);
+    expect(y + height).toBeLessThanOrEqual(minY + viewHeight);
+    expect(x + width / 2).toBeCloseTo(minX + viewWidth / 2, 6);
+    expect(y + height / 2).toBeCloseTo(minY + viewHeight / 2, 6);
+  });
+
   it.each([
     ['code128', 'HELLO-123'],
     ['ean13', '5901234123457'],
