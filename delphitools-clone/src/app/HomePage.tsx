@@ -1,11 +1,12 @@
-import { useState } from 'react';
-
 import { ToolCard } from '../components/ToolCard';
 import { TOOL_CATEGORIES } from '../data/categories';
 import { searchTools, TOOLS } from '../data/tools';
 
-export function HomePage() {
-  const [query, setQuery] = useState('');
+type HomePageProps = {
+  query: string;
+};
+
+export function HomePage({ query }: HomePageProps) {
   const visibleTools = searchTools(query);
   const featuredTools = TOOLS.slice(0, 3);
 
@@ -15,11 +16,6 @@ export function HomePage() {
         <p className="page-kicker">免费 · 本地 · 无需登录</p>
         <h1>为日常创作准备的实用工具</h1>
         <p className="page-lede">处理图片、文字、颜色、代码和版式。打开即用，文件始终留在你的设备上。</p>
-        <label className="search-field">
-          <span className="sr-only">搜索工具</span>
-          <span aria-hidden="true">⌕</span>
-          <input type="search" role="searchbox" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="搜索工具，例如：二维码、图片转换、颜色" />
-        </label>
       </header>
 
       {!query && (

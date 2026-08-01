@@ -9,8 +9,17 @@ function getPathname(): string {
   return window.location.pathname;
 }
 
+function decodeToolId(encodedToolId: string): string | undefined {
+  try {
+    return decodeURIComponent(encodedToolId);
+  } catch {
+    return undefined;
+  }
+}
+
 export function App() {
   const [pathname, setPathname] = useState(getPathname);
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     const updatePathname = () => setPathname(getPathname());
@@ -19,13 +28,21 @@ export function App() {
   }, []);
 
   const toolMatch = pathname.match(/^\/tools\/([^/]+)$/);
+  const toolId = toolMatch ? decodeToolId(toolMatch[1]) : undefined;
+  const updateSearchQuery = (query: string) => {
+    setSearchQuery(query);
+    if (pathname !== '/') {
+      window.history.pushState({}, '', '/');
+      setPathname('/');
+    }
+  };
   const content = pathname === '/'
-    ? <HomePage />
+    ? <HomePage query={searchQuery} />
     : pathname === '/editor'
       ? <ToolPage toolId="editor" />
-      : toolMatch
-        ? <ToolPage toolId={decodeURIComponent(toolMatch[1])} />
+      : toolId
+        ? <ToolPage toolId={toolId} />
         : <NotFoundPage />;
 
-  return <AppShell>{content}</AppShell>;
+  return <AppShell searchQuery={searchQuery} onSearchQueryChange={updateSearchQuery}>{content}</AppShell>;
 }

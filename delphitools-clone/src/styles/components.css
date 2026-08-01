@@ -4,7 +4,8 @@
 .brand { display: flex; gap: 10px; align-items: center; text-decoration: none; }
 .brand__mark { display: grid; width: 36px; height: 36px; place-items: center; border-radius: 11px; background: var(--accent); color: var(--surface); font-weight: 900; }
 .brand strong, .brand small { display: block; }.brand small { margin-top: 2px; color: var(--text-muted); font-size: .73rem; }
-.sidebar__nav { display: grid; gap: 2px; margin-top: 42px; overflow-y: auto; }
+.sidebar__search { width: 100%; margin-top: 28px; box-shadow: none; }
+.sidebar__nav { display: grid; gap: 2px; margin-top: 22px; overflow-y: auto; }
 .sidebar__nav a { padding: 9px 10px; border-radius: 8px; color: var(--text-muted); font-size: .88rem; text-decoration: none; }.sidebar__nav a:hover { background: var(--surface-muted); color: var(--text); }
 .sidebar__footer { margin-top: auto; padding: 18px 10px 0; border-top: 1px solid var(--line); }.sidebar__footer p { margin: 14px 0 0; color: var(--text-muted); font-size: .76rem; line-height: 1.55; }
 .theme-button, .icon-button { border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--text); cursor: pointer; }.theme-button { width: 100%; padding: 9px; }.icon-button { display: grid; width: 36px; height: 36px; place-items: center; font-size: 1.2rem; }

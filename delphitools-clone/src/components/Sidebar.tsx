@@ -1,24 +1,42 @@
+import { useEffect, useRef } from 'react';
+
 import { TOOL_CATEGORIES } from '../data/categories';
 
 type SidebarProps = {
+  isDrawer: boolean;
   isOpen: boolean;
   onClose: () => void;
   onToggleTheme: () => void;
   theme: 'light' | 'dark';
+  searchQuery: string;
+  onSearchQueryChange: (query: string) => void;
 };
 
-export function Sidebar({ isOpen, onClose, onToggleTheme, theme }: SidebarProps) {
+export function Sidebar({ isDrawer, isOpen, onClose, onToggleTheme, theme, searchQuery, onSearchQueryChange }: SidebarProps) {
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const isHidden = isDrawer && !isOpen;
+
+  useEffect(() => {
+    if (isDrawer && isOpen) closeButtonRef.current?.focus();
+  }, [isDrawer, isOpen]);
+
   return (
     <>
       {isOpen && <button className="drawer-scrim" aria-label="关闭导航菜单" onClick={onClose} />}
-      <aside className={`sidebar ${isOpen ? 'sidebar--open' : ''}`} aria-label="工具导航">
+      <aside className={`sidebar ${isOpen ? 'sidebar--open' : ''}`} aria-hidden={isHidden || undefined} aria-label="工具导航">
         <div className="sidebar__topline">
           <a className="brand" href="/" aria-label="DelphiTools 首页">
             <span className="brand__mark" aria-hidden="true">D</span>
             <span><strong>DelphiTools</strong><small>本地创作工具集</small></span>
           </a>
-          <button className="icon-button sidebar__close" type="button" onClick={onClose} aria-label="关闭导航菜单">×</button>
+          <button ref={closeButtonRef} className="icon-button sidebar__close" type="button" onClick={onClose} aria-label="关闭导航菜单">×</button>
         </div>
+
+        <label className="search-field sidebar__search">
+          <span className="sr-only">搜索工具</span>
+          <span aria-hidden="true">⌕</span>
+          <input type="search" role="searchbox" value={searchQuery} onChange={(event) => onSearchQueryChange(event.target.value)} placeholder="搜索工具，例如：二维码、图片转换、颜色" />
+        </label>
 
         <nav className="sidebar__nav" aria-label="工具分类">
           <a href="#featured" onClick={onClose}>精选工具</a>
