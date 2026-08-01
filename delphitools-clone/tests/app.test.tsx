@@ -86,4 +86,25 @@ describe('应用壳', () => {
 
     Object.defineProperty(window, 'innerWidth', { configurable: true, value: originalWidth });
   });
+
+  it('移动端关闭抽屉时 Tab 不会进入内部搜索、链接或主题按钮', async () => {
+    const originalWidth = window.innerWidth;
+    Object.defineProperty(window, 'innerWidth', { configurable: true, value: 390 });
+    const user = userEvent.setup();
+    render(<App />);
+
+    const openButton = screen.getByRole('button', { name: '打开导航菜单' });
+    const drawer = document.querySelector('aside')!;
+    expect(drawer.querySelector('input[type="search"]')).not.toBeNull();
+    expect(drawer.querySelector('a[href="#featured"]')).not.toBeNull();
+    expect(drawer.querySelector('.theme-button')).not.toBeNull();
+
+    openButton.focus();
+    for (let step = 0; step < 12; step += 1) {
+      await user.tab({ shift: true });
+      expect(drawer).not.toContain(document.activeElement);
+    }
+
+    Object.defineProperty(window, 'innerWidth', { configurable: true, value: originalWidth });
+  });
 });
