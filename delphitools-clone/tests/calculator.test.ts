@@ -41,6 +41,12 @@ describe('安全科学计算器', () => {
     expect(() => evaluateScientific('tan(pi / 2)')).toThrow(/tan.*定义域/);
     expect(() => evaluateScientific('tan(pi / 2 + pi)')).toThrow(/tan.*定义域/);
     expect(() => evaluateScientific('tan(-pi / 2 + 2 * pi)')).toThrow(/tan.*定义域/);
+    expect(() => evaluateScientific('tan(pi / 2 + 1000000 * pi)')).toThrow(/tan.*定义域/);
+    expect(() => evaluateScientific('tan(pi / 2 + 1000000000 * pi)')).toThrow(/tan.*定义域/);
+  });
+
+  it('tan 接近远周期奇点但超过浮点容差时仍可求值', () => {
+    expect(Number.isFinite(evaluateScientific('tan(pi / 2 + 1000000000 * pi + 0.00001)'))).toBe(true);
   });
 });
 
@@ -111,6 +117,15 @@ describe('函数绘图采样', () => {
 
   it('普通陡峭连续函数不会被误判为断点', () => {
     const points = buildPlotSeries('1000 * x', [-1, 1], 100);
+    expect(points).toHaveLength(100);
+    expect(points.every((point) => point !== null)).toBe(true);
+  });
+
+  it.each([
+    '1 / (x^2 + 0.000001)',
+    '1000000 / (1 + 1000000 * x^2)',
+  ])('连续有限尖峰 %s 在偶数采样下不插入断点', (expression) => {
+    const points = buildPlotSeries(expression, [-1, 1], 100);
     expect(points).toHaveLength(100);
     expect(points.every((point) => point !== null)).toBe(true);
   });

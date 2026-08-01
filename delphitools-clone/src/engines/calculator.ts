@@ -19,8 +19,11 @@ const FUNCTIONS: Readonly<Record<string, (value: number) => number>> = {
   sin: Math.sin,
   cos: Math.cos,
   tan: (value) => {
-    if (Math.abs(Math.cos(value)) < 1e-12) throw new Error('tan 的输入超出定义域：cos(x) 接近零');
-    return Math.tan(value);
+    const reduced = value - Math.round(value / Math.PI) * Math.PI;
+    const distanceFromPole = Math.abs(Math.abs(reduced) - Math.PI / 2);
+    const reductionTolerance = 8 * Number.EPSILON * Math.max(Math.PI, Math.abs(value));
+    if (distanceFromPole <= reductionTolerance) throw new Error('tan 的输入超出定义域：cos(x) 接近零');
+    return Math.tan(reduced);
   },
   asin: (value) => {
     if (value < -1 || value > 1) throw new Error('asin 的输入超出定义域 [-1, 1]');
@@ -418,30 +421,67 @@ function isSamplingDomainError(reason: unknown): boolean {
 function evaluatePlotPoint(expression: string, x: number): PlotPoint | null {
   try {
     const y = evaluateWithVariables(expression, { x });
-    return Number.isFinite(y) && Math.abs(y) <= 1_000_000 ? { x, y: normalizeNumber(y) } : null;
+    return Number.isFinite(y) ? { x, y: normalizeNumber(y) } : null;
   } catch (reason) {
     if (!isSamplingDomainError(reason)) throw reason;
     return null;
   }
 }
 
-function intervalHasDiscontinuity(expression: string, left: PlotPoint, right: PlotPoint, depth = 6): boolean {
-  const middleX = (left.x + right.x) / 2;
-  const middle = evaluatePlotPoint(expression, middleX);
-  if (!middle) return true;
+const MAX_DISCONTINUITY_DEPTH = 12;
+const MAX_DISCONTINUITY_PROBES = MAX_DISCONTINUITY_DEPTH * 3;
+const REQUIRED_DIVERGENCE_STEPS = 3;
 
-  const endpointScale = Math.max(1, Math.abs(left.y), Math.abs(right.y));
-  const middleMagnitude = Math.abs(middle.y);
-  if (middleMagnitude > Math.max(50, endpointScale * 8)) return true;
+function intervalHasDiscontinuity(expression: string, initialLeft: PlotPoint, initialRight: PlotPoint): boolean {
+  let left = initialLeft;
+  let right = initialRight;
+  let probes = 0;
+  let largestObserved = Math.max(Math.abs(left.y), Math.abs(right.y));
+  let divergenceSteps = 0;
 
-  const largeSignChange = Math.sign(left.y) !== Math.sign(right.y)
-    && Math.min(Math.abs(left.y), Math.abs(right.y)) > 10;
-  const linearMiddle = (left.y + right.y) / 2;
-  const visiblyCurved = Math.abs(middle.y - linearMiddle) > Math.max(10, endpointScale * 0.5);
-  if (depth === 0) return largeSignChange;
-  if (!largeSignChange && !visiblyCurved) return false;
-  return intervalHasDiscontinuity(expression, left, middle, depth - 1)
-    || intervalHasDiscontinuity(expression, middle, right, depth - 1);
+  for (let depth = 0; depth < MAX_DISCONTINUITY_DEPTH && probes + 3 <= MAX_DISCONTINUITY_PROBES; depth += 1) {
+    const width = right.x - left.x;
+    const quarter = evaluatePlotPoint(expression, left.x + width / 4);
+    const middle = evaluatePlotPoint(expression, left.x + width / 2);
+    const threeQuarter = evaluatePlotPoint(expression, left.x + width * 3 / 4);
+    probes += 3;
+    if (!quarter || !middle || !threeQuarter) return true;
+
+    const points = [left, quarter, middle, threeQuarter, right];
+    const magnitudes = points.map((point) => Math.abs(point.y));
+    const peakMagnitude = Math.max(...magnitudes);
+    const peakIndex = magnitudes.indexOf(peakMagnitude);
+
+    if (depth === 0) {
+      const endpointScale = Math.max(1, Math.abs(left.y), Math.abs(right.y));
+      const largeSignChange = Math.sign(left.y) !== Math.sign(right.y)
+        && Math.min(Math.abs(left.y), Math.abs(right.y)) > 10;
+      const linearMiddle = (left.y + right.y) / 2;
+      const visiblyCurved = Math.abs(middle.y - linearMiddle) > Math.max(10, endpointScale * 0.5);
+      const pronouncedPeak = peakMagnitude > Math.max(50, endpointScale * 8);
+      if (!largeSignChange && !visiblyCurved && !pronouncedPeak) return false;
+    }
+
+    if (peakMagnitude > largestObserved * 1.5) {
+      largestObserved = peakMagnitude;
+      divergenceSteps += 1;
+      if (divergenceSteps >= REQUIRED_DIVERGENCE_STEPS) return true;
+    } else {
+      divergenceSteps = 0;
+      if (peakMagnitude > largestObserved) largestObserved = peakMagnitude;
+    }
+
+    if (peakIndex === 0) {
+      right = quarter;
+    } else if (peakIndex === points.length - 1) {
+      left = threeQuarter;
+    } else {
+      left = points[peakIndex - 1];
+      right = points[peakIndex + 1];
+    }
+  }
+
+  return false;
 }
 
 export function buildPlotSeries(expression: string, domain: readonly [number, number], samples: number): PlotSample[] {
