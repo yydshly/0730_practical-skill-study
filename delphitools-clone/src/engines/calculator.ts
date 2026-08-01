@@ -18,7 +18,10 @@ const CONSTANTS: Readonly<Record<string, number>> = {
 const FUNCTIONS: Readonly<Record<string, (value: number) => number>> = {
   sin: Math.sin,
   cos: Math.cos,
-  tan: Math.tan,
+  tan: (value) => {
+    if (Math.abs(Math.cos(value)) < 1e-12) throw new Error('tan 的输入超出定义域：cos(x) 接近零');
+    return Math.tan(value);
+  },
   asin: (value) => {
     if (value < -1 || value > 1) throw new Error('asin 的输入超出定义域 [-1, 1]');
     return Math.asin(value);
@@ -193,17 +196,25 @@ export function evaluateScientific(expression: string): number {
 
 type Polynomial = Map<number, number>;
 
+function ensureFiniteCoefficient(value: number): number {
+  if (!Number.isFinite(value)) throw new Error('多项式系数必须是有限数字，计算结果超出数值范围');
+  return value;
+}
+
 function polynomial(entries: readonly (readonly [number, number])[] = []): Polynomial {
   const result = new Map<number, number>();
-  for (const [degree, coefficient] of entries) {
-    if (Math.abs(coefficient) > 1e-12) result.set(degree, normalizeNumber(coefficient));
+  for (const [degree, rawCoefficient] of entries) {
+    const coefficient = ensureFiniteCoefficient(rawCoefficient);
+    if (Math.abs(coefficient) > 1e-12) result.set(degree, ensureFiniteCoefficient(normalizeNumber(coefficient)));
   }
   return result;
 }
 
 function addPolynomials(left: Polynomial, right: Polynomial, direction = 1): Polynomial {
   const result = new Map(left);
-  for (const [degree, coefficient] of right) result.set(degree, (result.get(degree) ?? 0) + direction * coefficient);
+  for (const [degree, coefficient] of right) {
+    result.set(degree, ensureFiniteCoefficient((result.get(degree) ?? 0) + direction * coefficient));
+  }
   return polynomial([...result]);
 }
 
@@ -213,7 +224,8 @@ function multiplyPolynomials(left: Polynomial, right: Polynomial): Polynomial {
     for (const [rightDegree, rightCoefficient] of right) {
       const degree = leftDegree + rightDegree;
       if (degree > 12) throw new Error('仅支持次数不超过 12 的多项式');
-      result.set(degree, (result.get(degree) ?? 0) + leftCoefficient * rightCoefficient);
+      const product = ensureFiniteCoefficient(leftCoefficient * rightCoefficient);
+      result.set(degree, ensureFiniteCoefficient((result.get(degree) ?? 0) + product));
     }
   }
   return polynomial([...result]);
@@ -330,8 +342,9 @@ function polynomialDegree(value: Polynomial): number {
 }
 
 function normalizeNumber(value: number): number {
-  const rounded = Math.round(value);
-  const result = Math.abs(value - rounded) < 1e-10 ? rounded : Number(value.toPrecision(12));
+  const finiteValue = ensureFinite(value);
+  const rounded = Math.round(finiteValue);
+  const result = Math.abs(finiteValue - rounded) < 1e-10 ? rounded : Number(finiteValue.toPrecision(12));
   return Object.is(result, -0) ? 0 : result;
 }
 
@@ -340,7 +353,7 @@ function formatNumber(value: number): string {
 }
 
 function formatPolynomial(value: Polynomial): string {
-  const entries = [...value].filter(([, coefficient]) => Math.abs(coefficient) > 1e-12).sort(([a], [b]) => b - a);
+  const entries = [...value].map(([degree, coefficient]) => [degree, ensureFiniteCoefficient(coefficient)] as const).filter(([, coefficient]) => Math.abs(coefficient) > 1e-12).sort(([a], [b]) => b - a);
   if (!entries.length) return '0';
   return entries.map(([degree, rawCoefficient], index) => {
     const coefficient = normalizeNumber(rawCoefficient);
@@ -369,7 +382,7 @@ export function factorAlgebra(expression: string): string {
   const a = value.get(2) ?? 0;
   const b = value.get(1) ?? 0;
   const c = value.get(0) ?? 0;
-  const discriminant = b * b - 4 * a * c;
+  const discriminant = ensureFiniteCoefficient(b * b - 4 * a * c);
   if (discriminant < -1e-12) throw new Error('该二次式没有实数因式');
   const squareRoot = Math.sqrt(Math.max(0, discriminant));
   const roots = [(-b - squareRoot) / (2 * a), (-b + squareRoot) / (2 * a)].map(normalizeNumber).sort((left, right) => left - right);
@@ -382,12 +395,12 @@ export function solveAlgebra(equation: string): number[] {
   const value = parsePolynomialExpression(equation);
   const degree = polynomialDegree(value);
   if (degree === 0) throw new Error((value.get(0) ?? 0) === 0 ? '方程有无穷多个解' : '方程没有解');
-  if (degree === 1) return [normalizeNumber(-(value.get(0) ?? 0) / value.get(1)!)];
+  if (degree === 1) return [normalizeNumber(ensureFiniteCoefficient(-(value.get(0) ?? 0) / value.get(1)!))];
   if (degree !== 2) throw new Error('当前仅支持一次和二次方程');
   const a = value.get(2)!;
   const b = value.get(1) ?? 0;
   const c = value.get(0) ?? 0;
-  const discriminant = b * b - 4 * a * c;
+  const discriminant = ensureFiniteCoefficient(b * b - 4 * a * c);
   if (discriminant < -1e-12) throw new Error('方程没有实数解');
   const squareRoot = Math.sqrt(Math.max(0, discriminant));
   return [...new Set([normalizeNumber((-b - squareRoot) / (2 * a)), normalizeNumber((-b + squareRoot) / (2 * a))])].sort((left, right) => left - right);
@@ -395,11 +408,40 @@ export function solveAlgebra(equation: string): number[] {
 
 export function differentiate(expression: string): string {
   const value = parsePolynomialExpression(expression);
-  return formatPolynomial(polynomial([...value].filter(([degree]) => degree > 0).map(([degree, coefficient]) => [degree - 1, degree * coefficient] as const)));
+  return formatPolynomial(polynomial([...value].filter(([degree]) => degree > 0).map(([degree, coefficient]) => [degree - 1, ensureFiniteCoefficient(degree * coefficient)] as const)));
 }
 
 function isSamplingDomainError(reason: unknown): boolean {
   return reason instanceof Error && /除数不能为零|定义域|数值范围/u.test(reason.message);
+}
+
+function evaluatePlotPoint(expression: string, x: number): PlotPoint | null {
+  try {
+    const y = evaluateWithVariables(expression, { x });
+    return Number.isFinite(y) && Math.abs(y) <= 1_000_000 ? { x, y: normalizeNumber(y) } : null;
+  } catch (reason) {
+    if (!isSamplingDomainError(reason)) throw reason;
+    return null;
+  }
+}
+
+function intervalHasDiscontinuity(expression: string, left: PlotPoint, right: PlotPoint, depth = 6): boolean {
+  const middleX = (left.x + right.x) / 2;
+  const middle = evaluatePlotPoint(expression, middleX);
+  if (!middle) return true;
+
+  const endpointScale = Math.max(1, Math.abs(left.y), Math.abs(right.y));
+  const middleMagnitude = Math.abs(middle.y);
+  if (middleMagnitude > Math.max(50, endpointScale * 8)) return true;
+
+  const largeSignChange = Math.sign(left.y) !== Math.sign(right.y)
+    && Math.min(Math.abs(left.y), Math.abs(right.y)) > 10;
+  const linearMiddle = (left.y + right.y) / 2;
+  const visiblyCurved = Math.abs(middle.y - linearMiddle) > Math.max(10, endpointScale * 0.5);
+  if (depth === 0) return largeSignChange;
+  if (!largeSignChange && !visiblyCurved) return false;
+  return intervalHasDiscontinuity(expression, left, middle, depth - 1)
+    || intervalHasDiscontinuity(expression, middle, right, depth - 1);
 }
 
 export function buildPlotSeries(expression: string, domain: readonly [number, number], samples: number): PlotSample[] {
@@ -407,21 +449,19 @@ export function buildPlotSeries(expression: string, domain: readonly [number, nu
   if (!Number.isFinite(minimum) || !Number.isFinite(maximum) || minimum >= maximum) throw new Error('定义域必须是从小到大的有限数字');
   if (!Number.isInteger(samples) || samples < 2 || samples > 5000) throw new Error('采样点数量必须是 2 到 5000 的整数');
   tokenize(expression);
-  const result: PlotSample[] = [];
+  const sampled: PlotSample[] = [];
   const step = (maximum - minimum) / (samples - 1);
   for (let index = 0; index < samples; index += 1) {
     const rawX = index === samples - 1 ? maximum : minimum + index * step;
     const x = Math.abs(rawX) < 1e-12 ? 0 : normalizeNumber(rawX);
-    try {
-      const y = evaluateWithVariables(expression, { x });
-      const point = Number.isFinite(y) && Math.abs(y) <= 1_000_000 ? { x, y: normalizeNumber(y) } : null;
-      const previous = result[result.length - 1];
-      if (point && previous && Math.sign(point.y) !== Math.sign(previous.y) && Math.min(Math.abs(point.y), Math.abs(previous.y)) > 10) result.push(null);
-      result.push(point);
-    } catch (reason) {
-      if (!isSamplingDomainError(reason)) throw reason;
-      if (result[result.length - 1] !== null) result.push(null);
-    }
+    sampled.push(evaluatePlotPoint(expression, x));
+  }
+  const result: PlotSample[] = [];
+  for (let index = 0; index < sampled.length; index += 1) {
+    const point = sampled[index];
+    const previous = sampled[index - 1];
+    if (point && previous && intervalHasDiscontinuity(expression, previous, point) && result[result.length - 1] !== null) result.push(null);
+    if (point !== null || result[result.length - 1] !== null) result.push(point);
   }
   while (result[0] === null) result.shift();
   while (result[result.length - 1] === null) result.pop();
@@ -449,6 +489,7 @@ export function calculateDate(input: Date | string | number, amount: number, uni
 }
 
 export function parseUnixTimestamp(value: number | string, unit: UnixTimestampUnit = 'auto'): Date {
+  if (typeof value === 'string' && !value.trim()) throw new Error('Unix 时间戳不能为空');
   const numeric = typeof value === 'string' ? Number(value.trim()) : value;
   if (!Number.isFinite(numeric)) throw new Error('Unix 时间戳必须是有限数字');
   const milliseconds = unit === 'milliseconds' || (unit === 'auto' && Math.abs(numeric) >= 100_000_000_000) ? numeric : numeric * 1000;
@@ -457,7 +498,7 @@ export function parseUnixTimestamp(value: number | string, unit: UnixTimestampUn
 
 export function formatUnixTimestamp(input: Date | string | number, unit: Exclude<UnixTimestampUnit, 'auto'> = 'seconds'): number {
   const milliseconds = validDate(input).getTime();
-  return unit === 'milliseconds' ? milliseconds : Math.trunc(milliseconds / 1000);
+  return unit === 'milliseconds' ? milliseconds : milliseconds / 1000;
 }
 
 export function convertTimezone(input: Date | string | number, timeZone: string): string {

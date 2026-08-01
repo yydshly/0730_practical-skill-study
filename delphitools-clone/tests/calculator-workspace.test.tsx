@@ -114,6 +114,19 @@ describe('计算工作台关键交互', () => {
     expect(screen.getByText(/本地时区/)).toBeVisible();
   });
 
+  it('时间工具把日期双向转换为带精度的 Unix 秒和整数毫秒', async () => {
+    const user = userEvent.setup();
+    renderTool('time-calc');
+
+    fireEvent.change(screen.getByLabelText('日期转时间戳输入'), { target: { value: '1969-12-31T23:59:59.999' } });
+    await user.click(screen.getByRole('button', { name: '日期转 Unix 时间戳' }));
+    expect(screen.getByLabelText('日期转时间戳结果')).toHaveTextContent('-0.001 秒');
+
+    await user.selectOptions(screen.getByLabelText('输出时间戳单位'), 'milliseconds');
+    await user.click(screen.getByRole('button', { name: '日期转 Unix 时间戳' }));
+    expect(screen.getByLabelText('日期转时间戳结果')).toHaveTextContent('-1 毫秒');
+  });
+
   it('单位换算按类别更新单位并保留输入数值', async () => {
     const user = userEvent.setup();
     renderTool('unit-converter');

@@ -11,6 +11,7 @@ import {
   differentiate,
   evaluateScientific,
   factorAlgebra,
+  formatUnixTimestamp,
   parseUnixTimestamp,
   simplifyAlgebra,
   solveAlgebra,
@@ -195,7 +196,8 @@ function GraphCalculator() {
 }
 
 function utcInput(value: string): string {
-  return `${value}:00.000Z`;
+  const time = value.split('T')[1] ?? '';
+  return time.split(':').length >= 3 ? `${value}Z` : `${value}:00.000Z`;
 }
 
 function TimeCalculator() {
@@ -203,6 +205,9 @@ function TimeCalculator() {
   const [timestamp, setTimestamp] = useState('0');
   const [timestampUnit, setTimestampUnit] = useState<UnixTimestampUnit>('seconds');
   const [timestampResult, setTimestampResult] = useState('');
+  const [unixDateInput, setUnixDateInput] = useState('1970-01-01T00:00:00.000');
+  const [outputTimestampUnit, setOutputTimestampUnit] = useState<Exclude<UnixTimestampUnit, 'auto'>>('seconds');
+  const [dateTimestampResult, setDateTimestampResult] = useState('');
   const [dateInput, setDateInput] = useState('2024-02-28T00:00');
   const [dateAmount, setDateAmount] = useState(1);
   const [dateUnit, setDateUnit] = useState<DateUnit>('day');
@@ -227,6 +232,15 @@ function TimeCalculator() {
       </div>
       <button type="button" onClick={() => run(() => parseUnixTimestamp(timestamp, timestampUnit).toISOString(), setTimestampResult)}>转换时间戳</button>
       {timestampResult && <output aria-label="时间戳转换结果">{timestampResult}</output>}
+      <div className="text-controls text-controls--two">
+        <label>日期转时间戳输入<input aria-label="日期转时间戳输入" type="datetime-local" step="0.001" value={unixDateInput} onChange={(event) => { setUnixDateInput(event.target.value); setDateTimestampResult(''); }} /></label>
+        <label>输出时间戳单位<select aria-label="输出时间戳单位" value={outputTimestampUnit} onChange={(event) => { setOutputTimestampUnit(event.target.value as Exclude<UnixTimestampUnit, 'auto'>); setDateTimestampResult(''); }}><option value="seconds">秒（保留毫秒精度）</option><option value="milliseconds">毫秒（整数）</option></select></label>
+      </div>
+      <button type="button" onClick={() => run(() => {
+        const value = formatUnixTimestamp(utcInput(unixDateInput), outputTimestampUnit);
+        return `${value} ${outputTimestampUnit === 'seconds' ? '秒' : '毫秒'}`;
+      }, setDateTimestampResult)}>日期转 Unix 时间戳</button>
+      {dateTimestampResult && <output aria-label="日期转时间戳结果">{dateTimestampResult}</output>}
     </section>
     <section className="result-panel">
       <h2>日期加减</h2>
