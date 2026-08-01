@@ -26,6 +26,16 @@ function DropzoneHarness() {
   );
 }
 
+function SingleFileDropzoneHarness() {
+  const [names, setNames] = useState<string[]>([]);
+  return (
+    <>
+      <FileDropzone accepted={['image/*']} multiple={false} onFiles={(files) => setNames(files.map((file) => file.name))} />
+      <output aria-label="单文件接收结果">{names.join(',')}</output>
+    </>
+  );
+}
+
 function ResultHarness() {
   const [reset, setReset] = useState(false);
   return (
@@ -72,6 +82,43 @@ describe('FileDropzone', () => {
     expect(activated).toHaveBeenCalledTimes(2);
     await user.keyboard(' ');
     expect(activated).toHaveBeenCalledTimes(3);
+  });
+
+  it('不会把父级 onFiles 抛出的错误当成文件校验错误吞掉', () => {
+    const parentError = new Error('父级处理失败');
+    let reportedError: unknown;
+    const captureError = (event: ErrorEvent) => {
+      reportedError = event.error;
+      event.preventDefault();
+    };
+    window.addEventListener('error', captureError);
+    render(<FileDropzone accepted={['image/*']} onFiles={() => { throw parentError; }} />);
+    const dropzone = screen.getByRole('button', { name: '选择或拖放文件' });
+    const file = new File(['png'], 'photo.png', { type: 'image/png' });
+
+    try {
+      fireEvent.drop(dropzone, { dataTransfer: { files: [file] } });
+      expect(reportedError).toBe(parentError);
+      expect(screen.queryByRole('alert')).toBeNull();
+    } finally {
+      window.removeEventListener('error', captureError);
+    }
+  });
+
+  it('单文件模式在文件选择和拖放时都只接收第一个文件', () => {
+    render(<SingleFileDropzoneHarness />);
+    const dropzone = screen.getByRole('button', { name: '选择或拖放文件' });
+    const input = screen.getByLabelText('选择文件');
+    const pickedFirst = new File(['png'], 'picked-first.png', { type: 'image/png' });
+    const pickedSecond = new File(['png'], 'picked-second.png', { type: 'image/png' });
+    const droppedFirst = new File(['png'], 'dropped-first.png', { type: 'image/png' });
+    const droppedSecond = new File(['png'], 'dropped-second.png', { type: 'image/png' });
+
+    fireEvent.change(input, { target: { files: [pickedFirst, pickedSecond] } });
+    expect(screen.getByLabelText('单文件接收结果')).toHaveTextContent(/^picked-first\.png$/);
+
+    fireEvent.drop(dropzone, { dataTransfer: { files: [droppedFirst, droppedSecond] } });
+    expect(screen.getByLabelText('单文件接收结果')).toHaveTextContent(/^dropped-first\.png$/);
   });
 });
 

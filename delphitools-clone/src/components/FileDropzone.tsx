@@ -20,16 +20,20 @@ export function FileDropzone({ accepted, onFiles, maxSizeBytes, multiple = true 
   const [error, setError] = useState('');
 
   const acceptFiles = (files: File[]) => {
+    const selectedFiles = multiple ? files : files.slice(0, 1);
+
     try {
-      files.forEach((file) => {
+      selectedFiles.forEach((file) => {
         assertAcceptedFile(file, accepted);
         if (maxSizeBytes !== undefined && file.size > maxSizeBytes) throw new Error(maxSizeMessage(maxSizeBytes));
       });
       setError('');
-      onFiles(files);
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : '文件无法处理，请重新选择');
+      return;
     }
+
+    onFiles(selectedFiles);
   };
 
   const openPicker = () => inputRef.current?.click();

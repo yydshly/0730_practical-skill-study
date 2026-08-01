@@ -76,3 +76,40 @@ npm.cmd run build
 ## 提交
 
 提交信息：`feat: add local file and result pipeline`。
+
+## Fix round 1：FileDropzone 重要问题修复
+
+### RED
+
+在 `tests/file-components.test.tsx` 先新增两项真实组件行为测试，并执行：
+
+```powershell
+npm.cmd test -- tests/file-components.test.tsx
+```
+
+结果：7 项中 2 项失败。
+
+- 有效拖放触发的父级 `onFiles` 错误被组件捕获，没有到达浏览器错误边界。
+- `multiple={false}` 时，文件选择将 `picked-first.png,picked-second.png` 一起交给了父级，未遵守单文件语义。
+
+测试使用真实 `FileDropzone`。父级错误的最终断言监听真实 `window` 错误事件并阻止测试环境将预期错误标记为未处理错误；这符合 React 事件处理器通过浏览器错误边界传播、而不从 `fireEvent` 同步返回的行为。
+
+### GREEN
+
+将文件归一化为 `selectedFiles`：单文件模式仅保留传入列表的第一个文件，文件选择与拖放共用该入口。校验 `try/catch` 只围绕类型和大小校验；成功后在其外调用 `onFiles(selectedFiles)`，让父级错误按约定向外传播。
+
+重新执行 focused 测试：
+
+```powershell
+npm.cmd test -- tests/file-components.test.tsx
+```
+
+结果：7/7 通过。
+
+执行 full suite：
+
+```powershell
+npm.cmd test -- --run
+```
+
+结果：4 个测试文件、28/28 通过。
