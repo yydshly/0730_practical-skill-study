@@ -153,6 +153,16 @@ describe('六条高级媒体路由', () => {
     expect(screen.getByLabelText('翻转方式')).toBeVisible();
     expect(screen.getByText(/小册子固定双面输出/)).toBeVisible();
   });
+
+  it('翻转方式按当前纸张方向说明物理长边和短边', async () => {
+    renderTool('imposer');
+    expect(screen.getByRole('option', { name: '长边翻转（横向纸张：上下镜像）' })).toBeVisible();
+    expect(screen.getByRole('option', { name: '短边翻转（横向纸张：左右镜像）' })).toBeVisible();
+    await userEvent.selectOptions(screen.getByLabelText('纸张方向'), 'portrait');
+    expect(screen.getByRole('option', { name: '长边翻转（纵向纸张：左右镜像）' })).toBeVisible();
+    expect(screen.getByRole('option', { name: '短边翻转（纵向纸张：上下镜像）' })).toBeVisible();
+    expect(screen.getByText(/长边指纸张较长的物理边/)).toBeVisible();
+  });
 });
 
 describe('六条路由核心成功与恢复', () => {
@@ -274,6 +284,91 @@ describe('高级媒体任务竞态与卸载清理', () => {
     expect(screen.getByRole('button', { name: '下载追踪 SVG' })).toBeVisible();
     expect(screen.queryByText('A 任务迟到失败')).toBeNull();
     expect(workers[0].terminate).toHaveBeenCalled();
+  });
+
+  it('背景移除处理中选择非法文件会使旧 Worker 永久失效', async () => {
+    const workers = installControlledWorkers();
+    renderTool('background-remover');
+    const input = screen.getByLabelText('选择背景移除图片');
+    fireEvent.change(input, { target: { files: [new File(['a'], 'A.png', { type: 'image/png' })] } });
+    await screen.findByText('图片已读取，可开始本地颜色背景移除');
+    await userEvent.click(screen.getByRole('button', { name: '移除颜色背景' }));
+    await waitFor(() => expect(workers).toHaveLength(1));
+
+    fireEvent.change(input, { target: { files: [new File(['bad'], '非法.txt', { type: 'text/plain' })] } });
+    expect(screen.getByLabelText('背景移除 工作区').querySelector('.status-message')).toHaveTextContent('请选择图片文件');
+    expect(workers[0].terminate).toHaveBeenCalled();
+    await act(async () => {
+      workers[0].success({ width: 3, height: 1, data: new Uint8ClampedArray(12).buffer });
+      await Promise.resolve();
+    });
+    expect(screen.getByLabelText('背景移除 工作区').querySelector('.status-message')).toHaveTextContent('请选择图片文件');
+    expect(screen.queryByRole('button', { name: '下载透明 PNG' })).toBeNull();
+  });
+
+  it('图片追踪处理中选择非法文件会使旧 Worker 永久失效', async () => {
+    const workers = installControlledWorkers();
+    renderTool('image-tracer');
+    const input = screen.getByLabelText('选择追踪图片');
+    fireEvent.change(input, { target: { files: [new File(['a'], 'A.png', { type: 'image/png' })] } });
+    await screen.findByText('图片已读取，可开始追踪');
+    await userEvent.click(screen.getByRole('button', { name: '生成 SVG' }));
+    await waitFor(() => expect(workers).toHaveLength(1));
+
+    fireEvent.change(input, { target: { files: [new File(['bad'], '非法.txt', { type: 'text/plain' })] } });
+    expect(screen.getByLabelText('图片转 SVG 工作区').querySelector('.status-message')).toHaveTextContent('请选择图片文件');
+    expect(workers[0].terminate).toHaveBeenCalled();
+    await act(async () => {
+      workers[0].success({ svg: '<svg xmlns="http://www.w3.org/2000/svg"><path d="M0 0h1v1z"/></svg>' });
+      await Promise.resolve();
+    });
+    expect(screen.getByLabelText('图片转 SVG 工作区').querySelector('.status-message')).toHaveTextContent('请选择图片文件');
+    expect(screen.queryByRole('button', { name: '下载追踪 SVG' })).toBeNull();
+  });
+
+  it('SVG 读取中选择非法文件会使旧 FileReader 结果永久失效', async () => {
+    const readers: DeferredReader[] = [];
+    class DeferredReader {
+      result: string | ArrayBuffer | null = null;
+      error: DOMException | null = null;
+      onload: ((event: ProgressEvent<FileReader>) => void) | null = null;
+      onerror: ((event: ProgressEvent<FileReader>) => void) | null = null;
+      readAsText = vi.fn(() => readers.push(this));
+      resolve(value: string) { this.result = value; this.onload?.(new ProgressEvent('load') as ProgressEvent<FileReader>); }
+    }
+    vi.stubGlobal('FileReader', DeferredReader as unknown as typeof FileReader);
+    renderTool('svg-optimiser');
+    const input = screen.getByLabelText('选择 SVG 文件');
+    fireEvent.change(input, { target: { files: [new File(['a'], 'A.svg', { type: 'image/svg+xml' })] } });
+    expect(readers).toHaveLength(1);
+    fireEvent.change(input, { target: { files: [new File(['bad'], '非法.txt', { type: 'text/plain' })] } });
+    expect(screen.getByLabelText('SVG 优化器 工作区').querySelector('.status-message')).toHaveTextContent('请选择图片文件');
+    await act(async () => {
+      readers[0].resolve('<svg xmlns="http://www.w3.org/2000/svg"><rect width="1" height="1"/></svg>');
+      await Promise.resolve();
+    });
+    expect(screen.getByLabelText('SVG 优化器 工作区').querySelector('.status-message')).toHaveTextContent('请选择图片文件');
+    expect(screen.queryByRole('button', { name: '下载优化后的 SVG' })).toBeNull();
+  });
+
+  it.each([
+    ['background-remover', '选择背景移除图片', '移除颜色背景', '背景相似度阈值'],
+    ['image-tracer', '选择追踪图片', '生成 SVG', '平滑度'],
+  ])('%s 参数变化会终止并失效正在运行的旧任务', async (toolId, inputLabel, runLabel, parameterLabel) => {
+    const workers = installControlledWorkers();
+    renderTool(toolId);
+    fireEvent.change(screen.getByLabelText(inputLabel), { target: { files: [new File(['a'], 'A.png', { type: 'image/png' })] } });
+    await screen.findByText(toolId === 'background-remover' ? '图片已读取，可开始本地颜色背景移除' : '图片已读取，可开始追踪');
+    await userEvent.click(screen.getByRole('button', { name: runLabel }));
+    await waitFor(() => expect(workers).toHaveLength(1));
+    fireEvent.change(screen.getByLabelText(parameterLabel), { target: { value: '50' } });
+    expect(workers[0].terminate).toHaveBeenCalled();
+    await act(async () => {
+      if (toolId === 'background-remover') workers[0].success({ width: 3, height: 1, data: new Uint8ClampedArray(12).buffer });
+      else workers[0].success({ svg: '<svg xmlns="http://www.w3.org/2000/svg"><path d="M0 0h1v1z"/></svg>' });
+      await Promise.resolve();
+    });
+    expect(screen.queryByRole('button', { name: toolId === 'background-remover' ? '下载透明 PNG' : '下载追踪 SVG' })).toBeNull();
   });
 
   it('SVG 读取采用最新文件，较慢旧读取不能覆盖新结果', async () => {

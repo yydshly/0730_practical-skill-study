@@ -6,6 +6,7 @@ import {
   bookletOrder,
   createZinePdf,
   embeddedPagePlacement,
+  impositionPlacementsForSide,
   imposePdf,
   nUpLayout,
   optimiseSvg,
@@ -44,6 +45,47 @@ describe('PDF 页序与版面', () => {
   it('N-up 拒绝会吃掉纸张空间的边距和间距', () => {
     expect(() => nUpLayout({ paper: 'A4', orientation: 'portrait', columns: 2, rows: 2, margin: 300, gap: 20 }))
       .toThrow('边距和间距超过纸张可用范围');
+  });
+
+  it('纵向纸张按长边镜像 X、短边镜像 Y，覆盖 Nx1 与 1xN 版位', () => {
+    const horizontal = nUpLayout({ paper: 'A4', orientation: 'portrait', columns: 3, rows: 1, margin: 20, gap: 10 });
+    const vertical = nUpLayout({ paper: 'A4', orientation: 'portrait', columns: 1, rows: 3, margin: 20, gap: 10 });
+    const longEdge = impositionPlacementsForSide(horizontal, 1, { orientation: 'portrait', duplex: 'double', flip: 'long-edge' });
+    const shortEdge = impositionPlacementsForSide(vertical, 1, { orientation: 'portrait', duplex: 'double', flip: 'short-edge' });
+
+    expect(longEdge.map((placement) => placement.x)).toEqual([...horizontal.placements].reverse().map((placement) => expect.closeTo(placement.x, 2)));
+    expect(longEdge.map((placement) => placement.y)).toEqual(horizontal.placements.map((placement) => placement.y));
+    expect(shortEdge.map((placement) => placement.y)).toEqual([...vertical.placements].reverse().map((placement) => expect.closeTo(placement.y, 2)));
+    expect(shortEdge.map((placement) => placement.x)).toEqual(vertical.placements.map((placement) => placement.x));
+  });
+
+  it('横向纸张按长边镜像 Y、短边镜像 X，覆盖 1xN 与 Nx1 版位', () => {
+    const vertical = nUpLayout({ paper: 'A4', orientation: 'landscape', columns: 1, rows: 3, margin: 20, gap: 10 });
+    const horizontal = nUpLayout({ paper: 'A4', orientation: 'landscape', columns: 3, rows: 1, margin: 20, gap: 10 });
+    const longEdge = impositionPlacementsForSide(vertical, 1, { orientation: 'landscape', duplex: 'double', flip: 'long-edge' });
+    const shortEdge = impositionPlacementsForSide(horizontal, 1, { orientation: 'landscape', duplex: 'double', flip: 'short-edge' });
+
+    expect(longEdge.map((placement) => placement.y)).toEqual([...vertical.placements].reverse().map((placement) => expect.closeTo(placement.y, 2)));
+    expect(longEdge.map((placement) => placement.x)).toEqual(vertical.placements.map((placement) => placement.x));
+    expect(shortEdge.map((placement) => placement.x)).toEqual([...horizontal.placements].reverse().map((placement) => expect.closeTo(placement.x, 2)));
+    expect(shortEdge.map((placement) => placement.y)).toEqual(horizontal.placements.map((placement) => placement.y));
+  });
+
+  it('2x2 编号版位按纸张物理翻转轴映射坐标', () => {
+    const layout = {
+      sheet: { width: 200, height: 100 },
+      placements: [
+        { x: 10, y: 60, width: 40, height: 30 },
+        { x: 150, y: 60, width: 40, height: 30 },
+        { x: 10, y: 10, width: 40, height: 30 },
+        { x: 150, y: 10, width: 40, height: 30 },
+      ],
+    };
+
+    expect(impositionPlacementsForSide(layout, 1, { orientation: 'portrait', duplex: 'double', flip: 'long-edge' }).map(({ x, y }) => [x, y]))
+      .toEqual([[150, 60], [10, 60], [150, 10], [10, 10]]);
+    expect(impositionPlacementsForSide(layout, 1, { orientation: 'landscape', duplex: 'double', flip: 'long-edge' }).map(({ x, y }) => [x, y]))
+      .toEqual([[10, 10], [150, 10], [10, 60], [150, 60]]);
   });
 });
 
@@ -193,6 +235,32 @@ describe('SVG 安全优化', () => {
 
   it('拒绝畸形 XML，而不是下载无法解析的 SVG', () => {
     expect(() => optimiseSvg('<svg xmlns="http://www.w3.org/2000/svg"><g></svg>')).toThrow('不是有效的 SVG 文件');
+  });
+
+  it('规范化 CSS escape 后移除外链，并保留可可靠解析的本地引用', () => {
+    const dangerous = optimiseSvg('<svg xmlns="http://www.w3.org/2000/svg"><style>.x{fill:\\75\\72\\6c(\\68\\74\\74\\70\\73\\3a\\2f\\2fevil.example/a)}</style><rect style="fill:u\\72l(\\2f\\2fevil.example/b)"/></svg>');
+    expect(dangerous.svg).not.toMatch(/evil\.example|\\75|\\72|\\6c/i);
+    expect(dangerous.removedUnsafe).toBe(true);
+
+    const safe = optimiseSvg('<svg xmlns="http://www.w3.org/2000/svg"><defs><filter id="soft"/></defs><rect style="filter:u\\72l(\\23soft)"/></svg>');
+    expect(safe.svg).toContain('style="filter:u\\72l(\\23soft)"');
+    expect(safe.removedUnsafe).toBe(false);
+  });
+
+  it('无法可靠规范化的反斜杠 CSS 会被保守移除', () => {
+    const result = optimiseSvg('<svg xmlns="http://www.w3.org/2000/svg"><rect style="fill:red\\"/></svg>');
+    expect(result.svg).not.toContain('style=');
+    expect(result.removedUnsafe).toBe(true);
+  });
+
+  it('移除外部 xml:base 与全部 SMIL 动画元素，并保持二次解析有效', () => {
+    const source = '<svg xmlns="http://www.w3.org/2000/svg" xml:base="https://evil.example/"><rect id="safe" width="10" height="10"><set attributeName="href" to="javascript:alert(1)"/><animate attributeName="fill" values="red;url(https://evil.example/a)"/><animateTransform attributeName="transform" type="scale" values="1;2"/></rect></svg>';
+    const result = optimiseSvg(source);
+    expect(result.svg).not.toMatch(/xml:base|<set|<animate|animateTransform|evil\.example|javascript/i);
+    expect(result.svg).toContain('id="safe"');
+    expect(result.removedUnsafe).toBe(true);
+    const reparsed = new DOMParser().parseFromString(result.svg, 'image/svg+xml');
+    expect(reparsed.querySelector('parsererror')).toBeNull();
   });
 });
 

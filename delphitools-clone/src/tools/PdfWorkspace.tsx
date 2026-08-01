@@ -146,6 +146,10 @@ function beginTask(version: TaskVersion, active?: React.MutableRefObject<ActiveJ
   return version.current;
 }
 
+function invalidateTask(version: TaskVersion, active?: React.MutableRefObject<ActiveJob | null>): void {
+  beginTask(version, active);
+}
+
 function useTaskCleanup(version: TaskVersion, active?: React.MutableRefObject<ActiveJob | null>): void {
   useEffect(() => () => {
     version.current += 1;
@@ -214,7 +218,7 @@ function BackgroundWorkspace({ tool }: PdfWorkspaceProps) {
     setStatus({ kind: 'error', message: '处理已取消' });
   };
   const updateOptions = (next: BackgroundOptions) => {
-    beginTask(version, active);
+    invalidateTask(version, active);
     setOutput(undefined);
     setOptions(next);
   };
@@ -222,7 +226,7 @@ function BackgroundWorkspace({ tool }: PdfWorkspaceProps) {
     <section className="image-workspace__body">
       <h2>本地颜色背景移除</h2>
       <p className="image-help">这不是 AI 抠图模型。算法从图片四角估计背景色，适合纯色或近似纯色背景。</p>
-      <FileDropzone accepted={['image/*']} inputLabel="选择背景移除图片" multiple={false} onFiles={select} onError={(message) => { setOutput(undefined); setStatus({ kind: 'error', message }); }} />
+      <FileDropzone accepted={['image/*']} inputLabel="选择背景移除图片" multiple={false} onFiles={select} onError={(message) => { invalidateTask(version, active); setOutput(undefined); setProgress(0); setStatus({ kind: 'error', message }); }} />
       {file && <p>{file.name}</p>}
       <div className="image-controls">
         <label>背景相似度阈值<input aria-label="背景相似度阈值" type="range" min="0" max="220" value={options.threshold} onChange={(event) => updateOptions({ ...options, threshold: Number(event.target.value) })} /></label>
@@ -283,12 +287,12 @@ function TraceWorkspace({ tool }: PdfWorkspaceProps) {
     }
   };
   const updateOptions = (next: TraceOptions) => {
-    beginTask(version, active);
+    invalidateTask(version, active);
     setSvg('');
     setOptions(next);
   };
   return <WorkspaceFrame tool={tool} note="图片在本地转换为真实 SVG 路径。该像素追踪适合图标、线稿和有限色块，不等同于专业曲线矢量化。">
-    <FileDropzone accepted={['image/*']} inputLabel="选择追踪图片" multiple={false} onFiles={select} onError={(message) => { setSvg(''); setStatus({ kind: 'error', message }); }} />
+    <FileDropzone accepted={['image/*']} inputLabel="选择追踪图片" multiple={false} onFiles={select} onError={(message) => { invalidateTask(version, active); setSvg(''); setStatus({ kind: 'error', message }); }} />
     {file && <p>{file.name}</p>}
     <div className="image-controls">
       {options.mode === 'monochrome' && <label>追踪阈值<input aria-label="追踪阈值" type="number" min="0" max="255" value={options.threshold} onChange={(event) => updateOptions({ ...options, threshold: Number(event.target.value) })} /></label>}
@@ -323,7 +327,7 @@ function SvgWorkspace({ tool }: PdfWorkspaceProps) {
     }
   };
   return <WorkspaceFrame tool={tool}>
-    <FileDropzone accepted={['image/svg+xml', '.svg']} inputLabel="选择 SVG 文件" multiple={false} onFiles={process} onError={(message) => { setResult(undefined); setStatus({ kind: 'error', message }); }} />
+    <FileDropzone accepted={['image/svg+xml', '.svg']} inputLabel="选择 SVG 文件" multiple={false} onFiles={process} onError={(message) => { invalidateTask(version); setResult(undefined); setStatus({ kind: 'error', message }); }} />
     {file && <p>{file.name}</p>}
     <StatusMessage status={status.kind} message={status.message} />
     {result && blob && <ResultPanel download={{ blob, name: `${file?.name.replace(/\.svg$/i, '') || '优化结果'}-优化.svg`, label: '下载优化后的 SVG' }} onReset={() => setResult(undefined)}>
@@ -399,8 +403,8 @@ function PrintControls({ options, setOptions }: { options: ImposeOptions; setOpt
     }}><option value="nup">N-up</option><option value="booklet">小册子 / 骑马订</option></select></label>
     {options.mode === 'nup' && <><label>每行列数<input aria-label="每行列数" type="number" min="1" max="8" value={options.columns} onChange={(event) => setOptions({ ...options, columns: Number(event.target.value) })} /></label><label>每页行数<input aria-label="每页行数" type="number" min="1" max="8" value={options.rows} onChange={(event) => setOptions({ ...options, rows: Number(event.target.value) })} /></label></>}
     {options.mode === 'nup' && <label>单双面<select aria-label="单双面" value={options.duplex} onChange={(event) => setOptions({ ...options, duplex: event.target.value as ImposeOptions['duplex'] })}><option value="single">单面输出</option><option value="double">双面打印</option></select></label>}
-    {(options.mode === 'booklet' || options.duplex === 'double') && <label>翻转方式<select aria-label="翻转方式" value={options.flip} onChange={(event) => setOptions({ ...options, flip: event.target.value as ImposeOptions['flip'] })}><option value="long-edge">长边翻转（背面镜像列）</option><option value="short-edge">短边翻转（背面镜像行）</option></select></label>}
-    <p className="image-help">{options.mode === 'booklet' ? '小册子固定双面输出，翻转方式会改变背面页序。' : '单面输出按正常顺序排版；双面输出会在偶数张输出页上按所选装订边镜像版位，便于翻面后对齐。'}</p>
+    {(options.mode === 'booklet' || options.duplex === 'double') && <label>翻转方式<select aria-label="翻转方式" value={options.flip} onChange={(event) => setOptions({ ...options, flip: event.target.value as ImposeOptions['flip'] })}><option value="long-edge">{options.orientation === 'portrait' ? '长边翻转（纵向纸张：左右镜像）' : '长边翻转（横向纸张：上下镜像）'}</option><option value="short-edge">{options.orientation === 'portrait' ? '短边翻转（纵向纸张：上下镜像）' : '短边翻转（横向纸张：左右镜像）'}</option></select></label>}
+    <p className="image-help">长边指纸张较长的物理边，短边指较短的物理边。{options.mode === 'booklet' ? '小册子固定双面输出，背面会按纸张方向和所选翻转边镜像版位。' : '单面输出按正常顺序排版；双面输出会在背面按纸张方向和所选物理翻转边镜像版位。'}</p>
   </div>;
 }
 

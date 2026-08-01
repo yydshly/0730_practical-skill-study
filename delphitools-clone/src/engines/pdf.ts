@@ -205,9 +205,15 @@ async function embeddedPages(output: PDFDocument, source: PDFDocument): Promise<
   return embedded.map((page, index) => ({ embedded: page, rotation: normalizedRightAngle(source.getPage(index).getRotation().angle) }));
 }
 
-function placementsForOutputSide(layout: NUpResult, outputPageIndex: number, duplex: ImposeOptions['duplex'], flip: ImposeOptions['flip']): NUpPlacement[] {
-  if (duplex !== 'double' || outputPageIndex % 2 === 0) return layout.placements;
-  return layout.placements.map((placement) => flip === 'long-edge'
+export function impositionPlacementsForSide(
+  layout: NUpResult,
+  outputPageIndex: number,
+  options: Pick<ImposeOptions, 'orientation' | 'duplex' | 'flip'>,
+): NUpPlacement[] {
+  if (options.duplex !== 'double' || outputPageIndex % 2 === 0) return layout.placements;
+  const mirrorX = (options.orientation === 'portrait' && options.flip === 'long-edge')
+    || (options.orientation === 'landscape' && options.flip === 'short-edge');
+  return layout.placements.map((placement) => mirrorX
     ? { ...placement, x: round(layout.sheet.width - placement.x - placement.width) }
     : { ...placement, y: round(layout.sheet.height - placement.y - placement.height) });
 }
@@ -223,16 +229,16 @@ export async function imposePdf(bytes: Uint8Array, options: ImposeOptions): Prom
       drawEmbedded(front, sheet[0] ? embedded[sheet[0] - 1] : undefined, layout.placements[0]);
       drawEmbedded(front, sheet[1] ? embedded[sheet[1] - 1] : undefined, layout.placements[1]);
       const back = output.addPage([layout.sheet.width, layout.sheet.height]);
-      const backOrder = options.flip === 'short-edge' ? [sheet[3], sheet[2]] : [sheet[2], sheet[3]];
-      drawEmbedded(back, backOrder[0] ? embedded[backOrder[0] - 1] : undefined, layout.placements[0]);
-      drawEmbedded(back, backOrder[1] ? embedded[backOrder[1] - 1] : undefined, layout.placements[1]);
+      const backPlacements = impositionPlacementsForSide(layout, 1, { ...options, duplex: 'double' });
+      drawEmbedded(back, sheet[2] ? embedded[sheet[2] - 1] : undefined, backPlacements[0]);
+      drawEmbedded(back, sheet[3] ? embedded[sheet[3] - 1] : undefined, backPlacements[1]);
     });
   } else {
     const layout = nUpLayout(options);
     const perSheet = layout.placements.length;
     for (let start = 0, outputPageIndex = 0; start < embedded.length; start += perSheet, outputPageIndex += 1) {
       const page = output.addPage([layout.sheet.width, layout.sheet.height]);
-      const placements = placementsForOutputSide(layout, outputPageIndex, options.duplex, options.flip);
+      const placements = impositionPlacementsForSide(layout, outputPageIndex, options);
       embedded.slice(start, start + perSheet).forEach((sourcePage, index) => drawEmbedded(page, sourcePage, placements[index]));
     }
   }
@@ -259,18 +265,56 @@ function utf8Size(value: string): number {
 }
 
 const SVG_NAMESPACE = 'http://www.w3.org/2000/svg';
-const BLOCKED_SVG_ELEMENTS = new Set(['script', 'foreignobject', 'iframe', 'object', 'embed']);
+const BLOCKED_SVG_ELEMENTS = new Set([
+  'script', 'foreignobject', 'iframe', 'object', 'embed',
+  'animate', 'animatecolor', 'animatemotion', 'animatetransform', 'discard', 'mpath', 'set',
+]);
 const CSS_VALUE_ATTRIBUTES = new Set(['style', 'fill', 'stroke', 'filter', 'clip-path', 'mask', 'marker', 'marker-start', 'marker-mid', 'marker-end']);
+const XML_NAMESPACE = 'http://www.w3.org/XML/1998/namespace';
 
 function parserFailed(document: Document): boolean {
   return document.documentElement.localName.toLowerCase() === 'parsererror'
     || Array.from(document.getElementsByTagName('*')).some((element) => element.localName.toLowerCase() === 'parsererror');
 }
 
+function decodeCssEscapes(value: string): string | null {
+  let decoded = '';
+  for (let index = 0; index < value.length; index += 1) {
+    if (value[index] !== '\\') {
+      decoded += value[index];
+      continue;
+    }
+    index += 1;
+    if (index >= value.length || /[\n\r\f]/.test(value[index])) return null;
+    if (/[0-9a-f]/i.test(value[index])) {
+      let hex = '';
+      while (index < value.length && hex.length < 6 && /[0-9a-f]/i.test(value[index])) {
+        hex += value[index];
+        index += 1;
+      }
+      const codePoint = Number.parseInt(hex, 16);
+      if (codePoint === 0 || codePoint > 0x10ffff || (codePoint >= 0xd800 && codePoint <= 0xdfff)) return null;
+      decoded += String.fromCodePoint(codePoint);
+      if (index < value.length && /[\t\n\r\f ]/.test(value[index])) {
+        if (value[index] === '\r' && value[index + 1] === '\n') index += 1;
+      } else {
+        index -= 1;
+      }
+      continue;
+    }
+    decoded += value[index];
+  }
+  return decoded;
+}
+
 function unsafeCss(value: string): boolean {
-  const normalized = value.replace(/\/\*[\s\S]*?\*\//g, '').replace(/[\u0000-\u0020]+/g, '').toLowerCase();
+  const decoded = value.includes('\\') ? decodeCssEscapes(value) : value;
+  if (decoded === null) return true;
+  const normalized = decoded.replace(/\/\*[\s\S]*?\*\//g, '').replace(/[\u0000-\u0020]+/g, '').toLowerCase();
   if (/@import|expression\(|javascript:|data:|https?:|(?:^|[({:,])\/\//i.test(normalized)) return true;
-  for (const match of normalized.matchAll(/url\(([^)]*)\)/g)) {
+  const urls = Array.from(normalized.matchAll(/url\(([^)]*)\)/g));
+  if (normalized.includes('url(') && urls.length === 0) return true;
+  for (const match of urls) {
     const target = match[1].replace(/^['"]|['"]$/g, '').trim();
     if (!target.startsWith('#')) return true;
   }
@@ -313,6 +357,7 @@ export function optimiseSvg(source: string): { svg: string; beforeBytes: number;
       const value = attribute.value.trim();
       const remove = attributeName.startsWith('on')
         || attributeName === 'src'
+        || (attribute.namespaceURI === XML_NAMESPACE && attributeName === 'base' && value !== '')
         || (attributeName === 'href' && !value.startsWith('#'))
         || (CSS_VALUE_ATTRIBUTES.has(attributeName) && unsafeCss(value));
       if (remove) {
