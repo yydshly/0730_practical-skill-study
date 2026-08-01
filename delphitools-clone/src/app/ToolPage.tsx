@@ -8,6 +8,7 @@ import { DeveloperWorkspace, isDeveloperToolId } from '../tools/DeveloperWorkspa
 import { isTextToolId, TextWorkspace } from '../tools/TextWorkspace';
 import { ImageWorkspace, isImageToolId } from '../tools/ImageWorkspace';
 import { isPdfToolId, PdfWorkspace } from '../tools/PdfWorkspace';
+import { EditorWorkspace } from '../tools/EditorWorkspace';
 
 type ToolPageProps = {
   toolId: string;
@@ -22,6 +23,7 @@ export function ToolPage({ toolId }: ToolPageProps) {
 
   const tool = getToolById(toolId);
   if (!tool) return <NotFoundPage />;
+  if (tool.id === 'editor') return <EditorWorkspace tool={tool} />;
   if (isColorToolId(tool.id)) return <ColorWorkspace tool={tool} />;
   if (isTextToolId(tool.id)) return <TextWorkspace tool={tool} />;
   if (isDeveloperToolId(tool.id)) return <DeveloperWorkspace tool={tool} />;
