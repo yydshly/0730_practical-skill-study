@@ -191,3 +191,43 @@ GREEN：手工构造的合法最小 SFNT 通过并显示 3 个字形；`.bin + a
 - 修改：`delphitools-clone/tests/text-workspace.test.tsx`
 - 追加：本报告
 - 修复提交消息：`fix: harden text document and font tools`
+
+---
+
+## Fix round 2：无效数字实体中文反馈
+
+### 状态
+
+`DONE`
+
+本轮只处理遗留 Important Finding 3；动态 `aria-label` 与字体 `name` 表内部边界两个 Minor 未改动。
+
+### RED / GREEN
+
+- RED：先在 `tests/text-workspace.test.tsx` 增加真实 `ToolPage` / `TextWorkspace` 回归测试，再运行 `npm.cmd test -- tests/text-workspace.test.tsx`；结果为 22 项中 1 项失败，页面找不到 `role="alert"`，证明无效数字实体仍缺少中文用户反馈。
+- GREEN：文档引擎公开检测越界与代理区数字实体；HTML 输入命中时，文档转换器显示“文档包含无效的字符实体，已安全替换”。原有安全替换继续输出 `�`，页面仍可切换输出格式，输入恢复正常后警告消失。
+- GREEN 复验：`npm.cmd test -- tests/text-workspace.test.tsx` → 1 file / 22 tests passed。
+
+### 最终验证
+
+- Focused：`npm.cmd test -- tests/text.test.ts tests/text-workspace.test.tsx` → 2 files / 40 tests passed。
+- Full：`npm.cmd test` → 8 files / 94 tests passed。
+- Build：`npm.cmd run build` → TypeScript + Vite 成功，57 modules transformed。
+- 依赖：未新增依赖，`package.json` 与锁文件不变。
+
+### 本轮文件与提交
+
+- 修改：`delphitools-clone/src/engines/document.ts`
+- 修改：`delphitools-clone/src/tools/TextWorkspace.tsx`
+- 修改：`delphitools-clone/tests/text-workspace.test.tsx`
+- 追加：本报告
+- 修复提交消息：`fix: report invalid document entities`
+
+### 自检
+
+- [x] 失败测试先于实现产生，并准确失败于缺少中文警告。
+- [x] 测试通过真实 TextWorkspace 验证中文反馈，不只验证 helper 返回值。
+- [x] 越界十六进制实体与代理区十进制实体均安全替换，页面不崩溃。
+- [x] 警告不阻断转换，安全导出结果保持可用。
+- [x] 未处理或扩展两个 Minor。
+- [x] focused、full tests 与生产构建均有本轮最新成功证据。

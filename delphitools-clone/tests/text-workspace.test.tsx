@@ -112,6 +112,26 @@ describe('文档与 Markdown UI', () => {
     expect(screen.getByLabelText('转换结果')).toHaveTextContent(/^标题$/);
     expect(screen.getByRole('button', { name: '下载纯文本' })).toBeVisible();
   });
+
+  it('无效数字实体显示中文警告，安全替换后页面仍可继续转换', async () => {
+    const user = userEvent.setup();
+    renderTool('doc-converter');
+
+    await user.selectOptions(screen.getByLabelText('输入格式'), 'html');
+    fireEvent.change(screen.getByLabelText('文档内容'), {
+      target: { value: '<p>&#x110000; / &#55296; / 正文</p>' },
+    });
+
+    expect(screen.getByRole('alert')).toHaveTextContent('文档包含无效的字符实体，已安全替换');
+    expect(screen.getByLabelText('转换结果')).toHaveTextContent('� / � / 正文');
+
+    await user.selectOptions(screen.getByLabelText('输出格式'), 'text');
+    expect(screen.getByLabelText('转换结果')).toHaveTextContent('� / � / 正文');
+
+    fireEvent.change(screen.getByLabelText('文档内容'), { target: { value: '<p>正常正文</p>' } });
+    expect(screen.queryByRole('alert')).toBeNull();
+    expect(screen.getByLabelText('转换结果')).toHaveTextContent('正常正文');
+  });
 });
 
 describe('字体、字形和文本反馈', () => {

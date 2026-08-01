@@ -15,14 +15,26 @@ function escapeHtml(value: string): string {
   return value.replace(/&/gu, '&amp;').replace(/</gu, '&lt;').replace(/>/gu, '&gt;').replace(/"/gu, '&quot;').replace(/'/gu, '&#39;');
 }
 
+function isUnicodeScalar(value: number): boolean {
+  return Number.isInteger(value) && value >= 0 && value <= 0x10ffff && !(value >= 0xd800 && value <= 0xdfff);
+}
+
+function parseNumericEntity(code: string): number {
+  const hexadecimal = code[0]?.toLowerCase() === 'x';
+  return Number.parseInt(code.slice(hexadecimal ? 1 : 0), hexadecimal ? 16 : 10);
+}
+
+export function hasInvalidNumericEntities(value: string): boolean {
+  return Array.from(value.matchAll(/&#(x[0-9a-f]+|\d+);/giu))
+    .some((match) => !isUnicodeScalar(parseNumericEntity(match[1])));
+}
+
 function decodeEntities(value: string): string {
   const named: Record<string, string> = { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", nbsp: ' ' };
   return value.replace(/&(#x[0-9a-f]+|#\d+|\w+);/giu, (entity, code: string) => {
     if (code[0] === '#') {
-      const radix = code[1]?.toLowerCase() === 'x' ? 16 : 10;
-      const number = Number.parseInt(code.slice(radix === 16 ? 2 : 1), radix);
-      const isUnicodeScalar = Number.isInteger(number) && number >= 0 && number <= 0x10ffff && !(number >= 0xd800 && number <= 0xdfff);
-      return isUnicodeScalar ? String.fromCodePoint(number) : '�';
+      const number = parseNumericEntity(code.slice(1));
+      return isUnicodeScalar(number) ? String.fromCodePoint(number) : '�';
     }
     return named[code.toLowerCase()] ?? entity;
   });

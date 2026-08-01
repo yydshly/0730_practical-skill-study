@@ -8,7 +8,7 @@ import { copyText } from '../core/clipboard';
 import type { ToolDefinition, ToolId } from '../core/types';
 import { PAPER_SIZES, convertPaperDimensions, type PaperUnit } from '../data/paperSizes';
 import { UNICODE_BLOCKS, searchUnicode } from '../data/unicodeBlocks';
-import { createDocx, createEpub, htmlToMarkdown, inspectFont, markdownToHtml, markdownToLatex, markdownToPlainText, plainTextToHtml, plainTextToLatex, sanitizeHtml, type FontInspection } from '../engines/document';
+import { createDocx, createEpub, hasInvalidNumericEntities, htmlToMarkdown, inspectFont, markdownToHtml, markdownToLatex, markdownToPlainText, plainTextToHtml, plainTextToLatex, sanitizeHtml, type FontInspection } from '../engines/document';
 import { calculateLineHeight, convertTypographyUnit, countText, diffText, pxToRem, remToPx, type TypographyUnit } from '../engines/text';
 
 type TextWorkspaceProps = { tool: ToolDefinition };
@@ -55,6 +55,7 @@ function DocumentConverter() {
   const [output, setOutput] = useState<DocumentOutput>('html');
   const [source, setSource] = useState(initial);
   const result = convertDocument(source, input, output);
+  const hasInvalidEntities = input === 'html' && hasInvalidNumericEntities(source);
   const [name, mime, label] = outputMeta(output);
   const markdown = input === 'markdown' ? source : input === 'html' ? htmlToMarkdown(source) : source;
   const downloadable = output === 'docx'
@@ -68,6 +69,7 @@ function DocumentConverter() {
       <label>输出格式<select aria-label="输出格式" value={output} onChange={(event) => setOutput(event.target.value as DocumentOutput)}><option value="html">HTML</option><option value="markdown">Markdown</option><option value="text">纯文本</option><option value="latex">LaTeX</option><option value="docx">Word DOCX</option><option value="epub">EPUB 3</option></select></label>
     </div>
     <label className="text-area-field">文档内容<textarea aria-label="文档内容" value={source} onChange={(event) => setSource(event.target.value)} /></label>
+    {hasInvalidEntities && <StatusMessage status="error" message="文档包含无效的字符实体，已安全替换" />}
     <p className="format-limit">Word 和 EPUB 均在本地生成真实压缩文档。DOCX 为基础文字 OOXML，不保留复杂版式；EPUB 为单章节 EPUB 3；LaTeX 保持完整 ctex 文档导出。</p>
     <ResultPanel text={result} copyLabel="复制转换结果" download={downloadable} onReset={() => { setInput('markdown'); setOutput('html'); setSource(initial); }}>
       <pre className="document-output" aria-label="转换结果"><code>{result}</code></pre>
