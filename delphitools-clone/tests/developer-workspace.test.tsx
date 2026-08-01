@@ -38,7 +38,7 @@ describe('十个开发与编码入口', () => {
   });
 
   it('只接管指定十个入口', () => {
-    renderTool('algebra-calc');
+    renderTool('pdf-preflight');
     expect(screen.getByText('正在构建此工具')).toBeVisible();
     expect(document.querySelector('.developer-workspace')).toBeNull();
   });

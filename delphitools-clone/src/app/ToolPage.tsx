@@ -3,6 +3,7 @@ import type { ToolId } from '../core/types';
 import { NotFoundPage } from './NotFoundPage';
 import { ToolLayout } from '../components/ToolLayout';
 import { ColorWorkspace, isColorToolId } from '../tools/ColorWorkspace';
+import { CalculatorWorkspace, isCalculatorToolId } from '../tools/CalculatorWorkspace';
 import { DeveloperWorkspace, isDeveloperToolId } from '../tools/DeveloperWorkspace';
 import { isTextToolId, TextWorkspace } from '../tools/TextWorkspace';
 
@@ -22,5 +23,6 @@ export function ToolPage({ toolId }: ToolPageProps) {
   if (isColorToolId(tool.id)) return <ColorWorkspace tool={tool} />;
   if (isTextToolId(tool.id)) return <TextWorkspace tool={tool} />;
   if (isDeveloperToolId(tool.id)) return <DeveloperWorkspace tool={tool} />;
+  if (isCalculatorToolId(tool.id)) return <CalculatorWorkspace tool={tool} />;
   return <ToolLayout tool={tool} />;
 }
