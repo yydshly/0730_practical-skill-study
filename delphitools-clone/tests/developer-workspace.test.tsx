@@ -37,9 +37,9 @@ describe('十个开发与编码入口', () => {
     unmount();
   });
 
-  it('只接管指定十个入口', () => {
+  it('只接管指定十个入口，PDF 工具使用高级工作区', () => {
     renderTool('pdf-preflight');
-    expect(screen.getByText('正在构建此工具')).toBeVisible();
+    expect(screen.getByLabelText('PDF 印刷预检 工作区')).toBeVisible();
     expect(document.querySelector('.developer-workspace')).toBeNull();
   });
 });

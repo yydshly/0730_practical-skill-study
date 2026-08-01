@@ -7,6 +7,7 @@ import { CalculatorWorkspace, isCalculatorToolId } from '../tools/CalculatorWork
 import { DeveloperWorkspace, isDeveloperToolId } from '../tools/DeveloperWorkspace';
 import { isTextToolId, TextWorkspace } from '../tools/TextWorkspace';
 import { ImageWorkspace, isImageToolId } from '../tools/ImageWorkspace';
+import { isPdfToolId, PdfWorkspace } from '../tools/PdfWorkspace';
 
 type ToolPageProps = {
   toolId: string;
@@ -25,6 +26,7 @@ export function ToolPage({ toolId }: ToolPageProps) {
   if (isTextToolId(tool.id)) return <TextWorkspace tool={tool} />;
   if (isDeveloperToolId(tool.id)) return <DeveloperWorkspace tool={tool} />;
   if (isCalculatorToolId(tool.id)) return <CalculatorWorkspace tool={tool} />;
+  if (isPdfToolId(tool.id)) return <PdfWorkspace tool={tool} />;
   if (isImageToolId(tool.id)) return <ImageWorkspace tool={tool} />;
   return <ToolLayout tool={tool} />;
 }

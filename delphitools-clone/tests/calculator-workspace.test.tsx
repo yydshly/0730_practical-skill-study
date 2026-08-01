@@ -28,9 +28,9 @@ describe('五个计算入口', () => {
     unmount();
   });
 
-  it('只接管五个计算入口', () => {
+  it('只接管五个计算入口，PDF 工具使用高级工作区', () => {
     renderTool('pdf-preflight');
-    expect(screen.getByText('正在构建此工具')).toBeVisible();
+    expect(screen.getByLabelText('PDF 印刷预检 工作区')).toBeVisible();
     expect(document.querySelector('.calculator-workspace')).toBeNull();
   });
 });

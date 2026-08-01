@@ -7,6 +7,7 @@ type FileDropzoneProps = {
   accepted: string[];
   onFiles: (files: File[]) => void;
   onError?: (message: string) => void;
+  inputLabel?: string;
   maxSizeBytes?: number;
   multiple?: boolean;
 };
@@ -15,7 +16,7 @@ function maxSizeMessage(maxSizeBytes: number): string {
   return `文件大小不能超过 ${maxSizeBytes} 字节`;
 }
 
-export function FileDropzone({ accepted, onFiles, onError, maxSizeBytes, multiple = true }: FileDropzoneProps) {
+export function FileDropzone({ accepted, onFiles, onError, inputLabel = '选择文件', maxSizeBytes, multiple = true }: FileDropzoneProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const errorId = useId();
   const [error, setError] = useState('');
@@ -73,7 +74,7 @@ export function FileDropzone({ accepted, onFiles, onError, maxSizeBytes, multipl
         ref={inputRef}
         className="sr-only"
         type="file"
-        aria-label="选择文件"
+        aria-label={inputLabel}
         accept={accepted.join(',')}
         multiple={multiple}
         onChange={(event) => acceptFiles(Array.from(event.target.files ?? []))}
