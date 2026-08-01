@@ -62,3 +62,39 @@ tsc -b && vite build: passed
 ## 提交
 
 `feat: implement color design tools`
+
+## Fix Round 1
+
+### RED
+
+先扩展 `tests/color-workspace.test.tsx`，运行：
+
+```text
+npm.cmd test -- tests/color-workspace.test.tsx
+```
+
+结果：15 项中 3 项失败，分别证明空文件选择没有中文提示、图片读取期间没有“正在读取图片”状态、以及损坏的 `localStorage` JSON 会让调色板收藏页崩溃。失败均来自生产代码的实际 UI 行为。
+
+### GREEN
+
+- 图片处理入口先拒绝空文件数组，避免调用 `URL.createObjectURL`；读取期间显示“正在读取图片”。
+- 将底层读取异常统一映射为“图片读取失败，请重试”，同时保留已有的 `finally` URL 回收。
+- 收藏数据在 JSON 解析和字符串数组校验后才使用；损坏或非数组数据回退为空收藏。
+- 工作区测试覆盖十个颜色入口的标题/专属控件，并覆盖空输入、加载/错误、Object URL 回收、像素方向键、收藏持久化及损坏数据回退。
+
+### 本轮验证
+
+```text
+npm.cmd test -- tests/color-workspace.test.tsx
+16 passed
+
+npm.cmd test
+6 test files passed, 54 tests passed
+
+npm.cmd run build
+tsc -b && vite build: passed
+```
+
+### 本轮提交
+
+`fix: harden color workspace image and favorites flows`

@@ -86,18 +86,26 @@ async function readLocalImage(file: File): Promise<ImagePixels> {
 function ImageColorTool({ mode }: { mode: 'extractor' | 'picker' }) {
   const [image, setImage] = useState<ImageState>(null);
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   const [coordinates, setCoordinates] = useState({ x: 0, y: 0 });
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const handleFiles = async (files: File[]) => {
     setError('');
     setImage(null);
+    if (files.length === 0) {
+      setError('请选择一张图片');
+      return;
+    }
+    setLoading(true);
     try {
       const pixels = await readLocalImage(files[0]);
       setImage({ pixels, message: `已在本地读取图片：${pixels.width} × ${pixels.height}` });
       setCoordinates({ x: 0, y: 0 });
-    } catch (reason) {
-      setError(reason instanceof Error ? reason.message : '图片读取失败，请重试');
+    } catch {
+      setError('图片读取失败，请重试');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -145,6 +153,7 @@ function ImageColorTool({ mode }: { mode: 'extractor' | 'picker' }) {
     <div className="color-workspace__section">
       <FileDropzone accepted={['image/*']} multiple={false} onFiles={handleFiles} />
       {error && <p className="color-error" role="alert">{error}</p>}
+      {loading && <p role="status">正在读取图片</p>}
       {image && <p role="status">{image.message}</p>}
       {mode === 'extractor' && image && <ColorList colors={extracted} />}
       {mode === 'picker' && image && (
@@ -208,8 +217,17 @@ function Harmony() {
   try { return <><ColorControl label="基准颜色" value={base} onChange={setBase} /><label>配色方案<select aria-label="配色方案" value={scheme} onChange={(event) => setScheme(event.target.value as HarmonyScheme)}><option value="complementary">互补色</option><option value="analogous">类似色</option><option value="triadic">三角色</option><option value="split-complementary">分裂互补色</option></select></label><ColorList colors={generateHarmony(base, scheme)} /></>; } catch (reason) { return <p className="color-error" role="alert">{reason instanceof Error ? reason.message : '颜色输入有误'}</p>; }
 }
 
+function loadFavorites(): string[] {
+  try {
+    const value = JSON.parse(window.localStorage.getItem('delphitools-palette-favorites') ?? '[]');
+    return Array.isArray(value) && value.every((item) => typeof item === 'string') ? value : [];
+  } catch {
+    return [];
+  }
+}
+
 function PaletteCollection() {
-  const [favorites, setFavorites] = useState<string[]>(() => JSON.parse(window.localStorage.getItem('delphitools-palette-favorites') ?? '[]'));
+  const [favorites, setFavorites] = useState<string[]>(loadFavorites);
   const toggleFavorite = (id: string) => setFavorites((current) => {
     const next = current.includes(id) ? current.filter((item) => item !== id) : [...current, id];
     window.localStorage.setItem('delphitools-palette-favorites', JSON.stringify(next));
