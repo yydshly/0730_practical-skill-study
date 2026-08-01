@@ -44,6 +44,9 @@
 | [`/mengto-skills-study/game-dev-reference.html`](https://yydshly.github.io/0730_practical-skill-study/mengto-skills-study/game-dev-reference.html) | 项目 2 · 19 Game Dev Skills 参考手册 |
 | [`/mengto-skills-study/patterns-reference.html`](https://yydshly.github.io/0730_practical-skill-study/mengto-skills-study/patterns-reference.html) | 项目 3 · 15 设计模式速查 |
 | [`/mengto-skills-study/custom-skills-reference.html`](https://yydshly.github.io/0730_practical-skill-study/mengto-skills-study/custom-skills-reference.html) | 项目 3 · 5 个原创 Agent Skills |
+| [`/female-portrait-director-demo/`](https://yydshly.github.io/0730_practical-skill-study/female-portrait-director-demo/) | 项目 4a · 上游技能演示（20 风格 + 导演式扩写） |
+| [`/female-portrait-director-demo/playground/`](https://yydshly.github.io/0730_practical-skill-study/female-portrait-director-demo/playground/) | 项目 4b · Playground（推荐 · MiniMax API 生图） |
+| [`/female-portrait-style-gallery/`](https://yydshly.github.io/0730_practical-skill-study/female-portrait-style-gallery/) | 项目 4c · 静态风格画廊（20 风格参考图浏览） |
 
 > 部署开关：`Settings → Pages → Source: master · /(root)`（首次部署需仓库 owner 手动开启）
 
