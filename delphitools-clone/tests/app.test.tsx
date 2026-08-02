@@ -77,11 +77,24 @@ describe('应用壳', () => {
     expect(screen.queryByRole('searchbox', { name: '搜索工具' })).toBeNull();
 
     await user.click(openButton);
-    expect(within(screen.getByRole('complementary', { name: '工具导航' })).getByRole('button', { name: '关闭导航菜单' })).toHaveFocus();
+    const drawer = screen.getByRole('dialog', { name: '工具导航' });
+    const closeButton = within(drawer).getByRole('button', { name: '关闭导航菜单' });
+    const themeButton = within(drawer).getByRole('button', { name: '切换到深色主题' });
+    const brandLink = within(drawer).getByRole('link', { name: 'DelphiTools 首页' });
+    expect(closeButton).toHaveFocus();
+    expect(document.querySelector('main')).toHaveAttribute('inert');
+    expect(document.querySelector('main')).toHaveAttribute('aria-hidden', 'true');
     expect(screen.getByRole('searchbox', { name: '搜索工具' })).toBeVisible();
+
+    brandLink.focus();
+    await user.tab({ shift: true });
+    expect(themeButton).toHaveFocus();
+    await user.tab();
+    expect(brandLink).toHaveFocus();
 
     await user.keyboard('{Escape}');
     expect(document.querySelector('aside')).toHaveAttribute('aria-hidden', 'true');
+    expect(document.querySelector('main')).not.toHaveAttribute('inert');
     expect(openButton).toHaveFocus();
 
     Object.defineProperty(window, 'innerWidth', { configurable: true, value: originalWidth });

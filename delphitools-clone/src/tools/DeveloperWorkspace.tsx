@@ -22,13 +22,13 @@ import {
   rot13,
   slugify,
   sortLines,
-  testRegex,
   transformCase,
   transliterateShavian,
   trimLines,
   type BarcodeFormat,
   type HashAlgorithm,
   type QrErrorCorrectionLevel,
+  type RegexTestResult,
   type TextCase,
 } from '../engines/developer';
 
@@ -167,14 +167,77 @@ function RegexTester() {
   const [pattern, setPattern] = useState('(\\w+)-(\\d+)');
   const [flags, setFlags] = useState('g');
   const [sample, setSample] = useState('item-1 item-22');
-  const result = useMemo(() => testRegex(pattern, flags, sample), [pattern, flags, sample]);
+  const [result, setResult] = useState<RegexTestResult>({ matches: [], error: null });
+  const [isTesting, setIsTesting] = useState(true);
+
+  useEffect(() => {
+    if (pattern.length > 1_000 || sample.length > 200_000) {
+      setResult({ matches: [], error: '正则表达式最多 1,000 个字符，样本文本最多 200,000 个字符' });
+      setIsTesting(false);
+      return;
+    }
+    if (typeof Worker === 'undefined') {
+      setResult({ matches: [], error: '当前浏览器不支持安全的正则隔离计算' });
+      setIsTesting(false);
+      return;
+    }
+
+    let worker: Worker | null = null;
+    let timeoutId: ReturnType<typeof setTimeout> | undefined;
+    let settled = false;
+    setIsTesting(true);
+    const startId = window.setTimeout(() => {
+      try {
+        worker = new Worker(new URL('../workers/regex.worker.ts', import.meta.url), { type: 'module' });
+        const requestId = Date.now();
+        timeoutId = setTimeout(() => {
+          if (settled) return;
+          settled = true;
+          worker?.terminate();
+          setResult({ matches: [], error: '正则计算超时，请简化表达式或缩短样本文本' });
+          setIsTesting(false);
+        }, 500);
+        worker.onmessage = (event: MessageEvent<{ id: number; result: RegexTestResult }>) => {
+          if (settled || event.data.id !== requestId) return;
+          settled = true;
+          if (timeoutId !== undefined) clearTimeout(timeoutId);
+          setResult(event.data.result);
+          setIsTesting(false);
+          worker?.terminate();
+        };
+        worker.onerror = () => {
+          if (settled) return;
+          settled = true;
+          if (timeoutId !== undefined) clearTimeout(timeoutId);
+          setResult({ matches: [], error: '正则计算失败，请检查表达式后重试' });
+          setIsTesting(false);
+          worker?.terminate();
+        };
+        worker.postMessage({ id: requestId, pattern, flags, sample });
+      } catch {
+        settled = true;
+        if (timeoutId !== undefined) clearTimeout(timeoutId);
+        worker?.terminate();
+        setResult({ matches: [], error: '无法启动安全的正则隔离区，请检查浏览器安全策略' });
+        setIsTesting(false);
+      }
+    }, 80);
+
+    return () => {
+      settled = true;
+      window.clearTimeout(startId);
+      if (timeoutId !== undefined) clearTimeout(timeoutId);
+      worker?.terminate();
+    };
+  }, [pattern, flags, sample]);
+
   return <div className="developer-stack">
     <div className="developer-controls text-controls text-controls--two">
       <label>正则表达式<input aria-label="正则表达式" value={pattern} onChange={(event) => setPattern(event.target.value)} /></label>
       <label>正则标志<input aria-label="正则标志" value={flags} onChange={(event) => setFlags(event.target.value)} placeholder="gim" /></label>
     </div>
     <label>样本文本<textarea aria-label="样本文本" value={sample} onChange={(event) => setSample(event.target.value)} /></label>
-    {result.error ? <StatusMessage status="error" message={result.error} /> : <section className="match-list" aria-label="正则匹配结果">
+    {isTesting ? <StatusMessage status="loading" message="正在安全隔离区测试正则" /> : result.error ? <StatusMessage status="error" message={result.error} /> : <section className="match-list" aria-label="正则匹配结果">
       <h2>{result.matches.length} 个匹配</h2>
       {result.matches.length === 0 ? <p>没有匹配内容。</p> : result.matches.map((match, index) => <article key={`${match.index}-${index}`}>
         <strong>{match.text || '空匹配'}</strong><span>索引 {match.index}</span>

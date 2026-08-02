@@ -353,14 +353,16 @@ export function inspectFont(buffer: ArrayBuffer): FontInspection {
     if (name && name.length >= 6) {
       const count = view.getUint16(name.offset + 2);
       const stringBase = name.offset + view.getUint16(name.offset + 4);
+      const nameEnd = name.offset + name.length;
       if (6 + count * 12 > name.length) throw new Error(FONT_ERROR);
+      if (stringBase < name.offset || stringBase > nameEnd) throw new Error(FONT_ERROR);
       for (let index = 0; index < count; index += 1) {
         const record = name.offset + 6 + index * 12;
         const platform = view.getUint16(record);
         const nameId = view.getUint16(record + 6);
         const length = view.getUint16(record + 8);
         const offset = stringBase + view.getUint16(record + 10);
-        if (offset > buffer.byteLength || length > buffer.byteLength - offset) throw new Error(FONT_ERROR);
+        if (offset < stringBase || offset > nameEnd || length > nameEnd - offset) throw new Error(FONT_ERROR);
         const decoded = decodeFontName(new Uint8Array(buffer, offset, length), platform === 0 || platform === 3);
         if (decoded && !foundNames.has(nameId)) foundNames.set(nameId, decoded);
       }

@@ -1,4 +1,4 @@
-/** @vitest-environment jsdom */
+﻿/** @vitest-environment jsdom */
 
 import '@testing-library/jest-dom/vitest';
 
@@ -10,10 +10,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { App } from '../src/app/App';
 import { CanvasStage, clientPointToCanvas, resizeFromHandle } from '../src/components/editor/CanvasStage';
 import { createDocument, editorReducer } from '../src/engines/editor';
+import { renderAfterLazy } from './render-after-lazy';
 
-function renderEditor() {
+async function renderEditor() {
   window.history.replaceState({}, '', '/editor');
-  return render(<App />);
+  return renderAfterLazy(<App />);
 }
 
 function installDesktopViewport(matches = false): void {
@@ -83,8 +84,8 @@ afterEach(() => {
 });
 
 describe('Substrata 编辑器路由', () => {
-  it('显示中文工具栏、桌面三栏和有名称的画布操作', () => {
-    renderEditor();
+  it('显示中文工具栏、桌面三栏和有名称的画布操作', async () => {
+    await renderEditor();
     expect(screen.getByRole('heading', { name: 'Substrata 图片编辑器' })).toBeVisible();
     expect(screen.getByRole('toolbar', { name: '编辑器工具栏' })).toBeVisible();
     expect(screen.getByRole('complementary', { name: '图层面板' })).toBeVisible();
@@ -96,7 +97,7 @@ describe('Substrata 编辑器路由', () => {
   });
 
   it('完整旅程可添加两层、调序、移动、撤销并导出 PNG', async () => {
-    renderEditor();
+    await renderEditor();
     await userEvent.click(screen.getByRole('button', { name: '添加文字图层' }));
     await userEvent.click(screen.getByRole('button', { name: '添加矩形图层' }));
 
@@ -123,7 +124,7 @@ describe('Substrata 编辑器路由', () => {
   });
 
   it('选中图层显示八方向缩放手柄和旋转手柄，锁定后禁止画布操作', async () => {
-    renderEditor();
+    await renderEditor();
     await userEvent.click(screen.getByRole('button', { name: '添加矩形图层' }));
     expect(screen.getAllByRole('button', { name: /缩放手柄/ })).toHaveLength(8);
     expect(screen.getByRole('button', { name: '旋转手柄' })).toBeVisible();
@@ -133,7 +134,7 @@ describe('Substrata 编辑器路由', () => {
   });
 
   it('输入框中的删除和方向键不会误触图层快捷键', async () => {
-    renderEditor();
+    await renderEditor();
     await userEvent.click(screen.getByRole('button', { name: '添加矩形图层' }));
     const xInput = screen.getByLabelText('图层 X 坐标');
     const originalX = (xInput as HTMLInputElement).value;
@@ -145,7 +146,7 @@ describe('Substrata 编辑器路由', () => {
   });
 
   it('画布键盘方向键按 1 像素、Shift 按 10 像素微调，Delete 删除选中层', async () => {
-    renderEditor();
+    await renderEditor();
     await userEvent.click(screen.getByRole('button', { name: '添加矩形图层' }));
     const canvasRegion = screen.getByRole('application', { name: 'Substrata 画布编辑区' });
     const originalX = Number((screen.getByLabelText('图层 X 坐标') as HTMLInputElement).value);
@@ -167,10 +168,19 @@ describe('画布坐标与移动抽屉', () => {
 
   it('手机关闭面板后移除内部焦点，Escape 关闭并把焦点还给触发按钮', async () => {
     installDesktopViewport(true);
-    renderEditor();
+    await renderEditor();
+    await userEvent.click(screen.getByRole('button', { name: '添加文字图层' }));
     const layersTrigger = screen.getByRole('button', { name: '打开图层面板' });
     await userEvent.click(layersTrigger);
-    expect(screen.getByRole('dialog', { name: '移动端图层面板' })).toBeVisible();
+    const layersDialog = screen.getByRole('dialog', { name: '移动端图层面板' });
+    const closeLayers = within(layersDialog).getByRole('button', { name: '关闭图层面板' });
+    expect(layersDialog).toBeVisible();
+    expect(document.querySelector('.substrata-workspace')).toHaveAttribute('inert');
+    closeLayers.focus();
+    await userEvent.tab({ shift: true });
+    expect(closeLayers).not.toHaveFocus();
+    await userEvent.tab();
+    expect(closeLayers).toHaveFocus();
     await userEvent.click(screen.getByRole('button', { name: '关闭图层面板' }));
     expect(screen.queryByRole('dialog', { name: '移动端图层面板' })).toBeNull();
     expect(layersTrigger).toHaveFocus();
@@ -179,9 +189,14 @@ describe('画布坐标与移动抽屉', () => {
     await userEvent.click(inspectorTrigger);
     const dialog = screen.getByRole('dialog', { name: '移动端属性面板' });
     expect(dialog).toBeVisible();
+    const textContent = within(dialog).getByLabelText('文字内容');
+    textContent.focus();
+    fireEvent.change(textContent, { target: { value: '连续编辑不会丢失焦点' } });
+    expect(textContent).toHaveFocus();
     fireEvent.keyDown(dialog, { key: 'Escape' });
     expect(screen.queryByRole('dialog', { name: '移动端属性面板' })).toBeNull();
     expect(inspectorTrigger).toHaveFocus();
+    expect(document.querySelector('.substrata-workspace')).not.toHaveAttribute('inert');
   });
 });
 
@@ -274,7 +289,7 @@ describe('图片导入与 PNG 导出竞态', () => {
     vi.stubGlobal('FileReader', ControlledReader as unknown as typeof FileReader);
     vi.stubGlobal('Image', ControlledImage as unknown as typeof Image);
     vi.mocked(URL.createObjectURL).mockImplementation((file) => `blob:${(file as File).name}`);
-    renderEditor();
+    await renderEditor();
     const input = screen.getByLabelText('选择图片图层文件');
 
     fireEvent.change(input, { target: { files: [new File(['A'], 'A.png', { type: 'image/png' })] } });
@@ -290,7 +305,7 @@ describe('图片导入与 PNG 导出竞态', () => {
     expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:A.png');
   });
 
-  it('卸载时取消未完成导入并立即释放图片对象 URL', () => {
+  it('卸载时取消未完成导入并立即释放图片对象 URL', async () => {
     const readers: PendingReader[] = [];
     class PendingReader {
       result: string | ArrayBuffer | null = null;
@@ -317,7 +332,7 @@ describe('图片导入与 PNG 导出竞态', () => {
     vi.stubGlobal('FileReader', PendingReader as unknown as typeof FileReader);
     vi.stubGlobal('Image', PendingImage as unknown as typeof Image);
     vi.mocked(URL.createObjectURL).mockReturnValue('blob:unmount.png');
-    const view = renderEditor();
+    const view = await renderEditor();
     fireEvent.change(screen.getByLabelText('选择图片图层文件'), { target: { files: [new File(['A'], 'unmount.png', { type: 'image/png' })] } });
 
     view.unmount();
@@ -330,7 +345,7 @@ describe('图片导入与 PNG 导出竞态', () => {
   it('编辑会使慢导出 A 失效，快导出 B 成功后不被 A 的迟到失败覆盖', async () => {
     const callbacks: BlobCallback[] = [];
     vi.mocked(HTMLCanvasElement.prototype.toBlob).mockImplementation((callback) => { callbacks.push(callback); });
-    renderEditor();
+    await renderEditor();
     await userEvent.click(screen.getByRole('button', { name: '添加矩形图层' }));
     await userEvent.click(screen.getByRole('button', { name: '导出 PNG' }));
     expect(callbacks).toHaveLength(1);

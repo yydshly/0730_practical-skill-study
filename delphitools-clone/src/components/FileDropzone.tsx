@@ -77,7 +77,11 @@ export function FileDropzone({ accepted, onFiles, onError, inputLabel = '选择�
         aria-label={inputLabel}
         accept={accepted.join(',')}
         multiple={multiple}
-        onChange={(event) => acceptFiles(Array.from(event.target.files ?? []))}
+        onChange={(event) => {
+          const files = Array.from(event.target.files ?? []);
+          event.target.value = '';
+          acceptFiles(files);
+        }}
       />
       <strong>选择文件或拖放到这里</strong>
       <span>文件只会在你的设备本地处理</span>

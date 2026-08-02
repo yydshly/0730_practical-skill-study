@@ -1,4 +1,4 @@
-/** @vitest-environment jsdom */
+﻿/** @vitest-environment jsdom */
 
 import '@testing-library/jest-dom/vitest';
 
@@ -7,6 +7,7 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { ToolPage } from '../src/app/ToolPage';
+import { renderAfterLazy } from './render-after-lazy';
 
 afterEach(() => {
   cleanup();
@@ -14,8 +15,8 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-function renderTool(toolId: string) {
-  return render(<ToolPage toolId={toolId} />);
+async function renderTool(toolId: string) {
+  return renderAfterLazy(<ToolPage toolId={toolId} />);
 }
 
 function minimalSfntFont(): ArrayBuffer {
@@ -50,15 +51,15 @@ describe('11 个文字工具入口', () => {
     ['text-diff', '原始文本'],
     ['typo-calc', '原始单位'],
     ['word-counter', '待统计文本'],
-  ])('%s 显示独立中文控件和可用默认值', (toolId, label) => {
-    const { unmount } = renderTool(toolId);
+  ])('%s 显示独立中文控件和可用默认值', async (toolId, label) => {
+    const { unmount } = await renderTool(toolId);
     expect(screen.getByLabelText(label)).toBeVisible();
     expect(document.querySelector('.text-workspace')).not.toBeNull();
     unmount();
   });
 
-  it('只接管指定文字入口，PDF 工具使用高级工作区', () => {
-    renderTool('pdf-preflight');
+  it('只接管指定文字入口，PDF 工具使用高级工作区', async () => {
+    await renderTool('pdf-preflight');
     expect(screen.getByLabelText('PDF 印刷预检 工作区')).toBeVisible();
     expect(document.querySelector('.text-workspace')).toBeNull();
   });
@@ -73,7 +74,7 @@ describe('文档与 Markdown UI', () => {
       revokeObjectURL: vi.fn(),
     });
     vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => undefined);
-    renderTool('doc-converter');
+    await renderTool('doc-converter');
 
     await user.selectOptions(screen.getByLabelText('输出格式'), 'docx');
     await user.click(screen.getByRole('button', { name: '下载 DOCX' }));
@@ -87,7 +88,7 @@ describe('文档与 Markdown UI', () => {
 
   it('Markdown 源文和安全预览可切换，并提供两种真实下载', async () => {
     const user = userEvent.setup();
-    renderTool('text-editor');
+    await renderTool('text-editor');
     const source = screen.getByLabelText('Markdown 源文');
     fireEvent.change(source, { target: { value: '# 标题\n\n<script>alert(1)</script>' } });
 
@@ -102,7 +103,7 @@ describe('文档与 Markdown UI', () => {
 
   it('文档转换器生成真实 HTML 和纯文本并显示格式限制', async () => {
     const user = userEvent.setup();
-    renderTool('doc-converter');
+    await renderTool('doc-converter');
     fireEvent.change(screen.getByLabelText('文档内容'), { target: { value: '# 标题' } });
     expect(screen.getByLabelText('转换结果')).toHaveTextContent('<h1>标题</h1>');
     expect(screen.getByText(/Word 和 EPUB/)).toBeVisible();
@@ -115,7 +116,7 @@ describe('文档与 Markdown UI', () => {
 
   it('无效数字实体显示中文警告，安全替换后页面仍可继续转换', async () => {
     const user = userEvent.setup();
-    renderTool('doc-converter');
+    await renderTool('doc-converter');
 
     await user.selectOptions(screen.getByLabelText('输入格式'), 'html');
     fireEvent.change(screen.getByLabelText('文档内容'), {
@@ -136,7 +137,7 @@ describe('文档与 Markdown UI', () => {
 
 describe('字体、字形和文本反馈', () => {
   it('通用 MIME 的合法 TTF 通过扩展名和 SFNT 内容校验', async () => {
-    renderTool('font-explorer');
+    await renderTool('font-explorer');
     const file = new File(['font'], 'valid.ttf', { type: 'application/octet-stream' });
     const read = vi.fn().mockResolvedValue(minimalSfntFont());
     Object.defineProperty(file, 'arrayBuffer', { value: read });
@@ -149,7 +150,7 @@ describe('字体、字形和文本反馈', () => {
   });
 
   it('通用 MIME 的非字体扩展在读取内容前中文拒绝', async () => {
-    renderTool('font-explorer');
+    await renderTool('font-explorer');
     const file = new File(['font'], 'not-font.bin', { type: 'application/octet-stream' });
     const read = vi.fn().mockResolvedValue(minimalSfntFont());
     Object.defineProperty(file, 'arrayBuffer', { value: read });
@@ -161,7 +162,7 @@ describe('字体、字形和文本反馈', () => {
   });
 
   it('字体浏览器只读取单文件选择中的第一个文件并中文报告损坏', async () => {
-    renderTool('font-explorer');
+    await renderTool('font-explorer');
     const first = new File(['bad'], 'first.ttf', { type: 'font/ttf' });
     const second = new File(['ignored'], 'second.ttf', { type: 'font/ttf' });
     const firstRead = vi.fn().mockResolvedValue(new Uint8Array([1, 2, 3]).buffer);
@@ -178,7 +179,7 @@ describe('字体、字形和文本反馈', () => {
 
   it('Unicode 浏览器默认最多渲染 120 个节点并可按码点精确搜索', async () => {
     const user = userEvent.setup();
-    renderTool('glyph-browser');
+    await renderTool('glyph-browser');
     expect(document.querySelectorAll('.glyph-card')).toHaveLength(120);
 
     const search = screen.getByLabelText('搜索字符或码点');
@@ -188,8 +189,8 @@ describe('字体、字形和文本反馈', () => {
     expect(screen.getByRole('button', { name: '复制 中 U+4E2D' })).toBeVisible();
   });
 
-  it('文本差异同时提供语义标签和文字摘要', () => {
-    renderTool('text-diff');
+  it('文本差异同时提供语义标签和文字摘要', async () => {
+    await renderTool('text-diff');
     fireEvent.change(screen.getByLabelText('原始文本'), { target: { value: 'cat' } });
     fireEvent.change(screen.getByLabelText('修改后文本'), { target: { value: 'cart' } });
 
@@ -200,7 +201,7 @@ describe('字体、字形和文本反馈', () => {
 
   it('无效根字号显示中文反馈，大字在 390px 下使用受限响应字号', async () => {
     const user = userEvent.setup();
-    renderTool('px-to-rem');
+    await renderTool('px-to-rem');
     const root = screen.getByLabelText('根字号');
     await user.clear(root);
     await user.type(root, '0');
@@ -209,7 +210,7 @@ describe('字体、字形和文本反馈', () => {
 
     const originalWidth = window.innerWidth;
     Object.defineProperty(window, 'innerWidth', { configurable: true, value: 390 });
-    renderTool('large-type');
+    await renderTool('large-type');
     expect(screen.getByLabelText('大字预览')).toHaveStyle({ maxWidth: '100%' });
     expect(screen.getByLabelText('大字预览')).toHaveTextContent('让重要文字清晰可见');
     Object.defineProperty(window, 'innerWidth', { configurable: true, value: originalWidth });

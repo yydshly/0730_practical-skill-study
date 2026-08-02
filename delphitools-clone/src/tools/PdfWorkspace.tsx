@@ -481,6 +481,6 @@ export function PdfWorkspace({ tool }: PdfWorkspaceProps) {
     case 'pdf-preflight': return <PreflightWorkspace tool={tool} />;
     case 'imposer': return <ImposerWorkspace tool={tool} />;
     case 'zine-imposer': return <ZineWorkspace tool={tool} />;
-    default: return <ToolLayout tool={tool} />;
+    default: return <ToolLayout tool={tool}><p role="alert">工具路由配置错误，请返回目录后重试。</p></ToolLayout>;
   }
 }

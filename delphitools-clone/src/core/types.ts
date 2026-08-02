@@ -68,6 +68,17 @@ export type ToolId =
 
 export type ToolMode = 'standard' | 'canvas';
 
+export type ToolWorkspace =
+  | 'image'
+  | 'advanced-media'
+  | 'editor'
+  | 'color'
+  | 'text'
+  | 'print'
+  | 'developer'
+  | 'calculator'
+  | 'special';
+
 export type ToolDefinition = {
   id: ToolId;
   category: ToolCategory;
@@ -75,7 +86,7 @@ export type ToolDefinition = {
   englishTitle: string;
   description: string;
   keywords: readonly string[];
-  workspace: string;
+  workspace: ToolWorkspace;
   mode: ToolMode;
 };
 

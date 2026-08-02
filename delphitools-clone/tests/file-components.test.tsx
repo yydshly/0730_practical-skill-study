@@ -131,6 +131,19 @@ describe('FileDropzone', () => {
     fireEvent.drop(dropzone, { dataTransfer: { files: [droppedFirst, droppedSecond] } });
     expect(screen.getByLabelText('单文件接收结果')).toHaveTextContent(/^dropped-first\.png$/);
   });
+
+  it('读取后清空文件输入，允许连续选择同一个文件', () => {
+    const onFiles = vi.fn();
+    render(<FileDropzone accepted={['image/*']} onFiles={onFiles} />);
+    const input = screen.getByLabelText('选择文件') as HTMLInputElement;
+    const file = new File(['png'], 'same.png', { type: 'image/png' });
+
+    Object.defineProperty(input, 'value', { configurable: true, writable: true, value: 'C:\\fakepath\\same.png' });
+    fireEvent.change(input, { target: { files: [file] } });
+
+    expect(input.value).toBe('');
+    expect(onFiles).toHaveBeenCalledWith([file]);
+  });
 });
 
 describe('ResultPanel 和 StatusMessage', () => {

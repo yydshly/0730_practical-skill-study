@@ -1,4 +1,4 @@
-/** @vitest-environment jsdom */
+﻿/** @vitest-environment jsdom */
 
 import '@testing-library/jest-dom/vitest';
 
@@ -8,6 +8,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { App } from '../src/app/App';
 import { IMAGE_FIXTURES, bytesFromBase64, fixtureFile } from './fixtures/image-fixtures';
+import { renderAfterLazy } from './render-after-lazy';
 
 type DownloadRecord = { name: string; blob?: Blob };
 
@@ -82,9 +83,9 @@ function installCanvas(): void {
   });
 }
 
-function renderTool(toolId: string) {
+async function renderTool(toolId: string) {
   window.history.replaceState({}, '', `/tools/${toolId}`);
-  return render(<App />);
+  return renderAfterLazy(<App />);
 }
 
 async function upload(files: File | File[]): Promise<void> {
@@ -119,7 +120,7 @@ afterEach(() => {
 
 describe('13 条图片路由的核心成功交互', () => {
   it('方形衬底导入 PNG、修改尺寸并导出真实 PNG', async () => {
-    renderTool('matte-generator');
+    await renderTool('matte-generator');
     await upload(fixtureFile('png'));
     fireEvent.change(screen.getByLabelText('画布尺寸'), { target: { value: '256' } });
     await userEvent.click(screen.getByRole('button', { name: '生成方形衬底' }));
@@ -127,7 +128,7 @@ describe('13 条图片路由的核心成功交互', () => {
   });
 
   it('无缝轮播导入 JPEG、修改切片高度并导出 PNG', async () => {
-    renderTool('scroll-generator');
+    await renderTool('scroll-generator');
     await upload(fixtureFile('jpeg'));
     fireEvent.change(screen.getByLabelText('单片高度'), { target: { value: '40' } });
     await userEvent.click(screen.getByRole('button', { name: '拆分长图' }));
@@ -135,7 +136,7 @@ describe('13 条图片路由的核心成功交互', () => {
   });
 
   it('社交裁剪导入 JPEG、自定义斜杠比例并清洗导出文件名', async () => {
-    renderTool('social-cropper');
+    await renderTool('social-cropper');
     await upload(fixtureFile('jpeg'));
     await userEvent.selectOptions(screen.getByLabelText('裁剪场景'), 'custom');
     await userEvent.clear(screen.getByLabelText('自定义比例'));
@@ -145,7 +146,7 @@ describe('13 条图片路由的核心成功交互', () => {
   });
 
   it('水印工具导入 WebP、旋转平铺并导出 PNG', async () => {
-    renderTool('watermarker');
+    await renderTool('watermarker');
     await upload(fixtureFile('webp'));
     await userEvent.selectOptions(screen.getByLabelText('水印布局'), 'tile');
     fireEvent.change(screen.getByLabelText('水印旋转角度'), { target: { value: '45' } });
@@ -157,7 +158,7 @@ describe('13 条图片路由的核心成功交互', () => {
   });
 
   it('艺术品增强导入 JPEG、修改倍率与对比度并导出 PNG', async () => {
-    renderTool('artwork-enhancer');
+    await renderTool('artwork-enhancer');
     await upload(fixtureFile('jpeg'));
     await userEvent.selectOptions(screen.getByLabelText('输出倍率'), '1.5');
     fireEvent.change(screen.getByLabelText('对比度'), { target: { value: '125' } });
@@ -166,7 +167,7 @@ describe('13 条图片路由的核心成功交互', () => {
   });
 
   it('Favicon 导入 PNG、设置尺寸并导出对应 PNG', async () => {
-    renderTool('favicon-genny');
+    await renderTool('favicon-genny');
     await upload(fixtureFile('png'));
     await userEvent.clear(screen.getByLabelText('图标尺寸'));
     await userEvent.type(screen.getByLabelText('图标尺寸'), '16,32');
@@ -175,14 +176,14 @@ describe('13 条图片路由的核心成功交互', () => {
   });
 
   it('透明边缘裁剪导入 PNG、读取像素边界并导出 PNG', async () => {
-    renderTool('image-clipper');
+    await renderTool('image-clipper');
     await upload(fixtureFile('png'));
     await userEvent.click(screen.getByRole('button', { name: '裁剪图片' }));
     await expectDownload(/下载裁剪结果/, '裁剪结果.png', 'image/png');
   });
 
   it('格式转换导入 WebP、选择 JPEG 并导出真实 JPEG', async () => {
-    renderTool('image-converter');
+    await renderTool('image-converter');
     await upload(fixtureFile('webp'));
     await userEvent.selectOptions(screen.getByLabelText('输出格式'), 'image/jpeg');
     fireEvent.change(screen.getByLabelText('图片质量'), { target: { value: '0.8' } });
@@ -191,7 +192,7 @@ describe('13 条图片路由的核心成功交互', () => {
   });
 
   it('图片分割导入 WebP、设置 2×2 网格并导出 PNG', async () => {
-    renderTool('image-splitter');
+    await renderTool('image-splitter');
     await upload(fixtureFile('webp'));
     fireEvent.change(screen.getByLabelText('分割列数'), { target: { value: '2' } });
     fireEvent.change(screen.getByLabelText('分割行数'), { target: { value: '2' } });
@@ -200,7 +201,7 @@ describe('13 条图片路由的核心成功交互', () => {
   });
 
   it('图片拼接导入两种格式、设置纵向间距并导出 PNG', async () => {
-    renderTool('image-stitcher');
+    await renderTool('image-stitcher');
     await upload([fixtureFile('png', '上.png'), fixtureFile('jpeg', '下.jpg')]);
     await userEvent.selectOptions(screen.getByLabelText('拼接方向'), 'vertical');
     fireEvent.change(screen.getByLabelText('图片间距'), { target: { value: '8' } });
@@ -215,7 +216,7 @@ describe('13 条图片路由的核心成功交互', () => {
     const getType = vi.fn().mockResolvedValue(clipboardBlob);
     const read = vi.fn().mockResolvedValue([{ types: ['image/png'], getType }]);
     Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { read } });
-    renderTool('paste-image');
+    await renderTool('paste-image');
     await userEvent.click(screen.getByRole('button', { name: '粘贴剪贴板图片' }));
     await screen.findByText('已读取 1 张图片，可开始处理');
     expect(read).toHaveBeenCalledTimes(1);
@@ -225,7 +226,7 @@ describe('13 条图片路由的核心成功交互', () => {
   });
 
   it('占位图导入 PNG 尺寸、修改文字并导出 SVG', async () => {
-    renderTool('placeholder-genny');
+    await renderTool('placeholder-genny');
     await upload(fixtureFile('png'));
     await waitFor(() => expect(screen.getByLabelText('占位宽度')).toHaveValue(120));
     await userEvent.clear(screen.getByLabelText('占位文字'));
@@ -235,7 +236,7 @@ describe('13 条图片路由的核心成功交互', () => {
   });
 
   it('Base64 工具解析真实 WebP、真实解码确认并按内容扩展名下载', async () => {
-    renderTool('base64-image-encoder');
+    await renderTool('base64-image-encoder');
     fireEvent.change(screen.getByLabelText('图片 Data URL'), { target: { value: `data:image/webp;base64,${IMAGE_FIXTURES.webp.base64}` } });
     await userEvent.click(screen.getByRole('button', { name: '解析 Data URL' }));
     await screen.findByText('已解析 image/webp 图片');
@@ -256,7 +257,7 @@ describe('图片工作台状态、竞态与资源上限', () => {
       set src(_value: string) { pending.push({ image: this }); }
     }
     vi.stubGlobal('Image', ControlledImage as unknown as typeof Image);
-    renderTool('matte-generator');
+    await renderTool('matte-generator');
     const input = screen.getByLabelText('选择文件');
     fireEvent.change(input, { target: { files: [fixtureFile('png', '较慢旧图.png')] } });
     fireEvent.change(input, { target: { files: [fixtureFile('jpeg', '较快新图.jpg')] } });
@@ -282,7 +283,7 @@ describe('图片工作台状态、竞态与资源上限', () => {
       set src(_value: string) { pending.push({ image: this }); }
     }
     vi.stubGlobal('Image', ControlledImage as unknown as typeof Image);
-    renderTool('placeholder-genny');
+    await renderTool('placeholder-genny');
     const input = screen.getByLabelText('选择文件');
     fireEvent.change(input, { target: { files: [fixtureFile('png', '较慢旧尺寸.png')] } });
     fireEvent.change(input, { target: { files: [fixtureFile('jpeg', '较快新尺寸.jpg')] } });
@@ -299,7 +300,7 @@ describe('图片工作台状态、竞态与资源上限', () => {
   });
 
   it('绕过 HTML max 输入 21 列时在创建输出前被 UI 再次拒绝', async () => {
-    renderTool('image-splitter');
+    await renderTool('image-splitter');
     await upload(fixtureFile('png'));
     canvasToBlob.mockClear();
     fireEvent.change(screen.getByLabelText('分割列数'), { target: { value: '21' } });
@@ -311,7 +312,7 @@ describe('图片工作台状态、竞态与资源上限', () => {
 
   it('水印图片读取失败会清除之前的专属成功输出', async () => {
     installImmediateImages('损坏水印.png');
-    renderTool('watermarker');
+    await renderTool('watermarker');
     await upload(fixtureFile('png'));
     await userEvent.click(screen.getByRole('button', { name: '添加水印' }));
     expect(await screen.findByRole('button', { name: '下载带水印图片' })).toBeVisible();
@@ -328,7 +329,7 @@ describe('图片工作台状态、竞态与资源上限', () => {
       set src(_value: string) { queueMicrotask(() => this.onerror?.(new Event('error'))); }
     }
     vi.stubGlobal('Image', FailingImage as unknown as typeof Image);
-    renderTool('base64-image-encoder');
+    await renderTool('base64-image-encoder');
     fireEvent.change(screen.getByLabelText('图片 Data URL'), { target: { value: `data:image/png;base64,${IMAGE_FIXTURES.png.base64}` } });
     await userEvent.click(screen.getByRole('button', { name: '解析 Data URL' }));
     expect(await screen.findByRole('alert')).toHaveTextContent('图片加载失败');
@@ -337,7 +338,7 @@ describe('图片工作台状态、竞态与资源上限', () => {
   });
 
   it('Base64 文件校验失败也会清除已验证的复制与下载结果', async () => {
-    renderTool('base64-image-encoder');
+    await renderTool('base64-image-encoder');
     fireEvent.change(screen.getByLabelText('图片 Data URL'), { target: { value: `data:image/png;base64,${IMAGE_FIXTURES.png.base64}` } });
     await userEvent.click(screen.getByRole('button', { name: '解析 Data URL' }));
     expect(await screen.findByRole('button', { name: '复制 Data URL' })).toBeVisible();
@@ -350,7 +351,7 @@ describe('图片工作台状态、竞态与资源上限', () => {
   });
 
   it('Base64 文件编码成功后可重新开始并清空输入、验证结果与预览', async () => {
-    renderTool('base64-image-encoder');
+    await renderTool('base64-image-encoder');
     fireEvent.change(screen.getByLabelText('选择文件'), { target: { files: [fixtureFile('png', '待编码.png')] } });
     await screen.findByText('已编码并验证 image/png 图片');
     expect(screen.getByRole('button', { name: '复制 Data URL' })).toBeVisible();
@@ -364,7 +365,7 @@ describe('图片工作台状态、竞态与资源上限', () => {
   });
 
   it('Base64 Data URL 解码成功后重置不残留复制、下载或预览', async () => {
-    renderTool('base64-image-encoder');
+    await renderTool('base64-image-encoder');
     fireEvent.change(screen.getByLabelText('图片 Data URL'), { target: { value: `data:image/webp;base64,${IMAGE_FIXTURES.webp.base64}` } });
     await userEvent.click(screen.getByRole('button', { name: '解析 Data URL' }));
     await screen.findByText('已解析 image/webp 图片');

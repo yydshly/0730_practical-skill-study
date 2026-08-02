@@ -39,10 +39,39 @@ function isAbortError(reason: unknown): boolean {
 
 function MobileDrawer({ label, closeLabel, onClose, children }: { label: string; closeLabel: string; onClose: () => void; children: ReactNode }) {
   const closeRef = useRef<HTMLButtonElement>(null);
+  const drawerRef = useRef<HTMLElement>(null);
   useEffect(() => { closeRef.current?.focus(); }, []);
+  useEffect(() => {
+    const closeOnEscape = (event: globalThis.KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        onClose();
+      }
+    };
+    document.addEventListener('keydown', closeOnEscape);
+    return () => document.removeEventListener('keydown', closeOnEscape);
+  }, [onClose]);
+
+  const trapFocus = (event: KeyboardEvent<HTMLElement>) => {
+    if (event.key !== 'Tab') return;
+    const focusable = Array.from(drawerRef.current?.querySelectorAll<HTMLElement>(
+      'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+    ) ?? []).filter((element) => element.getAttribute('aria-hidden') !== 'true' && element.tabIndex >= 0);
+    if (focusable.length === 0) return;
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first.focus();
+    }
+  };
+
   return <div className="editor-mobile-layer">
-    <button type="button" className="editor-mobile-scrim" aria-label={`点击遮罩${closeLabel}`} onClick={onClose} />
-    <section className="editor-mobile-drawer" role="dialog" aria-modal="true" aria-label={label} onKeyDown={(event) => { if (event.key === 'Escape') { event.preventDefault(); onClose(); } }}>
+    <button type="button" className="editor-mobile-scrim" aria-label={`点击遮罩${closeLabel}`} tabIndex={-1} onClick={onClose} />
+    <section ref={drawerRef} className="editor-mobile-drawer" role="dialog" aria-modal="true" aria-label={label} onKeyDown={trapFocus}>
       <button ref={closeRef} type="button" className="editor-drawer-close" aria-label={closeLabel} onClick={onClose}>关闭</button>
       {children}
     </section>
@@ -59,6 +88,7 @@ export function EditorWorkspace({ tool }: EditorWorkspaceProps) {
   const imageInputRef = useRef<HTMLInputElement>(null);
   const layerTriggerRef = useRef<HTMLButtonElement>(null);
   const inspectorTriggerRef = useRef<HTMLButtonElement>(null);
+  const restorePanelFocusRef = useRef<HTMLButtonElement | null>(null);
   const importVersion = useRef(0);
   const importAbortRef = useRef<AbortController | null>(null);
   const exportVersion = useRef(0);
@@ -138,11 +168,18 @@ export function EditorWorkspace({ tool }: EditorWorkspaceProps) {
     }
   };
 
-  const closeMobilePanel = () => {
-    const target = mobilePanel === 'layers' ? layerTriggerRef.current : inspectorTriggerRef.current;
-    target?.focus();
+  const closeMobilePanel = useCallback(() => {
+    restorePanelFocusRef.current = mobilePanel === 'layers' ? layerTriggerRef.current : inspectorTriggerRef.current;
     setMobilePanel(null);
-  };
+  }, [mobilePanel]);
+
+  useEffect(() => {
+    if (!mobilePanel && restorePanelFocusRef.current) {
+      const target = restorePanelFocusRef.current;
+      restorePanelFocusRef.current = null;
+      target.focus();
+    }
+  }, [mobilePanel]);
 
   const toggleCanvasSettings = () => {
     const next = !showCanvasSettings;
@@ -158,14 +195,14 @@ export function EditorWorkspace({ tool }: EditorWorkspaceProps) {
 
   return (
     <section className="tool-page editor-page" onKeyDown={handleWorkspaceKeyDown}>
-      <div className="editor-page__intro page-wrap">
+      <div className="editor-page__intro page-wrap" aria-hidden={mobilePanel ? true : undefined} inert={mobilePanel ? '' : undefined}>
         <a className="back-link" href="/">← 返回工具目录</a>
         <p className="page-kicker">{tool.englishTitle}</p>
         <h1>{tool.title}</h1>
         <p className="page-lede">{tool.description}</p>
         <p className="local-note">所有图片与编辑状态都只保留在当前浏览器页面，不会上传到服务器。</p>
       </div>
-      <div className="substrata-workspace" aria-label="Substrata 图片编辑器工作区">
+      <div className="substrata-workspace" aria-label="Substrata 图片编辑器工作区" aria-hidden={mobilePanel ? true : undefined} inert={mobilePanel ? '' : undefined}>
         <div className="editor-toolbar" role="toolbar" aria-label="编辑器工具栏">
           <button type="button" onClick={() => imageInputRef.current?.click()} aria-label="添加图片图层">＋ 图片</button>
           <input ref={imageInputRef} className="sr-only" type="file" accept="image/*" aria-label="选择图片图层文件" onChange={importImage} />

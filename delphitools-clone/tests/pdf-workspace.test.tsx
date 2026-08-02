@@ -1,4 +1,4 @@
-/** @vitest-environment jsdom */
+﻿/** @vitest-environment jsdom */
 
 import '@testing-library/jest-dom/vitest';
 
@@ -8,10 +8,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { PDFDocument } from 'pdf-lib';
 
 import { App } from '../src/app/App';
+import { renderAfterLazy } from './render-after-lazy';
 
-function renderTool(toolId: string) {
+async function renderTool(toolId: string) {
   window.history.replaceState({}, '', `/tools/${toolId}`);
-  return render(<App />);
+  return renderAfterLazy(<App />);
 }
 
 afterEach(() => {
@@ -97,15 +98,15 @@ describe('六条高级媒体路由', () => {
     ['pdf-preflight', 'PDF 印刷预检', '选择 PDF 文件'],
     ['imposer', 'PDF 拼版', '纸张尺寸'],
     ['zine-imposer', 'Zine 拼版', '8 页固定顺序'],
-  ])('%s 显示独立中文工作区', (toolId, title, control) => {
-    renderTool(toolId);
+  ])('%s 显示独立中文工作区', async (toolId, title, control) => {
+    await renderTool(toolId);
     expect(screen.getByRole('heading', { name: title })).toBeVisible();
     expect(screen.getByLabelText(control)).toBeVisible();
     expect(screen.queryByText('正在构建此工具')).toBeNull();
   });
 
   it('SVG 优化器净化后提供真实 SVG 下载，失败时清除旧结果并保留输入', async () => {
-    renderTool('svg-optimiser');
+    await renderTool('svg-optimiser');
     const input = screen.getByLabelText('选择 SVG 文件');
     fireEvent.change(input, { target: { files: [new File(['<svg viewBox="0 0 10 10"><rect width="10" height="10"/></svg>'], '图形.svg', { type: 'image/svg+xml' })] } });
     expect(await screen.findByRole('button', { name: '下载优化后的 SVG' })).toBeVisible();
@@ -117,7 +118,7 @@ describe('六条高级媒体路由', () => {
   });
 
   it('PDF 预检拒绝非法文件并允许保留文件重试', async () => {
-    renderTool('pdf-preflight');
+    await renderTool('pdf-preflight');
     fireEvent.change(screen.getByLabelText('选择 PDF 文件'), { target: { files: [new File(['not pdf'], '损坏.pdf', { type: 'application/pdf' })] } });
     expect(await screen.findByRole('alert')).toHaveTextContent('不是有效的 PDF 文件');
     expect(screen.getByText(/损坏\.pdf/)).toBeVisible();
@@ -125,21 +126,21 @@ describe('六条高级媒体路由', () => {
   });
 
   it('背景移除如实说明不是 AI 并支持取消和重试', async () => {
-    renderTool('background-remover');
+    await renderTool('background-remover');
     expect(screen.getAllByText(/不是 AI 抠图模型/)).toHaveLength(2);
     expect(screen.getByRole('button', { name: '取消处理' })).toBeDisabled();
     await userEvent.click(screen.getByRole('button', { name: '重试处理' }));
     expect(screen.getByRole('alert')).toHaveTextContent('请先选择图片');
   });
 
-  it('Zine 明确固定八页顺序与折叠提示', () => {
-    renderTool('zine-imposer');
+  it('Zine 明确固定八页顺序与折叠提示', async () => {
+    await renderTool('zine-imposer');
     expect(screen.getByLabelText('8 页固定顺序')).toHaveTextContent('8、1、2、7、6、3、4、5');
     expect(screen.getByText(/沿中线裁切并折叠/)).toBeVisible();
   });
 
   it('彩色追踪隐藏无效阈值，只显示最大颜色数', async () => {
-    renderTool('image-tracer');
+    await renderTool('image-tracer');
     expect(screen.getByLabelText('追踪阈值')).toBeVisible();
     await userEvent.selectOptions(screen.getByLabelText('追踪模式'), 'color');
     expect(screen.queryByLabelText('追踪阈值')).toBeNull();
@@ -147,7 +148,7 @@ describe('六条高级媒体路由', () => {
   });
 
   it('小册子模式固定双面并只保留有实际作用的翻转设置', async () => {
-    renderTool('imposer');
+    await renderTool('imposer');
     await userEvent.selectOptions(screen.getByLabelText('输出模式'), 'booklet');
     expect(screen.queryByLabelText('单双面')).toBeNull();
     expect(screen.getByLabelText('翻转方式')).toBeVisible();
@@ -155,7 +156,7 @@ describe('六条高级媒体路由', () => {
   });
 
   it('翻转方式按当前纸张方向说明物理长边和短边', async () => {
-    renderTool('imposer');
+    await renderTool('imposer');
     expect(screen.getByRole('option', { name: '长边翻转（横向纸张：上下镜像）' })).toBeVisible();
     expect(screen.getByRole('option', { name: '短边翻转（横向纸张：左右镜像）' })).toBeVisible();
     await userEvent.selectOptions(screen.getByLabelText('纸张方向'), 'portrait');
@@ -169,7 +170,7 @@ describe('六条路由核心成功与恢复', () => {
   beforeEach(() => installImageCanvas());
 
   it('本地颜色背景移除从图片像素生成透明 PNG 下载', async () => {
-    renderTool('background-remover');
+    await renderTool('background-remover');
     fireEvent.change(screen.getByLabelText('选择背景移除图片'), { target: { files: [new File(['png'], '纯色背景.png', { type: 'image/png' })] } });
     await screen.findByText('图片已读取，可开始本地颜色背景移除');
     await userEvent.click(screen.getByRole('button', { name: '移除颜色背景' }));
@@ -185,7 +186,7 @@ describe('六条路由核心成功与恢复', () => {
     }
     vi.stubGlobal('Worker', WaitingWorker as unknown as typeof Worker);
     vi.stubGlobal('crypto', { randomUUID: () => 'job-cancel' });
-    renderTool('background-remover');
+    await renderTool('background-remover');
     fireEvent.change(screen.getByLabelText('选择背景移除图片'), { target: { files: [new File(['png'], '保留原图.png', { type: 'image/png' })] } });
     await screen.findByText('图片已读取，可开始本地颜色背景移除');
     await userEvent.click(screen.getByRole('button', { name: '移除颜色背景' }));
@@ -197,7 +198,7 @@ describe('六条路由核心成功与恢复', () => {
   });
 
   it('图片追踪生成真实 SVG，非法阈值后清除旧结果', async () => {
-    renderTool('image-tracer');
+    await renderTool('image-tracer');
     fireEvent.change(screen.getByLabelText('选择追踪图片'), { target: { files: [new File(['png'], '线稿.png', { type: 'image/png' })] } });
     await screen.findByText('图片已读取，可开始追踪');
     await userEvent.click(screen.getByRole('button', { name: '生成 SVG' }));
@@ -209,7 +210,7 @@ describe('六条路由核心成功与恢复', () => {
   });
 
   it('PDF 预检成功显示页数、逐页尺寸、方向和尺寸警告', async () => {
-    renderTool('pdf-preflight');
+    await renderTool('pdf-preflight');
     fireEvent.change(screen.getByLabelText('选择 PDF 文件'), { target: { files: [await pdfFile(2)] } });
     expect(await screen.findByText('PDF 预检完成')).toBeVisible();
     expect(screen.getByLabelText('PDF 预检结果')).toHaveTextContent('2 页');
@@ -217,7 +218,7 @@ describe('六条路由核心成功与恢复', () => {
   });
 
   it('PDF 拼版成功生成 application/pdf，非法边距清除旧结果', async () => {
-    renderTool('imposer');
+    await renderTool('imposer');
     fireEvent.change(screen.getByLabelText('选择 PDF 文件'), { target: { files: [await pdfFile(4)] } });
     await userEvent.click(screen.getByRole('button', { name: '生成拼版 PDF' }));
     expect(await screen.findByRole('button', { name: '下载拼版 PDF' })).toBeVisible();
@@ -228,7 +229,7 @@ describe('六条路由核心成功与恢复', () => {
   });
 
   it('Zine 恰好八页时生成 PDF，七页时显示约束错误', async () => {
-    renderTool('zine-imposer');
+    await renderTool('zine-imposer');
     fireEvent.change(screen.getByLabelText('选择 PDF 文件'), { target: { files: [await pdfFile(8, '八页.pdf')] } });
     await userEvent.click(screen.getByRole('button', { name: '生成 8 页 Zine PDF' }));
     expect(await screen.findByRole('button', { name: '下载 Zine PDF' })).toBeVisible();
@@ -244,7 +245,7 @@ describe('高级媒体任务竞态与卸载清理', () => {
 
   it('背景移除在选择新图片后忽略旧 Worker 的迟到失败', async () => {
     const workers = installControlledWorkers();
-    renderTool('background-remover');
+    await renderTool('background-remover');
     const input = screen.getByLabelText('选择背景移除图片');
     fireEvent.change(input, { target: { files: [new File(['a'], 'A.png', { type: 'image/png' })] } });
     await screen.findByText('图片已读取，可开始本地颜色背景移除');
@@ -266,7 +267,7 @@ describe('高级媒体任务竞态与卸载清理', () => {
 
   it('图片追踪在选择新图片后忽略旧 Worker 的迟到失败', async () => {
     const workers = installControlledWorkers();
-    renderTool('image-tracer');
+    await renderTool('image-tracer');
     const input = screen.getByLabelText('选择追踪图片');
     fireEvent.change(input, { target: { files: [new File(['a'], 'A.png', { type: 'image/png' })] } });
     await screen.findByText('图片已读取，可开始追踪');
@@ -288,7 +289,7 @@ describe('高级媒体任务竞态与卸载清理', () => {
 
   it('背景移除处理中选择非法文件会使旧 Worker 永久失效', async () => {
     const workers = installControlledWorkers();
-    renderTool('background-remover');
+    await renderTool('background-remover');
     const input = screen.getByLabelText('选择背景移除图片');
     fireEvent.change(input, { target: { files: [new File(['a'], 'A.png', { type: 'image/png' })] } });
     await screen.findByText('图片已读取，可开始本地颜色背景移除');
@@ -308,7 +309,7 @@ describe('高级媒体任务竞态与卸载清理', () => {
 
   it('图片追踪处理中选择非法文件会使旧 Worker 永久失效', async () => {
     const workers = installControlledWorkers();
-    renderTool('image-tracer');
+    await renderTool('image-tracer');
     const input = screen.getByLabelText('选择追踪图片');
     fireEvent.change(input, { target: { files: [new File(['a'], 'A.png', { type: 'image/png' })] } });
     await screen.findByText('图片已读取，可开始追踪');
@@ -337,7 +338,7 @@ describe('高级媒体任务竞态与卸载清理', () => {
       resolve(value: string) { this.result = value; this.onload?.(new ProgressEvent('load') as ProgressEvent<FileReader>); }
     }
     vi.stubGlobal('FileReader', DeferredReader as unknown as typeof FileReader);
-    renderTool('svg-optimiser');
+    await renderTool('svg-optimiser');
     const input = screen.getByLabelText('选择 SVG 文件');
     fireEvent.change(input, { target: { files: [new File(['a'], 'A.svg', { type: 'image/svg+xml' })] } });
     expect(readers).toHaveLength(1);
@@ -356,7 +357,7 @@ describe('高级媒体任务竞态与卸载清理', () => {
     ['image-tracer', '选择追踪图片', '生成 SVG', '平滑度'],
   ])('%s 参数变化会终止并失效正在运行的旧任务', async (toolId, inputLabel, runLabel, parameterLabel) => {
     const workers = installControlledWorkers();
-    renderTool(toolId);
+    await renderTool(toolId);
     fireEvent.change(screen.getByLabelText(inputLabel), { target: { files: [new File(['a'], 'A.png', { type: 'image/png' })] } });
     await screen.findByText(toolId === 'background-remover' ? '图片已读取，可开始本地颜色背景移除' : '图片已读取，可开始追踪');
     await userEvent.click(screen.getByRole('button', { name: runLabel }));
@@ -382,7 +383,7 @@ describe('高级媒体任务竞态与卸载清理', () => {
       resolve(value: string) { this.result = value; this.onload?.(new ProgressEvent('load') as ProgressEvent<FileReader>); }
     }
     vi.stubGlobal('FileReader', DeferredReader as unknown as typeof FileReader);
-    renderTool('svg-optimiser');
+    await renderTool('svg-optimiser');
     const input = screen.getByLabelText('选择 SVG 文件');
     fireEvent.change(input, { target: { files: [new File(['a'], 'A.svg', { type: 'image/svg+xml' })] } });
     fireEvent.change(input, { target: { files: [new File(['b'], 'B.svg', { type: 'image/svg+xml' })] } });
@@ -396,7 +397,7 @@ describe('高级媒体任务竞态与卸载清理', () => {
 
   it('PDF 预检只接受最新 Worker 的结果', async () => {
     const workers = installControlledWorkers();
-    renderTool('pdf-preflight');
+    await renderTool('pdf-preflight');
     const input = screen.getByLabelText('选择 PDF 文件');
     fireEvent.change(input, { target: { files: [await workerPdfFile(1, 'A.pdf')] } });
     await waitFor(() => expect(workers).toHaveLength(1));
@@ -415,7 +416,7 @@ describe('高级媒体任务竞态与卸载清理', () => {
     ['zine-imposer', '生成 8 页 Zine PDF', '下载 Zine PDF'],
   ])('%s 只保留最新生成任务，旧 Worker 迟到失败不能清空结果', async (toolId, runLabel, downloadLabel) => {
     const workers = installControlledWorkers();
-    renderTool(toolId);
+    await renderTool(toolId);
     const input = screen.getByLabelText('选择 PDF 文件');
     const pages = toolId === 'zine-imposer' ? 8 : 4;
     fireEvent.change(input, { target: { files: [await workerPdfFile(pages, 'A.pdf')] } });
@@ -438,7 +439,7 @@ describe('高级媒体任务竞态与卸载清理', () => {
     ['zine-imposer', '生成 8 页 Zine PDF', 8],
   ])('%s 卸载时终止仍在运行的 PDF Worker', async (toolId, runLabel, pages) => {
     const workers = installControlledWorkers();
-    const view = renderTool(toolId);
+    const view = await renderTool(toolId);
     fireEvent.change(screen.getByLabelText('选择 PDF 文件'), { target: { files: [await workerPdfFile(pages, '运行中.pdf')] } });
     if (runLabel) await userEvent.click(screen.getByRole('button', { name: runLabel }));
     await waitFor(() => expect(workers).toHaveLength(1));

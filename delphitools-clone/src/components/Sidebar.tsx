@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, type KeyboardEvent } from 'react';
 
 import { TOOL_CATEGORIES } from '../data/categories';
 
@@ -14,6 +14,7 @@ type SidebarProps = {
 
 export function Sidebar({ isDrawer, isOpen, onClose, onToggleTheme, theme, searchQuery, onSearchQueryChange }: SidebarProps) {
   const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const sidebarRef = useRef<HTMLElement>(null);
   const isHidden = isDrawer && !isOpen;
   const disabledTabIndex = isHidden ? -1 : undefined;
 
@@ -21,10 +22,35 @@ export function Sidebar({ isDrawer, isOpen, onClose, onToggleTheme, theme, searc
     if (isDrawer && isOpen) closeButtonRef.current?.focus();
   }, [isDrawer, isOpen]);
 
+  const trapDrawerFocus = (event: KeyboardEvent<HTMLElement>) => {
+    if (!isDrawer || !isOpen || event.key !== 'Tab') return;
+    const focusable = Array.from(sidebarRef.current?.querySelectorAll<HTMLElement>(
+      'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+    ) ?? []).filter((element) => element.getAttribute('aria-hidden') !== 'true' && element.tabIndex >= 0);
+    if (focusable.length === 0) return;
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first.focus();
+    }
+  };
+
   return (
     <>
-      {isOpen && <button className="drawer-scrim" aria-label="关闭导航菜单" onClick={onClose} />}
-      <aside className={`sidebar ${isOpen ? 'sidebar--open' : ''}`} aria-hidden={isHidden || undefined} aria-label="工具导航">
+      {isDrawer && isOpen && <button className="drawer-scrim" aria-label="关闭导航菜单" tabIndex={-1} onClick={onClose} />}
+      <aside
+        ref={sidebarRef}
+        className={`sidebar ${isOpen ? 'sidebar--open' : ''}`}
+        aria-hidden={isHidden || undefined}
+        aria-label="工具导航"
+        aria-modal={isDrawer && isOpen ? true : undefined}
+        role={isDrawer ? 'dialog' : undefined}
+        onKeyDown={trapDrawerFocus}
+      >
         <div className="sidebar__topline">
           <a className="brand" href="/" aria-label="DelphiTools 首页" tabIndex={disabledTabIndex}>
             <span className="brand__mark" aria-hidden="true">D</span>

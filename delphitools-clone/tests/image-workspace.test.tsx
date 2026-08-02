@@ -1,4 +1,4 @@
-/** @vitest-environment jsdom */
+﻿/** @vitest-environment jsdom */
 
 import '@testing-library/jest-dom/vitest';
 
@@ -7,6 +7,7 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { App } from '../src/app/App';
+import { renderAfterLazy } from './render-after-lazy';
 import { IMAGE_FIXTURES } from './fixtures/image-fixtures';
 
 const originalCreateObjectURL = URL.createObjectURL;
@@ -28,9 +29,9 @@ const TOOL_CASES = [
   ['base64-image-encoder', '图片 Base64 编码', '图片 Data URL'],
 ] as const;
 
-function renderTool(toolId: string) {
+async function renderTool(toolId: string) {
   window.history.replaceState({}, '', `/tools/${toolId}`);
-  return render(<App />);
+  return renderAfterLazy(<App />);
 }
 
 afterEach(() => {
@@ -43,8 +44,8 @@ afterEach(() => {
 });
 
 describe('图片工具路由', () => {
-  it.each(TOOL_CASES)('%s 显示不同中文标题、关键控件与本地处理入口', (toolId, title, control) => {
-    const { unmount } = renderTool(toolId);
+  it.each(TOOL_CASES)('%s 显示不同中文标题、关键控件与本地处理入口', async (toolId, title, control) => {
+    const { unmount } = await renderTool(toolId);
     expect(screen.getByRole('heading', { name: title })).toBeVisible();
     expect(screen.getByLabelText(control)).toBeVisible();
     expect(screen.getByRole('button', { name: '选择或拖放文件' })).toBeVisible();
@@ -52,8 +53,8 @@ describe('图片工具路由', () => {
     unmount();
   });
 
-  it.each(TOOL_CASES.filter(([id]) => !['paste-image', 'placeholder-genny', 'base64-image-encoder'].includes(id)))('%s 的文件核心交互拒绝非图片并保持错误状态', (toolId) => {
-    renderTool(toolId);
+  it.each(TOOL_CASES.filter(([id]) => !['paste-image', 'placeholder-genny', 'base64-image-encoder'].includes(id)))('%s 的文件核心交互拒绝非图片并保持错误状态', async (toolId) => {
+    await renderTool(toolId);
     fireEvent.change(screen.getByLabelText('选择文件'), {
       target: { files: [new File(['文本'], 'note.txt', { type: 'text/plain' })] },
     });
@@ -61,27 +62,27 @@ describe('图片工具路由', () => {
   });
 
   it('社交裁剪可切换中文场景并显示对应比例', async () => {
-    renderTool('social-cropper');
+    await renderTool('social-cropper');
     await userEvent.selectOptions(screen.getByLabelText('裁剪场景'), 'story');
     expect(screen.getByText('竖屏故事 · 9:16')).toBeVisible();
   });
 
   it('图片水印可在文字和图片类型之间切换', async () => {
-    renderTool('watermarker');
+    await renderTool('watermarker');
     expect(screen.getByLabelText('水印文字')).toBeVisible();
     await userEvent.selectOptions(screen.getByLabelText('水印类型'), 'image');
     expect(screen.getByLabelText('选择水印图片')).toBeVisible();
   });
 
   it('拼接工具允许横向与纵向切换并支持多选', async () => {
-    renderTool('image-stitcher');
+    await renderTool('image-stitcher');
     await userEvent.selectOptions(screen.getByLabelText('拼接方向'), 'vertical');
     expect(screen.getByLabelText('拼接方向')).toHaveValue('vertical');
     expect(screen.getByLabelText('选择文件')).toHaveAttribute('multiple');
   });
 
   it('占位图核心交互生成可下载的安全 SVG', async () => {
-    renderTool('placeholder-genny');
+    await renderTool('placeholder-genny');
     await userEvent.clear(screen.getByLabelText('占位文字'));
     await userEvent.type(screen.getByLabelText('占位文字'), '<标题>');
     await userEvent.click(screen.getByRole('button', { name: '生成占位图' }));
@@ -90,7 +91,7 @@ describe('图片工具路由', () => {
   });
 
   it('新上传校验失败会清除旧的成功图片结果', async () => {
-    renderTool('placeholder-genny');
+    await renderTool('placeholder-genny');
     await userEvent.click(screen.getByRole('button', { name: '生成占位图' }));
     expect(screen.getByRole('button', { name: '下载 SVG' })).toBeVisible();
 
@@ -109,7 +110,7 @@ describe('图片工具路由', () => {
     const revokeObjectURL = vi.fn();
     Object.defineProperty(URL, 'createObjectURL', { configurable: true, value: createObjectURL });
     Object.defineProperty(URL, 'revokeObjectURL', { configurable: true, value: revokeObjectURL });
-    const { unmount } = renderTool('placeholder-genny');
+    const { unmount } = await renderTool('placeholder-genny');
 
     await userEvent.click(screen.getByRole('button', { name: '生成占位图' }));
     await waitFor(() => expect(createObjectURL).toHaveBeenCalledTimes(1));
@@ -137,7 +138,7 @@ describe('图片工具路由', () => {
       set src(_value: string) { queueMicrotask(() => this.onload?.(new Event('load'))); }
     }
     vi.stubGlobal('Image', ImmediateImage as unknown as typeof Image);
-    renderTool('base64-image-encoder');
+    await renderTool('base64-image-encoder');
     const input = screen.getByLabelText('图片 Data URL');
     await userEvent.type(input, `data:image/png;base64,${IMAGE_FIXTURES.png.base64}`);
     await userEvent.click(screen.getByRole('button', { name: '解析 Data URL' }));
@@ -153,8 +154,8 @@ describe('图片工具路由', () => {
     expect(screen.queryByRole('button', { name: '复制 Data URL' })).toBeNull();
   });
 
-  it('格式转换器只启用真实支持格式并解释禁用项', () => {
-    renderTool('image-converter');
+  it('格式转换器只启用真实支持格式并解释禁用项', async () => {
+    await renderTool('image-converter');
     const gif = screen.getByRole('option', { name: /GIF/ });
     expect(gif).toBeDisabled();
     expect(screen.getByText(/GIF.*无法可靠编码/)).toBeVisible();
@@ -165,7 +166,7 @@ describe('图片工具路由', () => {
       configurable: true,
       value: { read: vi.fn().mockRejectedValue(new Error('permission denied')) },
     });
-    renderTool('paste-image');
+    await renderTool('paste-image');
     await userEvent.click(screen.getByRole('button', { name: '粘贴剪贴板图片' }));
     expect(screen.getByRole('alert')).toHaveTextContent('无法读取剪贴板图片');
     expect(screen.queryByRole('button', { name: /下载/ })).toBeNull();

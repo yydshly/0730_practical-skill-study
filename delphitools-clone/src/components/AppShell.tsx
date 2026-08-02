@@ -20,6 +20,7 @@ export function AppShell({ children, searchQuery, onSearchQueryChange }: AppShel
   const [isDrawer, setIsDrawer] = useState(isDrawerViewport);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const openButtonRef = useRef<HTMLButtonElement>(null);
+  const restoreMenuFocusRef = useRef(false);
 
   useEffect(() => {
     applyTheme(theme);
@@ -32,9 +33,16 @@ export function AppShell({ children, searchQuery, onSearchQueryChange }: AppShel
   }, []);
 
   const closeMenu = () => {
+    restoreMenuFocusRef.current = isDrawer;
     setIsMenuOpen(false);
-    if (isDrawer) openButtonRef.current?.focus();
   };
+
+  useEffect(() => {
+    if (!isMenuOpen && restoreMenuFocusRef.current) {
+      restoreMenuFocusRef.current = false;
+      openButtonRef.current?.focus();
+    }
+  }, [isMenuOpen]);
 
   useEffect(() => {
     const closeOnEscape = (event: KeyboardEvent) => {
@@ -56,7 +64,7 @@ export function AppShell({ children, searchQuery, onSearchQueryChange }: AppShel
         searchQuery={searchQuery}
         onSearchQueryChange={onSearchQueryChange}
       />
-      <main className="app-main">
+      <main className="app-main" aria-hidden={isDrawer && isMenuOpen ? true : undefined} inert={isDrawer && isMenuOpen ? '' : undefined}>
         <div className="mobile-header">
           <button ref={openButtonRef} className="icon-button" type="button" onClick={() => setIsMenuOpen(true)} aria-label="打开导航菜单">☰</button>
           <a className="mobile-header__brand" href="/">DelphiTools</a>

@@ -1,4 +1,4 @@
-/** @vitest-environment jsdom */
+﻿/** @vitest-environment jsdom */
 
 import '@testing-library/jest-dom/vitest';
 
@@ -7,11 +7,12 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { ToolPage } from '../src/app/ToolPage';
+import { renderAfterLazy } from './render-after-lazy';
 
 afterEach(cleanup);
 
-function renderTool(toolId: string) {
-  return render(<ToolPage toolId={toolId} />);
+async function renderTool(toolId: string) {
+  return renderAfterLazy(<ToolPage toolId={toolId} />);
 }
 
 describe('五个计算入口', () => {
@@ -21,15 +22,15 @@ describe('五个计算入口', () => {
     ['sci-calc', '科学计算表达式'],
     ['time-calc', 'Unix 时间戳'],
     ['unit-converter', '单位类别'],
-  ])('%s 显示专属中文控件', (toolId, label) => {
-    const { unmount } = renderTool(toolId);
+  ])('%s 显示专属中文控件', async (toolId, label) => {
+    const { unmount } = await renderTool(toolId);
     expect(screen.getByLabelText(label)).toBeVisible();
     expect(document.querySelector('.calculator-workspace')).not.toBeNull();
     unmount();
   });
 
-  it('只接管五个计算入口，PDF 工具使用高级工作区', () => {
-    renderTool('pdf-preflight');
+  it('只接管五个计算入口，PDF 工具使用高级工作区', async () => {
+    await renderTool('pdf-preflight');
     expect(screen.getByLabelText('PDF 印刷预检 工作区')).toBeVisible();
     expect(document.querySelector('.calculator-workspace')).toBeNull();
   });
@@ -38,7 +39,7 @@ describe('五个计算入口', () => {
 describe('计算工作台关键交互', () => {
   it('科学计算器支持键盘输入、数字键盘、历史、删除与清空', async () => {
     const user = userEvent.setup();
-    renderTool('sci-calc');
+    await renderTool('sci-calc');
 
     const input = screen.getByLabelText('科学计算表达式');
     await user.clear(input);
@@ -58,7 +59,7 @@ describe('计算工作台关键交互', () => {
 
   it('科学计算失败时显示中文错误并清除旧结果', async () => {
     const user = userEvent.setup();
-    renderTool('sci-calc');
+    await renderTool('sci-calc');
     const input = screen.getByLabelText('科学计算表达式');
     await user.clear(input);
     await user.type(input, '2+2');
@@ -72,8 +73,8 @@ describe('计算工作台关键交互', () => {
     expect(screen.queryByLabelText('科学计算结果')).not.toBeInTheDocument();
   });
 
-  it('代数工具分开展示化简、因式分解、解方程和求导', () => {
-    renderTool('algebra-calc');
+  it('代数工具分开展示化简、因式分解、解方程和求导', async () => {
+    await renderTool('algebra-calc');
     fireEvent.change(screen.getByLabelText('代数表达式或方程'), { target: { value: 'x^2 - 5x + 6 = 0' } });
     expect(screen.getByRole('region', { name: '化简结果' })).toBeVisible();
     expect(screen.getByRole('region', { name: '因式分解结果' })).toHaveTextContent('(x - 2)(x - 3)');
@@ -82,8 +83,8 @@ describe('计算工作台关键交互', () => {
     expect(screen.getByText(/中文示例/)).toBeVisible();
   });
 
-  it('函数绘图显示坐标轴、多条曲线，并按断点拆分路径', () => {
-    renderTool('graph-calc');
+  it('函数绘图显示坐标轴、多条曲线，并按断点拆分路径', async () => {
+    await renderTool('graph-calc');
     fireEvent.change(screen.getByLabelText('函数表达式（每行一个）'), { target: { value: 'x\n1/x' } });
     const chart = screen.getByRole('img', { name: '函数曲线图' });
     expect(within(chart).getByText('x')).toBeVisible();
@@ -93,8 +94,8 @@ describe('计算工作台关键交互', () => {
     expect(screen.getByText(/定义域：/)).toBeVisible();
   });
 
-  it('函数绘图不会把超限常量投影为伪曲线或非有限 SVG 坐标', () => {
-    renderTool('graph-calc');
+  it('函数绘图不会把超限常量投影为伪曲线或非有限 SVG 坐标', async () => {
+    await renderTool('graph-calc');
     fireEvent.change(screen.getByLabelText('函数表达式（每行一个）'), { target: { value: '1e308' } });
     const chart = screen.getByRole('img', { name: '函数曲线图' });
     expect(chart.querySelector('path[data-expression="1e308"]')).toBeNull();
@@ -103,7 +104,7 @@ describe('计算工作台关键交互', () => {
 
   it('时间工具完成时间戳转换、日期加减与时区转换', async () => {
     const user = userEvent.setup();
-    renderTool('time-calc');
+    await renderTool('time-calc');
 
     const timestamp = screen.getByLabelText('Unix 时间戳');
     await user.clear(timestamp);
@@ -124,7 +125,7 @@ describe('计算工作台关键交互', () => {
 
   it('时间工具把日期双向转换为带精度的 Unix 秒和整数毫秒', async () => {
     const user = userEvent.setup();
-    renderTool('time-calc');
+    await renderTool('time-calc');
 
     fireEvent.change(screen.getByLabelText('日期转时间戳输入'), { target: { value: '1969-12-31T23:59:59.999' } });
     await user.click(screen.getByRole('button', { name: '日期转 Unix 时间戳' }));
@@ -137,7 +138,7 @@ describe('计算工作台关键交互', () => {
 
   it('单位换算按类别更新单位并保留输入数值', async () => {
     const user = userEvent.setup();
-    renderTool('unit-converter');
+    await renderTool('unit-converter');
     const value = screen.getByLabelText('换算数值');
     await user.clear(value);
     await user.type(value, '1');

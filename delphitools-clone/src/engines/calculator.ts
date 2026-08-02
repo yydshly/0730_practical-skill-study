@@ -698,6 +698,10 @@ export function convertUnit(value: number, from: string, to: string): number {
   const target = UNIT_DEFINITIONS.find((unit) => unit.id === to);
   if (!source || !target) throw new Error(`未知单位：${!source ? from : to}`);
   if (source.category !== target.category) throw new Error('不同类别的单位不能直接换算');
-  if (source.category === 'temperature') return normalizeNumber(fromCelsius(toCelsius(value, source.id), target.id));
+  if (source.category === 'temperature') {
+    const celsius = toCelsius(value, source.id);
+    if (celsius < -273.15 - 1e-12) throw new Error('温度不能低于绝对零度');
+    return normalizeNumber(fromCelsius(celsius, target.id));
+  }
   return normalizeNumber(value * source.factor! / target.factor!);
 }

@@ -6,16 +6,16 @@ const imageTools: readonly ToolDefinition[] = [
   { id: 'social-cropper', category: 'image', title: '社交媒体裁剪', englishTitle: 'Social Cropper', description: '按 Instagram、Bluesky 和 Threads 的常见比例裁剪图片。', keywords: ['裁剪', 'Instagram', 'Bluesky', 'Threads'], workspace: 'image', mode: 'standard' },
   { id: 'watermarker', category: 'image', title: '图片水印', englishTitle: 'Watermarker', description: '为图片添加可调位置、透明度和大小的文字或图片水印。', keywords: ['水印', '文字水印', '图片水印', '透明度'], workspace: 'image', mode: 'standard' },
   { id: 'artwork-enhancer', category: 'image', title: '艺术品增强', englishTitle: 'Artwork Enhancer', description: '为图片叠加可控的彩色噪声纹理，增强艺术展示效果。', keywords: ['噪声', '纹理', '艺术品', '增强'], workspace: 'image', mode: 'standard' },
-  { id: 'background-remover', category: 'image', title: '背景移除', englishTitle: 'Background Remover', description: '在浏览器本地移除图片背景并导出透明 PNG。', keywords: ['抠图', '去背景', '透明 PNG', '本地处理'], workspace: 'image', mode: 'standard' },
+  { id: 'background-remover', category: 'image', title: '背景移除', englishTitle: 'Background Remover', description: '在浏览器本地移除图片背景并导出透明 PNG。', keywords: ['抠图', '去背景', '透明 PNG', '本地处理'], workspace: 'advanced-media', mode: 'standard' },
   { id: 'favicon-genny', category: 'image', title: 'Favicon 生成器', englishTitle: 'Favicon Generator', description: '从图片生成常见尺寸的网站 Favicon 图标。', keywords: ['Favicon', '网站图标', 'ICO', '图标'], workspace: 'image', mode: 'standard' },
   { id: 'image-clipper', category: 'image', title: '透明边缘裁剪', englishTitle: 'Image Clipper', description: '自动裁掉 PNG 四周多余的透明边缘。', keywords: ['透明边缘', 'PNG', '裁边', '裁剪'], workspace: 'image', mode: 'standard' },
   { id: 'image-converter', category: 'image', title: '图片格式转换', englishTitle: 'Image Converter', description: '转换 PNG、JPEG、WebP、GIF、BMP、TIFF 和 ICO 格式并调整尺寸。', keywords: ['格式转换', 'PNG', 'JPEG', 'WebP', '图片转换'], workspace: 'image', mode: 'standard' },
   { id: 'image-splitter', category: 'image', title: '图片分割', englishTitle: 'Image Splitter', description: '按行列或固定尺寸把图片切成多个小图。', keywords: ['分割', '切图', '行列', '尺寸'], workspace: 'image', mode: 'standard' },
   { id: 'image-stitcher', category: 'image', title: '图片拼接', englishTitle: 'Image Stitcher', description: '按方向、间距和顺序把多张图片拼成一张图。', keywords: ['拼接', '合并图片', '间距', '顺序'], workspace: 'image', mode: 'standard' },
-  { id: 'image-tracer', category: 'image', title: '图片转 SVG', englishTitle: 'Image Tracer', description: '将简单栅格图像追踪为 SVG 路径。', keywords: ['SVG', '矢量化', '追踪', '栅格图'], workspace: 'image', mode: 'standard' },
+  { id: 'image-tracer', category: 'image', title: '图片转 SVG', englishTitle: 'Image Tracer', description: '将简单栅格图像追踪为 SVG 路径。', keywords: ['SVG', '矢量化', '追踪', '栅格图'], workspace: 'advanced-media', mode: 'standard' },
   { id: 'paste-image', category: 'image', title: '剪贴板图片', englishTitle: 'Paste Image', description: '从系统剪贴板粘贴图片并下载。', keywords: ['剪贴板', '粘贴图片', '下载', '截图'], workspace: 'image', mode: 'standard' },
   { id: 'placeholder-genny', category: 'image', title: '占位图生成器', englishTitle: 'Placeholder Generator', description: '生成带尺寸、颜色和文字的占位图片。', keywords: ['占位图', '尺寸', '颜色', '文字'], workspace: 'image', mode: 'standard' },
-  { id: 'svg-optimiser', category: 'image', title: 'SVG 优化器', englishTitle: 'SVG Optimiser', description: '清理无用属性、压缩并格式化 SVG 文件。', keywords: ['SVG', '压缩', '格式化', '优化'], workspace: 'image', mode: 'standard' },
+  { id: 'svg-optimiser', category: 'image', title: 'SVG 优化器', englishTitle: 'SVG Optimiser', description: '清理无用属性、压缩并格式化 SVG 文件。', keywords: ['SVG', '矢量化', '压缩', '优化'], workspace: 'advanced-media', mode: 'standard' },
   { id: 'base64-image-encoder', category: 'image', title: '图片 Base64 编码', englishTitle: 'Base64 Image Encoder', description: '将图片转换为可嵌入 HTML 或 CSS 的 Base64 字符串。', keywords: ['Base64', '图片编码', 'HTML', 'CSS'], workspace: 'image', mode: 'standard' },
 ];
 
@@ -68,8 +68,8 @@ const developerTools: readonly ToolDefinition[] = [
 
 const calculatorTools: readonly ToolDefinition[] = [
   { id: 'algebra-calc', category: 'calculator', title: '代数计算器', englishTitle: 'Algebra Calculator', description: '化简、因式分解、求解和求导代数表达式。', keywords: ['代数', '化简', '因式分解', '求导'], workspace: 'calculator', mode: 'standard' },
-  { id: 'base-converter', category: 'calculator', title: '进制转换器', englishTitle: 'Base Converter', description: '转换十进制、十六进制、二进制和八进制。', keywords: ['进制', '二进制', '十六进制', '八进制'], workspace: 'calculator', mode: 'standard' },
-  { id: 'encoder', category: 'calculator', title: '编码工具', englishTitle: 'Encoder', description: '提供 Base64、URL 编码、解码和哈希生成。', keywords: ['Base64', 'URL 编码', '解码', '哈希'], workspace: 'calculator', mode: 'standard' },
+  { id: 'base-converter', category: 'calculator', title: '进制转换器', englishTitle: 'Base Converter', description: '转换十进制、十六进制、二进制和八进制。', keywords: ['进制', '二进制', '十六进制', '八进制'], workspace: 'developer', mode: 'standard' },
+  { id: 'encoder', category: 'calculator', title: '编码工具', englishTitle: 'Encoder', description: '提供 Base64、URL 编码、解码和哈希生成。', keywords: ['Base64', 'URL 编码', '解码', '哈希'], workspace: 'developer', mode: 'standard' },
   { id: 'graph-calc', category: 'calculator', title: '函数绘图器', englishTitle: 'Graph Calculator', description: '输入数学函数并绘制曲线。', keywords: ['函数', '绘图', '曲线', '数学'], workspace: 'calculator', mode: 'standard' },
   { id: 'sci-calc', category: 'calculator', title: '科学计算器', englishTitle: 'Scientific Calculator', description: '支持三角函数、对数、幂和计算历史。', keywords: ['科学计算', '三角函数', '对数', '幂'], workspace: 'calculator', mode: 'standard' },
   { id: 'time-calc', category: 'calculator', title: '时间计算器', englishTitle: 'Time Calculator', description: '处理 Unix 时间戳、日期运算和时区换算。', keywords: ['时间戳', '日期', '时区', 'Unix'], workspace: 'calculator', mode: 'standard' },

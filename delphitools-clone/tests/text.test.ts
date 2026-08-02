@@ -190,4 +190,32 @@ describe('纸张、Unicode 与字体数据', () => {
     const { inspectFont } = await import('../src/engines/document');
     expect(() => inspectFont(new Uint8Array([1, 2, 3]).buffer)).toThrow('字体文件无效或已损坏');
   });
+
+  it('字体名称记录不能越过 name 表边界读取其他表数据', async () => {
+    const { inspectFont } = await import('../src/engines/document');
+    const buffer = new ArrayBuffer(140);
+    const view = new DataView(buffer);
+    const bytes = new Uint8Array(buffer);
+    view.setUint32(0, 0x00010000);
+    view.setUint16(4, 3);
+    const writeTable = (record: number, name: string, offset: number, length: number) => {
+      bytes.set(new TextEncoder().encode(name), record);
+      view.setUint32(record + 8, offset);
+      view.setUint32(record + 12, length);
+    };
+    writeTable(12, 'head', 64, 20);
+    writeTable(28, 'maxp', 84, 6);
+    writeTable(44, 'name', 90, 18);
+    view.setUint16(64 + 18, 1_000);
+    view.setUint16(84 + 4, 3);
+    view.setUint16(90 + 2, 1);
+    view.setUint16(90 + 4, 18);
+    view.setUint16(96, 3);
+    view.setUint16(96 + 6, 1);
+    view.setUint16(96 + 8, 4);
+    view.setUint16(96 + 10, 20);
+    bytes.set(new TextEncoder().encode('FAKE'), 128);
+
+    expect(() => inspectFont(buffer)).toThrow('字体文件无效或已损坏');
+  });
 });

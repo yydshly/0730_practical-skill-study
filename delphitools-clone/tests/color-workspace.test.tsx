@@ -1,4 +1,4 @@
-/** @vitest-environment jsdom */
+﻿/** @vitest-environment jsdom */
 
 import '@testing-library/jest-dom/vitest';
 
@@ -7,6 +7,7 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { App } from '../src/app/App';
+import { renderAfterLazy } from './render-after-lazy';
 
 type ControlledImageInstance = {
   onload: (() => void) | null;
@@ -29,9 +30,9 @@ const TOOL_ENTRIES = [
   ['tailwind-shades', 'Tailwind 色阶生成器'],
 ] as const;
 
-function renderTool(toolId: string) {
+async function renderTool(toolId: string) {
   window.history.replaceState({}, '', `/tools/${toolId}`);
-  return render(<App />);
+  return renderAfterLazy(<App />);
 }
 
 function installControlledImage() {
@@ -72,8 +73,8 @@ afterEach(() => {
 });
 
 describe('颜色工具工作区', () => {
-  it.each(TOOL_ENTRIES)('入口 %s 呈现标题和专属控件', (toolId, title) => {
-    const { unmount } = renderTool(toolId);
+  it.each(TOOL_ENTRIES)('入口 %s 呈现标题和专属控件', async (toolId, title) => {
+    const { unmount } = await renderTool(toolId);
     expect(screen.getByRole('heading', { name: title })).toBeVisible();
     if (toolId === 'colorblind-sim') expect(screen.getByRole('combobox', { name: '模拟模式' })).toBeVisible();
     if (toolId === 'colour-converter') expect(screen.getByRole('textbox', { name: '输入颜色' })).toBeVisible();
@@ -87,21 +88,21 @@ describe('颜色工具工作区', () => {
     unmount();
   });
 
-  it('颜色路由呈现可操作的转换工作区且不接管二维码路由', () => {
-    const { unmount } = renderTool('colour-converter');
+  it('颜色路由呈现可操作的转换工作区且不接管二维码路由', async () => {
+    const { unmount } = await renderTool('colour-converter');
     expect(screen.getByRole('textbox', { name: '输入颜色' })).toHaveValue('#3b82f6');
     expect(screen.getByText('HEX')).toBeVisible();
     unmount();
 
-    renderTool('qr-genny');
+    await renderTool('qr-genny');
     expect(screen.getByLabelText('二维码内容')).toBeVisible();
     expect(document.querySelector('.color-workspace')).toBeNull();
   });
 
-  it('图片工具拒绝空选择且不会创建 Object URL', () => {
+  it('图片工具拒绝空选择且不会创建 Object URL', async () => {
     const createObjectURL = vi.fn(() => 'blob:unexpected');
     vi.stubGlobal('URL', { createObjectURL, revokeObjectURL: vi.fn() });
-    renderTool('palette-extractor');
+    await renderTool('palette-extractor');
 
     fireEvent.change(screen.getByLabelText('选择文件'), { target: { files: [] } });
 
@@ -113,7 +114,7 @@ describe('颜色工具工作区', () => {
     const revokeObjectURL = vi.fn();
     vi.stubGlobal('URL', { createObjectURL: vi.fn(() => 'blob:local-image'), revokeObjectURL });
     const images = installControlledImage();
-    renderTool('palette-extractor');
+    await renderTool('palette-extractor');
 
     uploadImage();
     expect(screen.getByRole('status')).toHaveTextContent('正在读取图片');
@@ -129,7 +130,7 @@ describe('颜色工具工作区', () => {
       createObjectURL: () => { throw new Error('native decoder failed'); },
       revokeObjectURL: vi.fn(),
     });
-    renderTool('palette-extractor');
+    await renderTool('palette-extractor');
 
     uploadImage();
 
@@ -147,7 +148,7 @@ describe('颜色工具工作区', () => {
     };
     vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(context as unknown as CanvasRenderingContext2D);
     vi.stubGlobal('ImageData', class { constructor(..._args: unknown[]) {} });
-    renderTool('pixel-picker');
+    await renderTool('pixel-picker');
 
     uploadImage();
     images[0].onload?.();
@@ -161,7 +162,7 @@ describe('颜色工具工作区', () => {
   it('收藏持久化，并在损坏的本地数据上回退为空列表', async () => {
     window.localStorage.setItem('delphitools-palette-favorites', '{not-json');
     const user = userEvent.setup();
-    const { unmount } = renderTool('palette-collection');
+    const { unmount } = await renderTool('palette-collection');
 
     const favorite = screen.getAllByRole('button', { name: '收藏调色板' })[0];
     await user.click(favorite);
@@ -169,7 +170,7 @@ describe('颜色工具工作区', () => {
     expect(screen.getByRole('button', { name: '取消收藏' })).toBeVisible();
     unmount();
 
-    renderTool('palette-collection');
+    await renderTool('palette-collection');
     expect(screen.getByRole('button', { name: '取消收藏' })).toBeVisible();
   });
 });

@@ -214,6 +214,8 @@ describe('七类单位换算', () => {
   it('转换摄氏、华氏和开尔文温度', () => {
     expect(convertUnit(32, 'fahrenheit', 'celsius')).toBeCloseTo(0, 12);
     expect(convertUnit(0, 'celsius', 'kelvin')).toBeCloseTo(273.15, 12);
+    expect(convertUnit(-273.15, 'celsius', 'kelvin')).toBeCloseTo(0, 12);
+    expect(() => convertUnit(-1, 'kelvin', 'celsius')).toThrow('温度不能低于绝对零度');
   });
 
   it('区分十进制和二进制字节单位', () => {
