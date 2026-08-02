@@ -52,6 +52,7 @@
 | [`/rope-gallery-study/rope-gallery-source/`](https://yydshly.github.io/0730_practical-skill-study/rope-gallery-study/rope-gallery-source/) | 项目 6a · rope-gallery 原始演示（WebGL 悬挂绳索画廊） |
 | [`/rope-gallery-study/custom-sample/`](https://yydshly.github.io/0730_practical-skill-study/rope-gallery-study/custom-sample/) | 项目 6b · 画轴画廊 · 人像风格悬挂交互展示 |
 | [`/hyperframes-motion-library/business-demo/`](https://yydshly.github.io/0730_practical-skill-study/hyperframes-motion-library/business-demo/) | 项目 7 · 视频动效业务演示（静态展示页） |
+| [`/hyperframes-motion-library/app/`](https://yydshly.github.io/0730_practical-skill-study/hyperframes-motion-library/app/) | 项目 7 · 20 个模板索引 + 参数编辑器（纯静态，可查看所有样片） |
 
 > 部署开关：`Settings → Pages → Source: master · /(root)`（首次部署需仓库 owner 手动开启）
 
@@ -85,6 +86,7 @@ python -m http.server 8000
 #   http://localhost:8000/rope-gallery-study/rope-gallery-source/       ← 项目 6a · rope-gallery 原始演示
 #   http://localhost:8000/hyperframes-motion-library/             ← 项目 7 · 视频动效模板库（需 npm install && npm run dev）
 #   http://localhost:8000/hyperframes-motion-library/business-demo/   ← 项目 7 · 动效业务演示（静态）
+#   http://localhost:8000/hyperframes-motion-library/app/            ← 项目 7 · 20 模板索引+参数编辑器（静态，可查看所有样片）
 #   http://localhost:8000/rope-gallery-study/custom-sample/            ← 项目 6b · 画轴画廊 · 人像风格悬挂展示
 
 # 项目 7 需要独立运行（HyperFrames + Chrome + FFmpeg）:
