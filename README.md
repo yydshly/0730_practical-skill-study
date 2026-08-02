@@ -50,7 +50,6 @@
 | [`/gc-minimal-zine-poster/`](https://yydshly.github.io/0730_practical-skill-study/gc-minimal-zine-poster/) | 项目 5 · 极简 ZINE 海报技能仓库与研究说明 |
 | [`/gc-minimal-zine-poster/demo/`](https://yydshly.github.io/0730_practical-skill-study/gc-minimal-zine-poster/demo/) | 项目 5 · Prompt Compiler、10 个产品场景与完整文字版海报在线 Demo |
 | [`/rope-gallery-study/rope-gallery-source/`](https://yydshly.github.io/0730_practical-skill-study/rope-gallery-study/rope-gallery-source/) | 项目 6a · rope-gallery 原始演示（WebGL 悬挂绳索画廊） |
-| [`/hyperframes-motion-library/`](https://yydshly.github.io/0730_practical-skill-study/hyperframes-motion-library/) | 项目 7 · 视频动效模板库（20 个模板 · 需本地运行） |
 | [`/rope-gallery-study/custom-sample/`](https://yydshly.github.io/0730_practical-skill-study/rope-gallery-study/custom-sample/) | 项目 6b · 画轴画廊 · 人像风格悬挂交互展示 |
 
 > 部署开关：`Settings → Pages → Source: master · /(root)`（首次部署需仓库 owner 手动开启）
@@ -220,7 +219,7 @@ python -m http.server 8000
 | 6 | [rope-gallery-study](./rope-gallery-study/) | WebGL 悬挂绳索画廊：弹簧链物理 + 卡片多层运动叠加 + 自定义 GLSL 着色器 | 已完成 |
 | 6a | [原始 rope-gallery 演示](./rope-gallery-study/rope-gallery-source/) | 克隆自 GitHub · 儿童教育卡片 Awwwards 风格画廊 | ✓ |
 | 6b | [画轴画廊 · 人像风格](./rope-gallery-study/custom-sample/) | 20 种人像风格 · 悬挂物理交互 · 中式墨金主题 | ✓ |
-| 7 | [hyperframes-motion-library](./hyperframes-motion-library/) | 视频动效模板库：HTML+GSAP 动画，渲染为透明通道视频，可叠加到真人出镜视频 | 研究完成 |
+| 7 | [hyperframes-motion-library](./hyperframes-motion-library/) | 视频动效模板库（需本地运行）：HTML+GSAP 动画，渲染为透明通道视频，可叠加到真人出镜视频 | 仅本地运行 |
 
 > **项目 3 运行方式**：
 > ```bash
