@@ -1,21 +1,32 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  applyBitwise16,
   atbash,
   cleanupWhitespace,
+  convertCommonBases,
   convertBase,
   decodeBase64,
   decodeCaesar,
+  decodeHex,
+  decodeMorse,
   decodeUrl,
+  decodeVigenere,
   deduplicateLines,
   encodeBase64,
   encodeCaesar,
   encodeUrl,
+  extractTextItems,
+  findAndReplaceText,
   generateBarcodeSvg,
   generateMetaTags,
   generateQrSvg,
   hashText,
+  numberLines,
   rankCaesarDecodings,
+  rankDecodingCandidates,
+  removeEmptyLines,
+  reverseLines,
   rot13,
   slugify,
   sortLines,
@@ -23,7 +34,9 @@ import {
   transformCase,
   transliterateShavian,
   trimLines,
+  toggleBit16,
 } from '../src/engines/developer';
+import { REGEX_PRESETS } from '../src/data/regexPresets';
 
 describe('任意精度进制转换', () => {
   it('十六进制 ff 转十进制为 255', () => {
@@ -84,6 +97,58 @@ describe('正则表达式测试', () => {
     expect(testRegex('(', 'g', 'sample').error).toMatch(/^正则表达式无效：/u);
     expect(testRegex('a', 'gg', 'sample').error).toMatch(/^正则标志无效：/u);
   });
+
+  it('四个本地预设都提供可被正则引擎匹配的样例', () => {
+    expect(REGEX_PRESETS.map((preset) => preset.id)).toEqual(['email', 'url', 'phone-cn', 'iso-date']);
+    for (const preset of REGEX_PRESETS) {
+      const result = testRegex(preset.pattern, preset.flags, preset.sample);
+      expect(result.error).toBeNull();
+      expect(result.matches.length).toBeGreaterThan(0);
+    }
+  });
+
+  it('中国大陆手机号预设只匹配独立号码及支持的 +86 格式', () => {
+    const preset = REGEX_PRESETS.find((item) => item.id === 'phone-cn')!;
+
+    expect(testRegex(preset.pattern, preset.flags, '13800138000 +86 13800138000 +86-13800138000 +8613800138000').matches.map((match) => match.text))
+      .toEqual(['13800138000', '+86 13800138000', '+86-13800138000', '+8613800138000']);
+    expect(testRegex(preset.pattern, preset.flags, '213800138000').matches).toEqual([]);
+    expect(testRegex(preset.pattern, preset.flags, '138001380001').matches).toEqual([]);
+  });
+
+  it('ISO 日期预设检查月份和日期的基本范围，但不验证日历有效性', () => {
+    const preset = REGEX_PRESETS.find((item) => item.id === 'iso-date')!;
+
+    expect(testRegex(preset.pattern, preset.flags, '2026-01-01 2026-12-31 2026-02-29').matches.map((match) => match.text))
+      .toEqual(['2026-01-01', '2026-12-31', '2026-02-29']);
+    expect(testRegex(preset.pattern, preset.flags, '2026-99-99').matches).toEqual([]);
+    expect(testRegex(preset.pattern, preset.flags, '2026-02-39').matches).toEqual([]);
+  });
+});
+
+describe('常用进制同步与 16 位位运算', () => {
+  it('以逐字符 BigInt 解析同步四种进制，并保留普通转换的负数和大整数能力', () => {
+    expect(convertCommonBases('ff', 16)).toEqual({
+      binary: '11111111', octal: '377', decimal: '255', hexadecimal: 'ff',
+    });
+    expect(convertCommonBases('-100000000000000000000000000000000000000000000000000000000000000000', 2).decimal)
+      .toBe('-36893488147419103232');
+  });
+
+  it('16 位切换和运算统一使用无符号范围并在每一步截断', () => {
+    expect(toggleBit16('0', 15)).toBe('32768');
+    expect(toggleBit16('32768', 15)).toBe('0');
+    expect(applyBitwise16('65535', '3855', 'and')).toBe('3855');
+    expect(applyBitwise16('32768', '1', 'shift-left')).toBe('0');
+    expect(applyBitwise16('0', '1', 'not')).toBe('65535');
+  });
+
+  it('为 16 位区域拒绝负数、超范围输入和无效 bit 序号', () => {
+    expect(() => toggleBit16('-1', 0)).toThrow('16 位数值必须在 0 到 65535 之间');
+    expect(() => toggleBit16('65536', 0)).toThrow('16 位数值必须在 0 到 65535 之间');
+    expect(() => toggleBit16('1', 16)).toThrow('bit 序号必须在 0 到 15 之间');
+    expect(() => applyBitwise16('1', '-1', 'and')).toThrow('16 位数值必须在 0 到 65535 之间');
+  });
 });
 
 describe('Meta 标签安全生成', () => {
@@ -95,6 +160,9 @@ describe('Meta 标签安全生成', () => {
       author: "O'Reilly",
       canonicalUrl: 'https://example.com/?a=1&b=2',
       imageUrl: 'https://example.com/a"b.png',
+      siteName: 'A&B 社区',
+      twitterHandle: '@@news&\'<',
+      twitterCard: 'summary_large_image',
     });
 
     expect(html).toContain('<title>A&amp;B &lt;站点&gt;</title>');
@@ -102,7 +170,23 @@ describe('Meta 标签安全生成', () => {
     expect(html).toContain('content="O&#39;Reilly"');
     expect(html).toContain('href="https://example.com/?a=1&amp;b=2"');
     expect(html).toContain('content="https://example.com/a&quot;b.png"');
+    expect(html).toContain('property="og:site_name" content="A&amp;B 社区"');
+    expect(html).toContain('name="twitter:card" content="summary_large_image"');
+    expect(html).toContain('name="twitter:title" content="A&amp;B &lt;站点&gt;"');
+    expect(html).toContain('name="twitter:description" content="欢迎 &quot;访客&quot; &lt;script&gt;"');
+    expect(html).toContain('name="twitter:image" content="https://example.com/a&quot;b.png"');
+    expect(html).toContain('name="twitter:site" content="@news&amp;&#39;&lt;"');
     expect(html).not.toContain('<script>');
+  });
+
+  it('仅为已填写的 Twitter 内容生成对应标签', () => {
+    const html = generateMetaTags({ twitterCard: 'summary', twitterHandle: '@@local' });
+
+    expect(html).toContain('name="twitter:card" content="summary"');
+    expect(html).toContain('name="twitter:site" content="@local"');
+    expect(html).not.toContain('twitter:title');
+    expect(html).not.toContain('twitter:description');
+    expect(html).not.toContain('twitter:image');
   });
 });
 
@@ -120,6 +204,36 @@ describe('古典密码与有界候选', () => {
   });
 });
 
+describe('本地密码解码与安全自动候选', () => {
+  it('按字母密钥解开 Vigenere 并保留大小写、标点和非拉丁字符', () => {
+    expect(decodeVigenere('LXFOPVEFRNHR', 'LEMON')).toBe('ATTACKATDAWN');
+    expect(decodeVigenere('Lxfop, vefrn! 世界', 'lemon')).toBe('Attac, katda! 世界');
+  });
+
+  it('解开以空格分隔符号、斜杠分隔单词的 Morse 与 UTF-8 十六进制', () => {
+    expect(decodeMorse('... --- ... / .---- ..---')).toBe('SOS 12');
+    expect(decodeMorse('.-.-.- --..-- ..--..')).toBe('.,?');
+    expect(decodeHex('E4 BD A0:E5-A5 BD')).toBe('你好');
+  });
+
+  it('拒绝空密钥、未知 Morse、奇数或非 UTF-8 十六进制输入', () => {
+    expect(() => decodeVigenere('ABC', '')).toThrow('Vigenere 密钥不能为空');
+    expect(() => decodeVigenere('ABC', '密钥')).toThrow('Vigenere 密钥只能包含英文字母');
+    expect(() => decodeMorse('... --- ..---.-')).toThrow('Morse 代码无效');
+    expect(() => decodeHex('ABC')).toThrow('十六进制内容必须由偶数个字符组成');
+    expect(() => decodeHex('FF')).toThrow('十六进制内容不是有效的 UTF-8 文本');
+  });
+
+  it('只为符合形态的输入合并去重、按分数排序自动候选，不猜测 Vigenere', () => {
+    const candidates = rankDecodingCandidates('SGVsbG8gd29ybGQ=', 6);
+    expect(candidates.some((item) => item.method === 'base64' && item.text === 'Hello world')).toBe(true);
+    expect(candidates).toHaveLength(6);
+    expect(new Set(candidates.map((item) => item.text)).size).toBe(candidates.length);
+    expect(candidates.every((item, index) => index === 0 || candidates[index - 1].score >= item.score)).toBe(true);
+    expect(rankDecodingCandidates('plain text').some((item) => ['morse', 'hex', 'base64'].includes(item.method))).toBe(false);
+  });
+});
+
 describe('Shavian 显式映射与文本处理', () => {
   it('按规则映射英文并原样保留标点和未知文字', () => {
     expect(transliterateShavian('Hello, 世界!')).toBe('𐑣𐑧𐑤𐑤𐑪, 世界!');
@@ -132,6 +246,52 @@ describe('Shavian 显式映射与文本处理', () => {
     expect(transformCase('hello WORLD', 'title')).toBe('Hello World');
     expect(slugify('Hello, 世界!')).toBe('hello-世界');
     expect(cleanupWhitespace('  a   b \n\n\n c  ')).toBe('a b\n\nc');
+  });
+});
+
+describe('文本处理工作台的确定性操作', () => {
+  it('字面量查找会转义正则字符，并把替换文本原样写入', () => {
+    expect(findAndReplaceText('a.b a.b', 'a.b', '$&-$1', {
+      useRegex: false,
+      caseSensitive: true,
+      replaceAll: true,
+    })).toEqual({ text: '$&-$1 $&-$1', replacements: 2 });
+  });
+
+  it('支持不区分大小写的全部替换，并清晰报告无效或过长正则', () => {
+    expect(findAndReplaceText('Alpha alpha ALPHA', 'alpha', 'β', {
+      useRegex: false,
+      caseSensitive: false,
+      replaceAll: true,
+    })).toEqual({ text: 'β β β', replacements: 3 });
+    expect(() => findAndReplaceText('text', '(', '', {
+      useRegex: true,
+      caseSensitive: true,
+      replaceAll: false,
+    })).toThrow('正则表达式无效');
+    expect(() => findAndReplaceText('text', 'a'.repeat(1001), '', {
+      useRegex: true,
+      caseSensitive: true,
+      replaceAll: false,
+    })).toThrow('正则表达式不能超过 1000 个字符');
+  });
+
+  it('提取内容去重并保持首次出现顺序，同时限定协议和电话号码位数', () => {
+    expect(extractTextItems('a@x.com https://a.test a@x.com ftp://skip.test http://b.test', 'emails'))
+      .toEqual(['a@x.com']);
+    expect(extractTextItems('a@x.com https://a.test a@x.com ftp://skip.test http://b.test', 'urls'))
+      .toEqual(['https://a.test', 'http://b.test']);
+    expect(extractTextItems('联系 +86 138-0013-8000、138 0013 8000、123456、9999999999999999', 'phone-numbers'))
+      .toEqual(['+86 138-0013-8000', '138 0013 8000']);
+    expect(extractTextItems('第 12 项、12、003', 'numbers')).toEqual(['12', '003']);
+    expect(extractTextItems(Array.from({ length: 10_001 }, (_, index) => String(index)).join(' '), 'numbers')).toHaveLength(10_000);
+  });
+
+  it('补齐大小写切换、逆序行、删除空行和行号动作', () => {
+    expect(transformCase('AbC 你好', 'toggle')).toBe('aBc 你好');
+    expect(reverseLines('first\nsecond\nthird')).toBe('third\nsecond\nfirst');
+    expect(removeEmptyLines('a\n\n  \n b \n')).toBe('a\n b ');
+    expect(numberLines('a\nb\n')).toBe('1. a\n2. b\n3. ');
   });
 });
 

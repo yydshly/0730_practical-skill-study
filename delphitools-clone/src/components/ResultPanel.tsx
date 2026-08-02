@@ -9,12 +9,13 @@ type ResultPanelProps = {
   copyLabel?: string;
   download?: { blob: Blob; name: string; label?: string };
   onReset?: () => void;
+  localOnly?: boolean;
   children?: React.ReactNode;
 };
 
 type OperationState = { status: 'success' | 'error'; message: string } | null;
 
-export function ResultPanel({ text, copyLabel = '复制结果', download, onReset, children }: ResultPanelProps) {
+export function ResultPanel({ text, copyLabel = '复制结果', download, onReset, localOnly = false, children }: ResultPanelProps) {
   const [operation, setOperation] = useState<OperationState>(null);
 
   const handleCopy = async () => {
@@ -39,6 +40,7 @@ export function ResultPanel({ text, copyLabel = '复制结果', download, onRese
 
   return (
     <section className="result-panel" aria-label="处理结果">
+      {localOnly && <p className="result-panel__local-note">仅在本地处理</p>}
       {children}
       <div className="result-panel__actions">
         {text !== undefined && <button type="button" onClick={handleCopy}>{copyLabel}</button>}

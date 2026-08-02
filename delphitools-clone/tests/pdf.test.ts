@@ -1,6 +1,7 @@
 /** @vitest-environment jsdom */
 
 import { describe, expect, it, vi } from 'vitest';
+import { decodePDFRawStream, PDFRawStream } from 'pdf-lib/es/core';
 
 import {
   bookletOrder,
@@ -17,6 +18,25 @@ import {
 } from '../src/engines/pdf';
 import { degrees, PDFDocument, rgb } from 'pdf-lib';
 import { workerErrorResponse } from '../src/workers/protocol';
+
+function outputPdfSemantics(bytes: Uint8Array): Promise<Array<{ size: { width: number; height: number }; operations: string[] }>> {
+  return PDFDocument.load(bytes).then((document) => document.getPages().map((page) => {
+    const contents = page.node.normalizedEntries().Contents;
+    const operations = contents
+      ? Array.from({ length: contents.size() }, (_, index) => {
+        const stream = contents.lookup(index);
+        if (stream && 'getUnencodedContents' in stream) {
+          return new TextDecoder('latin1').decode((stream as { getUnencodedContents: () => Uint8Array }).getUnencodedContents());
+        }
+        if (stream && 'dict' in stream) {
+          return new TextDecoder('latin1').decode(decodePDFRawStream(stream as PDFRawStream).decode());
+        }
+        throw new Error('输出页面包含无法解析的内容流');
+      })
+      : [];
+    return { size: page.getSize(), operations };
+  }));
+}
 
 describe('PDF 页序与版面', () => {
   it('八页小册子输出正确的外侧和内侧顺序', () => {
@@ -149,10 +169,14 @@ describe('PDF 预检错误', () => {
     const singleLong = await imposePdf(input, { ...base, duplex: 'single', flip: 'long-edge' });
     const singleShort = await imposePdf(input, { ...base, duplex: 'single', flip: 'short-edge' });
 
-    expect(Array.from(doubleLong)).not.toEqual(Array.from(doubleShort));
-    expect(Array.from(singleLong)).toEqual(Array.from(singleShort));
-    expect((await PDFDocument.load(doubleLong)).getPageCount()).toBe(2);
-    expect((await PDFDocument.load(doubleShort)).getPageCount()).toBe(2);
+    const [doubleLongSemantics, doubleShortSemantics, singleLongSemantics, singleShortSemantics] = await Promise.all([
+      outputPdfSemantics(doubleLong), outputPdfSemantics(doubleShort), outputPdfSemantics(singleLong), outputPdfSemantics(singleShort),
+    ]);
+
+    expect(doubleLongSemantics).not.toEqual(doubleShortSemantics);
+    expect(singleLongSemantics).toEqual(singleShortSemantics);
+    expect(doubleLongSemantics).toHaveLength(2);
+    expect(doubleShortSemantics).toHaveLength(2);
   });
 
   it('拼版保留 90、180、270 度来源页并生成可重载输出', async () => {

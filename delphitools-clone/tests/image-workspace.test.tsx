@@ -90,17 +90,59 @@ describe('图片工具路由', () => {
     expect(screen.getByRole('button', { name: '下载 SVG' })).toBeVisible();
   });
 
-  it('新上传校验失败会清除旧的成功图片结果', async () => {
-    await renderTool('placeholder-genny');
-    await userEvent.click(screen.getByRole('button', { name: '生成占位图' }));
-    expect(screen.getByRole('button', { name: '下载 SVG' })).toBeVisible();
+  it('新上传校验失败会保留上一次成功图片的预览、尺寸和下载', async () => {
+    const createObjectURL = vi.fn()
+      .mockReturnValueOnce('blob:valid-source')
+      .mockReturnValueOnce('blob:valid-result');
+    const revokeObjectURL = vi.fn();
+    Object.defineProperty(URL, 'createObjectURL', { configurable: true, value: createObjectURL });
+    Object.defineProperty(URL, 'revokeObjectURL', { configurable: true, value: revokeObjectURL });
+
+    class ImmediateImage {
+      onload: ((event: Event) => void) | null = null;
+      onerror: ((event: Event | string) => void) | null = null;
+      naturalWidth = 120;
+      naturalHeight = 80;
+      width = 120;
+      height = 80;
+      set src(_value: string) { queueMicrotask(() => this.onload?.(new Event('load'))); }
+    }
+    vi.stubGlobal('Image', ImmediateImage as unknown as typeof Image);
+    const context = {
+      drawImage: vi.fn(), putImageData: vi.fn(), fillRect: vi.fn(), save: vi.fn(), restore: vi.fn(),
+      translate: vi.fn(), rotate: vi.fn(), fillText: vi.fn(), measureText: vi.fn(() => ({ width: 72 })),
+      getImageData: vi.fn((_x: number, _y: number, width: number, height: number) => ({ width, height, data: new Uint8ClampedArray(width * height * 4) })),
+      font: '', fillStyle: '', globalAlpha: 1,
+    };
+    vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(context as unknown as CanvasRenderingContext2D);
+    vi.spyOn(HTMLCanvasElement.prototype, 'toBlob').mockImplementation(function (this: HTMLCanvasElement, callback, mime = 'image/png') {
+      callback(new Blob([`${this.width}x${this.height}`], { type: mime }));
+    });
+
+    await renderTool('social-cropper');
+    const validImage = new File(
+      [Uint8Array.from(atob(IMAGE_FIXTURES.png.base64), (character) => character.charCodeAt(0))],
+      '有效图片.png',
+      { type: 'image/png' },
+    );
+    fireEvent.change(screen.getByLabelText('选择文件'), { target: { files: [validImage] } });
+    await screen.findByText('已读取 1 张图片，可开始处理');
+    await userEvent.selectOptions(screen.getByLabelText('裁剪场景'), 'square');
+    await userEvent.click(screen.getByRole('button', { name: '按比例裁剪' }));
+
+    const download = await screen.findByRole('button', { name: /下载方形帖子/ });
+    const dimensions = screen.getByText('原图 120 × 80 · 结果 80 × 80');
+    const preview = screen.getByAltText(/方形帖子.*预览/);
 
     fireEvent.change(screen.getByLabelText('选择文件'), {
       target: { files: [new File(['文本'], 'note.txt', { type: 'text/plain' })] },
     });
 
     expect(screen.getByRole('alert')).toHaveTextContent('请选择图片文件');
-    expect(screen.queryByRole('button', { name: '下载 SVG' })).toBeNull();
+    expect(download).toBeVisible();
+    expect(dimensions).toBeVisible();
+    expect(preview).toBeVisible();
+    expect(revokeObjectURL).not.toHaveBeenCalledWith('blob:valid-result');
   });
 
   it('替换结果和卸载工作区都会释放对象 URL', async () => {
@@ -125,6 +167,59 @@ describe('图片工具路由', () => {
     expect(revokeObjectURL).toHaveBeenCalledWith('blob:placeholder-second');
   });
 
+  it('五个变换工具的结果替换、重置和卸载都会释放对象 URL', async () => {
+    const createObjectURL = vi.fn()
+      .mockReturnValueOnce('blob:source-first')
+      .mockReturnValueOnce('blob:result-first')
+      .mockReturnValueOnce('blob:source-second')
+      .mockReturnValueOnce('blob:result-second');
+    const revokeObjectURL = vi.fn();
+    Object.defineProperty(URL, 'createObjectURL', { configurable: true, value: createObjectURL });
+    Object.defineProperty(URL, 'revokeObjectURL', { configurable: true, value: revokeObjectURL });
+
+    class ImmediateImage {
+      onload: ((event: Event) => void) | null = null;
+      onerror: ((event: Event | string) => void) | null = null;
+      naturalWidth = 120;
+      naturalHeight = 80;
+      width = 120;
+      height = 80;
+      set src(_value: string) { queueMicrotask(() => this.onload?.(new Event('load'))); }
+    }
+    vi.stubGlobal('Image', ImmediateImage as unknown as typeof Image);
+    const context = {
+      drawImage: vi.fn(), putImageData: vi.fn(), fillRect: vi.fn(), save: vi.fn(), restore: vi.fn(),
+      translate: vi.fn(), rotate: vi.fn(), fillText: vi.fn(), measureText: vi.fn(() => ({ width: 72 })),
+      getImageData: vi.fn((_x: number, _y: number, width: number, height: number) => ({ width, height, data: new Uint8ClampedArray(width * height * 4) })),
+      font: '', fillStyle: '', globalAlpha: 1,
+    };
+    vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(context as unknown as CanvasRenderingContext2D);
+    vi.spyOn(HTMLCanvasElement.prototype, 'toBlob').mockImplementation(function (this: HTMLCanvasElement, callback, mime = 'image/png') {
+      callback(new Blob([`${this.width}x${this.height}`], { type: mime }));
+    });
+
+    const { unmount } = await renderTool('social-cropper');
+    const input = screen.getByLabelText('选择文件');
+    const first = new File([Uint8Array.from(atob(IMAGE_FIXTURES.png.base64), (character) => character.charCodeAt(0))], '第一张.png', { type: 'image/png' });
+    fireEvent.change(input, { target: { files: [first] } });
+    await screen.findByText('已读取 1 张图片，可开始处理');
+    await userEvent.click(screen.getByRole('button', { name: '按比例裁剪' }));
+    await screen.findByRole('button', { name: /下载竖版帖子/ });
+
+    const second = new File([Uint8Array.from(atob(IMAGE_FIXTURES.jpeg.base64), (character) => character.charCodeAt(0))], '第二张.jpg', { type: 'image/jpeg' });
+    fireEvent.change(input, { target: { files: [second] } });
+    await screen.findByText('已读取 1 张图片，可开始处理');
+    expect(revokeObjectURL).toHaveBeenCalledWith('blob:result-first');
+    await userEvent.click(screen.getByRole('button', { name: '按比例裁剪' }));
+    await screen.findByRole('button', { name: /下载竖版帖子/ });
+
+    await userEvent.click(screen.getByRole('button', { name: '重新开始' }));
+    expect(revokeObjectURL).toHaveBeenCalledWith('blob:result-second');
+    unmount();
+    expect(revokeObjectURL).toHaveBeenCalledWith('blob:source-first');
+    expect(revokeObjectURL).toHaveBeenCalledWith('blob:source-second');
+  });
+
   it('Base64 核心交互解析有效 Data URL，失败后清除旧结果', async () => {
     Object.defineProperty(URL, 'createObjectURL', { configurable: true, value: vi.fn(() => 'blob:base64-test') });
     Object.defineProperty(URL, 'revokeObjectURL', { configurable: true, value: vi.fn() });
@@ -142,7 +237,7 @@ describe('图片工具路由', () => {
     const input = screen.getByLabelText('图片 Data URL');
     await userEvent.type(input, `data:image/png;base64,${IMAGE_FIXTURES.png.base64}`);
     await userEvent.click(screen.getByRole('button', { name: '解析 Data URL' }));
-    expect(screen.getByRole('status')).toHaveTextContent('已解析 image/png 图片');
+    await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('已解析 image/png 图片'));
     expect(screen.getByRole('button', { name: '下载解码图片' })).toBeVisible();
     expect(screen.getByRole('button', { name: '复制 Data URL' })).toBeVisible();
 

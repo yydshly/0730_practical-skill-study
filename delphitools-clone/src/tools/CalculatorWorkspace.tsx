@@ -74,25 +74,36 @@ function AlgebraCalculator() {
 
 type KeyDefinition = { text: string; label: string; value: string };
 
-const SCIENTIFIC_KEYS: readonly KeyDefinition[] = [
+const NUMBER_AND_OPERATOR_KEYS: readonly KeyDefinition[] = [
   { text: '7', label: '数字 7', value: '7' }, { text: '8', label: '数字 8', value: '8' }, { text: '9', label: '数字 9', value: '9' }, { text: '÷', label: '除号', value: '/' },
   { text: '4', label: '数字 4', value: '4' }, { text: '5', label: '数字 5', value: '5' }, { text: '6', label: '数字 6', value: '6' }, { text: '×', label: '乘号', value: '*' },
   { text: '1', label: '数字 1', value: '1' }, { text: '2', label: '数字 2', value: '2' }, { text: '3', label: '数字 3', value: '3' }, { text: '−', label: '减号', value: '-' },
-  { text: '0', label: '数字 0', value: '0' }, { text: '.', label: '小数点', value: '.' }, { text: '^', label: '幂', value: '^' }, { text: '+', label: '加号', value: '+' },
-  { text: '(', label: '左括号', value: '(' }, { text: ')', label: '右括号', value: ')' }, { text: 'π', label: '圆周率', value: 'pi' }, { text: '√', label: '平方根', value: 'sqrt(' },
+  { text: '0', label: '数字 0', value: '0' }, { text: '.', label: '小数点', value: '.' }, { text: 'xʸ', label: '幂 xʸ', value: '^' }, { text: '+', label: '加号', value: '+' },
+  { text: '(', label: '左括号', value: '(' }, { text: ')', label: '右括号', value: ')' }, { text: ',', label: '逗号', value: ',' }, { text: 'mod', label: '取模 mod', value: '%' },
+];
+
+const SCIENTIFIC_FUNCTION_KEYS: readonly KeyDefinition[] = [
+  { text: 'sin', label: '正弦 sin', value: 'sin(' }, { text: 'cos', label: '余弦 cos', value: 'cos(' }, { text: 'tan', label: '正切 tan', value: 'tan(' },
+  { text: 'sin⁻¹', label: '反正弦', value: 'asin(' }, { text: 'cos⁻¹', label: '反余弦', value: 'acos(' }, { text: 'tan⁻¹', label: '反正切', value: 'atan(' },
+  { text: 'log', label: '常用对数 log', value: 'log(' }, { text: 'ln', label: '自然对数 ln', value: 'ln(' }, { text: 'x!', label: '阶乘', value: '!' },
+  { text: '|x|', label: '绝对值', value: 'abs(' }, { text: 'π', label: '圆周率 π', value: 'pi' }, { text: 'e', label: '自然常数 e', value: 'e' },
+  { text: 'Ans', label: '上次结果 Ans', value: 'ans' }, { text: 'EE', label: '科学计数法 EE', value: 'e' }, { text: 'ʸ√x', label: 'n 次方根', value: 'root(' },
 ];
 
 function ScientificCalculator() {
   const [expression, setExpression] = useState('sin(pi / 2) + sqrt(16)');
   const [result, setResult] = useState<number | null>(null);
+  const [ans, setAns] = useState<number | null>(null);
+  const [angleMode, setAngleMode] = useState<'rad' | 'deg'>('rad');
   const [error, setError] = useState('');
   const [history, setHistory] = useState<readonly string[]>([]);
 
   const calculate = () => {
     try {
-      const value = evaluateScientific(expression);
+      const value = evaluateScientific(expression, { angleMode, ans: ans ?? undefined });
       const normalized = Number(value.toPrecision(12));
       setResult(normalized);
+      setAns(normalized);
       setError('');
       setHistory((items) => [`${expression} = ${normalized}`, ...items].slice(0, 12));
     } catch (reason) {
@@ -114,16 +125,24 @@ function ScientificCalculator() {
       <div className="inline-actions">
         <button type="submit" aria-label="计算结果">计算</button>
         <button type="button" aria-label="删除一位" onClick={() => setExpression((value) => value.slice(0, -1))}>删除一位</button>
-        <button type="button" aria-label="清空表达式" onClick={() => { setExpression(''); setResult(null); setError(''); }}>清空</button>
+        <button type="button" aria-label="清空表达式" onClick={() => { setExpression(''); setError(''); }}>清空</button>
       </div>
     </form>
-    <div role="group" aria-label="科学计算数字键盘" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 8 }}>
-      {SCIENTIFIC_KEYS.map((key) => <button key={key.label} type="button" aria-label={key.label} onClick={() => setExpression((value) => value + key.value)}>{key.text}</button>)}
+    <div className="inline-actions" role="group" aria-label="角度模式">
+      <button type="button" aria-label="角度制 DEG" aria-pressed={angleMode === 'deg'} onClick={() => setAngleMode('deg')}>DEG</button>
+      <button type="button" aria-label="弧度制 RAD" aria-pressed={angleMode === 'rad'} onClick={() => setAngleMode('rad')}>RAD</button>
+    </div>
+    <div role="group" aria-label="数字与运算键盘" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(72px, 1fr))', gap: 8 }}>
+      {NUMBER_AND_OPERATOR_KEYS.map((key) => <button key={key.label} type="button" aria-label={key.label} onClick={() => setExpression((value) => value + key.value)}>{key.text}</button>)}
+    </div>
+    <div role="group" aria-label="科学函数键盘" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(72px, 1fr))', gap: 8 }}>
+      {SCIENTIFIC_FUNCTION_KEYS.map((key) => <button key={key.label} type="button" aria-label={key.label} onClick={() => setExpression((value) => value + key.value)}>{key.text}</button>)}
     </div>
     {error && <StatusMessage status="error" message={error} />}
     {result !== null && <section className="result-panel" aria-label="科学计算结果"><output>{result}</output></section>}
     <section aria-label="计算历史">
       <h2>历史记录</h2>
+      <button type="button" aria-label="清空历史" onClick={() => setHistory([])}>清空历史</button>
       {history.length ? <ol>{history.map((item, index) => <li key={`${item}-${index}`}><code>{item}</code></li>)}</ol> : <p>完成一次计算后会显示在这里。</p>}
     </section>
   </div>;

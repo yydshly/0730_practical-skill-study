@@ -46,7 +46,7 @@ describe('11 个文字工具入口', () => {
     ['glyph-browser', 'Unicode 区段'],
     ['large-type', '展示文字'],
     ['line-height-calc', '字号（px）'],
-    ['paper-sizes', '纸张规格'],
+    ['paper-sizes', '搜索纸张'],
     ['px-to-rem', '像素值'],
     ['text-diff', '原始文本'],
     ['typo-calc', '原始单位'],
@@ -214,5 +214,30 @@ describe('字体、字形和文本反馈', () => {
     expect(screen.getByLabelText('大字预览')).toHaveStyle({ maxWidth: '100%' });
     expect(screen.getByLabelText('大字预览')).toHaveTextContent('让重要文字清晰可见');
     Object.defineProperty(window, 'innerWidth', { configurable: true, value: originalWidth });
+  });
+
+  it('纸张浏览器可搜索和分组，按 DPI 比较最多三项并拒绝第四项', async () => {
+    const user = userEvent.setup();
+    await renderTool('paper-sizes');
+
+    await user.selectOptions(screen.getByLabelText('纸张类别'), 'ISO 信封');
+    await user.type(screen.getByLabelText('搜索纸张'), 'C5');
+    expect(screen.getByLabelText('选择 C5')).toBeVisible();
+    expect(screen.queryByLabelText('选择 C4')).toBeNull();
+
+    await user.clear(screen.getByLabelText('搜索纸张'));
+    await user.selectOptions(screen.getByLabelText('纸张类别'), '全部');
+    const dpi = screen.getByLabelText('DPI');
+    await user.clear(dpi);
+    await user.type(dpi, '300');
+    expect(screen.getByText('2480 × 3508 px')).toBeVisible();
+
+    for (const name of ['A4', 'C5', 'SRA3']) await user.click(screen.getByLabelText(`选择 ${name}`));
+    expect(screen.getByRole('heading', { name: '比较纸张' })).toBeVisible();
+    expect(document.querySelectorAll('.paper-comparison-card')).toHaveLength(3);
+
+    await user.click(screen.getByLabelText('选择 Letter'));
+    expect(screen.getByRole('alert')).toHaveTextContent('最多只能比较 3 项纸张规格');
+    expect(screen.getByLabelText('选择 Letter')).not.toBeChecked();
   });
 });

@@ -53,6 +53,12 @@ describe('应用壳', () => {
     expect(screen.getByRole('heading', { name: '未找到工具' })).toBeVisible();
   });
 
+  it('侧栏提供能力与实现说明的独立路由入口', () => {
+    render(<App />);
+
+    expect(screen.getByRole('link', { name: '能力与实现说明' })).toHaveAttribute('href', '/capabilities');
+  });
+
   it('工具页侧栏提供可访问的全局中文搜索并返回过滤后的目录', async () => {
     const user = userEvent.setup();
     window.history.replaceState({}, '', '/tools/qr-genny');

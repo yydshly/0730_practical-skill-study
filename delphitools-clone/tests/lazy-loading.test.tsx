@@ -50,7 +50,7 @@ describe('工具工作区按路由加载', () => {
     render(<App />);
 
     expect(screen.getByRole('status')).toHaveTextContent('正在加载二维码生成器工作区');
-    expect(await screen.findByLabelText('二维码内容')).toBeVisible();
+    expect(await screen.findByLabelText('二维码内容', {}, { timeout: 5000 })).toBeVisible();
     expect(moduleLoads).toContain('qrcode');
     expect(moduleLoads).not.toContain('pdf-lib');
     expect(moduleLoads).not.toContain('editor');

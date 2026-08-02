@@ -14,10 +14,24 @@ export type RegexTestResult = {
 };
 
 export type HashAlgorithm = 'SHA-1' | 'SHA-256' | 'SHA-384' | 'SHA-512';
-export type TextCase = 'upper' | 'lower' | 'title' | 'sentence';
+export type TextCase = 'upper' | 'lower' | 'title' | 'sentence' | 'toggle';
 export type SortDirection = 'asc' | 'desc';
 export type BarcodeFormat = 'code128' | 'ean13' | 'datamatrix' | 'azteccode' | 'pdf417';
 export type QrErrorCorrectionLevel = 'L' | 'M' | 'Q' | 'H';
+export type FindReplaceOptions = {
+  useRegex: boolean;
+  caseSensitive: boolean;
+  replaceAll: boolean;
+};
+export type FindReplaceResult = { text: string; replacements: number };
+export type TextExtractKind = 'emails' | 'urls' | 'phone-numbers' | 'numbers';
+export type CommonBaseValues = {
+  binary: string;
+  octal: string;
+  decimal: string;
+  hexadecimal: string;
+};
+export type BitwiseOperation = 'and' | 'or' | 'xor' | 'not' | 'shift-left' | 'shift-right';
 
 export type MetaTagInput = {
   title?: string;
@@ -26,6 +40,9 @@ export type MetaTagInput = {
   author?: string;
   canonicalUrl?: string;
   imageUrl?: string;
+  siteName?: string;
+  twitterHandle?: string;
+  twitterCard?: 'summary' | 'summary_large_image';
 };
 
 export type QrSvgInput = {
@@ -115,22 +132,72 @@ function validateBase(base: number): void {
   if (!Number.isInteger(base) || base < 2 || base > 36) throw new Error('进制必须是 2 到 36 之间的整数');
 }
 
-export function convertBase(value: string, fromBase: number, toBase: number): string {
+function digitValue(character: string): number {
+  const code = character.charCodeAt(0);
+  if (code >= 48 && code <= 57) return code - 48;
+  if (code >= 97 && code <= 122) return code - 87;
+  return -1;
+}
+
+function parseBaseInteger(value: string, fromBase: number): bigint {
   validateBase(fromBase);
-  validateBase(toBase);
   const normalized = value.trim().toLowerCase();
   if (!normalized || normalized === '-' || normalized === '+') throw new Error('请输入要转换的数字');
   const sign = normalized.startsWith('-') ? -1n : 1n;
   const unsigned = /^[+-]/u.test(normalized) ? normalized.slice(1) : normalized;
   let decimal = 0n;
   for (const character of unsigned) {
-    const digit = parseInt(character, 36);
-    if (!/^[0-9a-z]$/u.test(character) || digit >= fromBase) {
-      throw new Error(`数字 ${character} 不属于 ${fromBase} 进制`);
-    }
+    const digit = digitValue(character);
+    if (digit < 0 || digit >= fromBase) throw new Error(`数字 ${character} 不属于 ${fromBase} 进制`);
     decimal = decimal * BigInt(fromBase) + BigInt(digit);
   }
-  return (decimal * sign).toString(toBase);
+  return decimal * sign;
+}
+
+export function convertBase(value: string, fromBase: number, toBase: number): string {
+  validateBase(toBase);
+  return parseBaseInteger(value, fromBase).toString(toBase);
+}
+
+export function convertCommonBases(value: string, fromBase: number): CommonBaseValues {
+  const decimal = parseBaseInteger(value, fromBase);
+  return {
+    binary: decimal.toString(2),
+    octal: decimal.toString(8),
+    decimal: decimal.toString(10),
+    hexadecimal: decimal.toString(16),
+  };
+}
+
+const BIT16_MASK = 0xffffn;
+
+function parseUnsigned16(value: string): bigint {
+  if (!/^\d+$/u.test(value.trim())) throw new Error('16 位数值必须在 0 到 65535 之间');
+  const parsed = parseBaseInteger(value, 10);
+  if (parsed < 0n || parsed > BIT16_MASK) throw new Error('16 位数值必须在 0 到 65535 之间');
+  return parsed;
+}
+
+function validateBitIndex(bit: number): void {
+  if (!Number.isInteger(bit) || bit < 0 || bit > 15) throw new Error('bit 序号必须在 0 到 15 之间');
+}
+
+export function toggleBit16(value: string, bit: number): string {
+  validateBitIndex(bit);
+  return (parseUnsigned16(value) ^ (1n << BigInt(bit))).toString(10);
+}
+
+export function applyBitwise16(left: string, right: string, operation: BitwiseOperation): string {
+  const leftValue = parseUnsigned16(left);
+  const rightValue = parseUnsigned16(right);
+  let result: bigint;
+  if (operation === 'and') result = leftValue & rightValue;
+  else if (operation === 'or') result = leftValue | rightValue;
+  else if (operation === 'xor') result = leftValue ^ rightValue;
+  else if (operation === 'not') result = ~leftValue;
+  else if (operation === 'shift-left') result = leftValue << rightValue;
+  else result = leftValue >> rightValue;
+  return (result & BIT16_MASK).toString(10);
 }
 
 function escapeHtml(value: string): string {
@@ -145,6 +212,10 @@ function escapeHtml(value: string): string {
 export function generateMetaTags(input: MetaTagInput): string {
   const title = escapeHtml(input.title?.trim() ?? '');
   const description = escapeHtml(input.description?.trim() ?? '');
+  const imageUrl = escapeHtml(input.imageUrl?.trim() ?? '');
+  const siteName = escapeHtml(input.siteName?.trim() ?? '');
+  const twitterHandle = input.twitterHandle?.trim().replace(/^@+/u, '') ?? '';
+  const twitterCard = escapeHtml(input.twitterCard ?? '');
   const lines = [
     title ? `<title>${title}</title>` : '',
     description ? `<meta name="description" content="${description}">` : '',
@@ -153,7 +224,13 @@ export function generateMetaTags(input: MetaTagInput): string {
     input.canonicalUrl?.trim() ? `<link rel="canonical" href="${escapeHtml(input.canonicalUrl.trim())}">` : '',
     title ? `<meta property="og:title" content="${title}">` : '',
     description ? `<meta property="og:description" content="${description}">` : '',
-    input.imageUrl?.trim() ? `<meta property="og:image" content="${escapeHtml(input.imageUrl.trim())}">` : '',
+    imageUrl ? `<meta property="og:image" content="${imageUrl}">` : '',
+    siteName ? `<meta property="og:site_name" content="${siteName}">` : '',
+    twitterCard ? `<meta name="twitter:card" content="${twitterCard}">` : '',
+    title ? `<meta name="twitter:title" content="${title}">` : '',
+    description ? `<meta name="twitter:description" content="${description}">` : '',
+    imageUrl ? `<meta name="twitter:image" content="${imageUrl}">` : '',
+    twitterHandle ? `<meta name="twitter:site" content="${escapeHtml(`@${twitterHandle}`)}">` : '',
   ];
   return lines.filter(Boolean).join('\n');
 }
@@ -188,6 +265,75 @@ export function rot13(text: string): string {
 }
 
 export type CaesarCandidate = { shift: number; text: string; score: number };
+export type DecodingCandidate = {
+  method: 'caesar' | 'atbash' | 'rot13' | 'morse' | 'hex' | 'base64';
+  label: string;
+  text: string;
+  score: number;
+};
+
+function isAsciiLetter(character: string): boolean {
+  return /^[A-Za-z]$/u.test(character);
+}
+
+export function decodeVigenere(text: string, key: string): string {
+  if (!key.trim()) throw new Error('Vigenere 密钥不能为空');
+  if (!Array.from(key).every(isAsciiLetter)) throw new Error('Vigenere 密钥只能包含英文字母');
+
+  let keyIndex = 0;
+  return Array.from(text, (character) => {
+    if (!isAsciiLetter(character)) return character;
+    const shift = key.charAt(keyIndex % key.length).toUpperCase().charCodeAt(0) - 65;
+    keyIndex += 1;
+    return rotateCharacter(character, -shift);
+  }).join('');
+}
+
+const MORSE_CODE: Readonly<Record<string, string>> = {
+  '.-': 'A', '-...': 'B', '-.-.': 'C', '-..': 'D', '.': 'E', '..-.': 'F', '--.': 'G', '....': 'H', '..': 'I',
+  '.---': 'J', '-.-': 'K', '.-..': 'L', '--': 'M', '-.': 'N', '---': 'O', '.--.': 'P', '--.-': 'Q', '.-.': 'R',
+  '...': 'S', '-': 'T', '..-': 'U', '...-': 'V', '.--': 'W', '-..-': 'X', '-.--': 'Y', '--..': 'Z',
+  '-----': '0', '.----': '1', '..---': '2', '...--': '3', '....-': '4', '.....': '5', '-....': '6', '--...': '7',
+  '---..': '8', '----.': '9', '.-.-.-': '.', '--..--': ',', '..--..': '?', '.----.': "'", '-.-.--': '!',
+  '-..-.': '/', '-.--.': '(', '-.--.-': ')', '.-...': '&', '---...': ':', '-.-.-.': ';', '-...-': '=', '.-.-.': '+',
+  '-....-': '-', '..--.-': '_', '.-..-.': '"', '...-..-': '$', '.--.-.': '@',
+};
+
+export function decodeMorse(value: string): string {
+  const normalized = value.trim();
+  if (!normalized || !/^[.\-/\s]+$/u.test(normalized)) throw new Error('Morse 代码无效，请使用点、划线、空格和 /');
+
+  const tokens = normalized.split(/\s+/u);
+  const words: string[] = [];
+  let word = '';
+  for (const token of tokens) {
+    if (token === '/') {
+      if (!word) throw new Error('Morse 代码无效，请检查单词分隔符');
+      words.push(word);
+      word = '';
+      continue;
+    }
+    const character = MORSE_CODE[token];
+    if (!character) throw new Error('Morse 代码无效，请检查点划组合');
+    word += character;
+  }
+  if (!word) throw new Error('Morse 代码无效，请检查单词分隔符');
+  words.push(word);
+  return words.join(' ');
+}
+
+export function decodeHex(value: string): string {
+  const normalized = value.replace(/[\s:-]/gu, '');
+  if (!normalized) throw new Error('十六进制内容不能为空');
+  if (!/^[0-9a-f]+$/iu.test(normalized)) throw new Error('十六进制内容只能包含 0-9 和 A-F');
+  if (normalized.length % 2 !== 0) throw new Error('十六进制内容必须由偶数个字符组成');
+  try {
+    const bytes = Uint8Array.from(normalized.match(/.{2}/gu)!, (pair) => Number.parseInt(pair, 16));
+    return new TextDecoder('utf-8', { fatal: true }).decode(bytes);
+  } catch {
+    throw new Error('十六进制内容不是有效的 UTF-8 文本');
+  }
+}
 
 function englishScore(text: string): number {
   const upper = ` ${text.toUpperCase()} `;
@@ -203,6 +349,55 @@ export function rankCaesarDecodings(text: string, limit = 5): CaesarCandidate[] 
     const decoded = decodeCaesar(text, shift);
     return { shift, text: decoded, score: englishScore(decoded) };
   }).sort((a, b) => b.score - a.score || a.shift - b.shift).slice(0, boundedLimit);
+}
+
+function looksLikeMorse(text: string): boolean {
+  return /^[.\-/\s]+$/u.test(text.trim()) && /[.-]/u.test(text);
+}
+
+function looksLikeHex(text: string): boolean {
+  const normalized = text.replace(/[\s:-]/gu, '');
+  return normalized.length > 0 && normalized.length % 2 === 0 && /^[0-9a-f]+$/iu.test(normalized);
+}
+
+function looksLikeBase64(text: string): boolean {
+  const normalized = text.trim();
+  return normalized.length >= 4 && normalized.length % 4 === 0 && /^[A-Za-z0-9+/]*={0,2}$/u.test(normalized);
+}
+
+export function rankDecodingCandidates(text: string, limit = 5): DecodingCandidate[] {
+  const boundedLimit = Math.min(10, Math.max(1, Math.trunc(limit) || 1));
+  if (!text.trim()) return [];
+
+  const candidates: DecodingCandidate[] = rankCaesarDecodings(text, 26).map((candidate) => ({
+    method: 'caesar', label: `凯撒（左移 ${candidate.shift}）`, text: candidate.text, score: candidate.score,
+  }));
+  candidates.push(
+    { method: 'atbash', label: 'Atbash', text: atbash(text), score: englishScore(atbash(text)) },
+    { method: 'rot13', label: 'ROT13', text: rot13(text), score: englishScore(rot13(text)) },
+  );
+
+  const addIfDecodable = (method: DecodingCandidate['method'], label: string, decoder: () => string) => {
+    try {
+      const decoded = decoder();
+      candidates.push({ method, label, text: decoded, score: englishScore(decoded) });
+    } catch {
+      // 自动模式只呈现已通过形态和严格解码校验的候选。
+    }
+  };
+  if (looksLikeMorse(text)) addIfDecodable('morse', 'Morse', () => decodeMorse(text));
+  if (looksLikeHex(text)) addIfDecodable('hex', '十六进制 UTF-8', () => decodeHex(text));
+  if (looksLikeBase64(text)) addIfDecodable('base64', 'Base64', () => decodeBase64(text));
+
+  const seen = new Set<string>();
+  return candidates
+    .sort((left, right) => right.score - left.score || left.label.localeCompare(right.label))
+    .filter((candidate) => {
+      if (seen.has(candidate.text)) return false;
+      seen.add(candidate.text);
+      return true;
+    })
+    .slice(0, boundedLimit);
 }
 
 const SHAVIAN_RULES: Readonly<Record<string, string>> = {
@@ -257,8 +452,88 @@ export function transformCase(text: string, mode: TextCase): string {
   if (mode === 'upper') return text.toLocaleUpperCase();
   if (mode === 'lower') return text.toLocaleLowerCase();
   if (mode === 'title') return text.toLocaleLowerCase().replace(/\b\p{L}/gu, (character) => character.toLocaleUpperCase());
+  if (mode === 'toggle') {
+    return [...text].map((character) => {
+      const upper = character.toLocaleUpperCase();
+      const lower = character.toLocaleLowerCase();
+      if (character === upper && character !== lower) return lower;
+      if (character === lower && character !== upper) return upper;
+      return character;
+    }).join('');
+  }
   const lower = text.toLocaleLowerCase();
   return lower.replace(/(^|[.!?]\s+)(\p{L})/gu, (_, prefix: string, character: string) => `${prefix}${character.toLocaleUpperCase()}`);
+}
+
+function escapeRegExp(text: string): string {
+  return text.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&');
+}
+
+export function findAndReplaceText(
+  source: string,
+  query: string,
+  replacement: string,
+  options: FindReplaceOptions,
+): FindReplaceResult {
+  if (!query) return { text: source, replacements: 0 };
+  if (options.useRegex && query.length > 1000) throw new Error('正则表达式不能超过 1000 个字符');
+
+  const flags = `${options.replaceAll ? 'g' : ''}${options.caseSensitive ? '' : 'i'}`;
+  let expression: RegExp;
+  try {
+    expression = new RegExp(options.useRegex ? query : escapeRegExp(query), flags);
+  } catch {
+    throw new Error('正则表达式无效，请检查括号、方括号和标志');
+  }
+
+  let replacements = 0;
+  const text = source.replace(expression, () => {
+    replacements += 1;
+    return replacement;
+  });
+  return { text, replacements };
+}
+
+function uniqueTextItems(items: Iterable<string>): string[] {
+  const result: string[] = [];
+  const seen = new Set<string>();
+  for (const item of items) {
+    if (seen.has(item)) continue;
+    seen.add(item);
+    result.push(item);
+    if (result.length >= 10_000) break;
+  }
+  return result;
+}
+
+export function extractTextItems(source: string, kind: TextExtractKind): string[] {
+  if (kind === 'emails') {
+    return uniqueTextItems(source.match(/[A-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[A-Z0-9](?:[A-Z0-9-]*[A-Z0-9])?(?:\.[A-Z0-9](?:[A-Z0-9-]*[A-Z0-9])?)+/giu) ?? []);
+  }
+  if (kind === 'urls') {
+    const urls = source.match(/https?:\/\/[^\s<>"']+/giu) ?? [];
+    return uniqueTextItems(urls.map((url) => url.replace(/[.,!?;:)}\]]+$/gu, '')));
+  }
+  if (kind === 'phone-numbers') {
+    const candidates = source.match(/(?<![\d+])\+?\d(?:[ -]?\d)*(?!\d)/gu) ?? [];
+    return uniqueTextItems(candidates.filter((candidate) => {
+      const digitCount = candidate.replace(/\D/gu, '').length;
+      return digitCount >= 7 && digitCount <= 15;
+    }));
+  }
+  return uniqueTextItems(source.match(/\d+(?:[.,]\d+)?/gu) ?? []);
+}
+
+export function reverseLines(text: string): string {
+  return text.split(/\r?\n/u).reverse().join('\n');
+}
+
+export function removeEmptyLines(text: string): string {
+  return text.split(/\r?\n/u).filter((line) => !/^\s*$/u.test(line)).join('\n');
+}
+
+export function numberLines(text: string): string {
+  return text.split(/\r?\n/u).map((line, index) => `${index + 1}. ${line}`).join('\n');
 }
 
 export function slugify(text: string): string {

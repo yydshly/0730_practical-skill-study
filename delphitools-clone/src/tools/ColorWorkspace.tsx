@@ -1,13 +1,17 @@
-import { useEffect, useRef, useState } from 'react';
+import { Fragment, useEffect, useRef, useState } from 'react';
 import type { ChangeEvent, KeyboardEvent, MouseEvent } from 'react';
 
 import { FileDropzone } from '../components/FileDropzone';
 import { ResultPanel } from '../components/ResultPanel';
+import { ToolExplanationPanel } from '../components/ToolExplanationPanel';
+import { copyText } from '../core/clipboard';
 import { CURATED_PALETTES } from '../data/palettes';
 import {
   contrastRatio,
   convertColor,
   extractPalette,
+  formatTailwindConfig,
+  formatTailwindCssVariables,
   generateGradientCss,
   generateHarmony,
   generatePalette,
@@ -19,6 +23,7 @@ import {
   type GradientMode,
   type HarmonyScheme,
   type ImagePixels,
+  type TailwindScaleMode,
   type VisionMode,
 } from '../engines/color';
 import type { ToolDefinition, ToolId } from '../core/types';
@@ -172,9 +177,28 @@ function ImageColorTool({ mode }: { mode: 'extractor' | 'picker' }) {
 
 function Converter() {
   const [value, setValue] = useState('#3b82f6');
+  const [copyMessage, setCopyMessage] = useState('');
   try {
     const result = convertColor(value);
-    return <><ColorControl label="输入颜色" value={value} onChange={setValue} /><ResultPanel text={`${result.hex}\n${result.rgb}\n${result.hsl}`}><dl className="conversion-result"><dt>HEX</dt><dd>{result.hex}</dd><dt>RGB</dt><dd>{result.rgb}</dd><dt>HSL</dt><dd>{result.hsl}</dd></dl></ResultPanel></>;
+    const formats = [
+      ['HEX', result.hex],
+      ['RGB', result.rgb],
+      ['Decimal RGB', result.decimalRgb],
+      ['HSL', result.hsl],
+      ['Lab', result.lab],
+      ['LCH', result.lch],
+      ['OKLab', result.oklab],
+      ['OKLCH', result.oklch],
+    ] as const;
+    const copyFormat = async (label: string, text: string) => {
+      try {
+        await copyText(text);
+        setCopyMessage(`已复制 ${label}`);
+      } catch {
+        setCopyMessage(`复制 ${label} 失败，请重试`);
+      }
+    };
+    return <><ColorControl label="输入颜色" value={value} onChange={setValue} /><ResultPanel text={formats.map(([, text]) => text).join('\n')}><dl className="conversion-result">{formats.map(([label, text]) => <Fragment key={label}><dt>{label}</dt><dd><code>{text}</code><button type="button" onClick={() => void copyFormat(label, text)}>复制 {label}</button></dd></Fragment>)}</dl>{copyMessage && <p role="status">{copyMessage}</p>}</ResultPanel></>;
   } catch (reason) {
     return <><ColorControl label="输入颜色" value={value} onChange={setValue} /><p className="color-error" role="alert">{reason instanceof Error ? reason.message : '颜色输入有误'}</p></>;
   }
@@ -214,7 +238,11 @@ function Gradient() {
 function Harmony() {
   const [base, setBase] = useState('#8b5cf6');
   const [scheme, setScheme] = useState<HarmonyScheme>('triadic');
-  try { return <><ColorControl label="基准颜色" value={base} onChange={setBase} /><label>配色方案<select aria-label="配色方案" value={scheme} onChange={(event) => setScheme(event.target.value as HarmonyScheme)}><option value="complementary">互补色</option><option value="analogous">类似色</option><option value="triadic">三角色</option><option value="split-complementary">分裂互补色</option></select></label><ColorList colors={generateHarmony(base, scheme)} /></>; } catch (reason) { return <p className="color-error" role="alert">{reason instanceof Error ? reason.message : '颜色输入有误'}</p>; }
+  try {
+    const colors = generateHarmony(base, scheme);
+    const cssVariables = `:root {\n${colors.map((color, index) => `  --harmony-${index + 1}: ${color};`).join('\n')}\n}`;
+    return <><ColorControl label="基准颜色" value={base} onChange={setBase} /><label>配色方案<select aria-label="配色方案" value={scheme} onChange={(event) => setScheme(event.target.value as HarmonyScheme)}><option value="complementary">互补色</option><option value="analogous">类似色</option><option value="triadic">三角色</option><option value="split-complementary">分裂互补色</option><option value="tetradic">四色配色</option><option value="square">方形配色</option><option value="monochromatic">单色配色</option><option value="shades">阴影配色</option><option value="tints">浅色配色</option><option value="tones">色调配色</option><option value="double-split">双分裂互补色</option><option value="accented-analogous">强调类似色</option></select></label><ColorList colors={colors} /><ResultPanel text={colors.join('\n')} copyLabel="复制全部颜色"><code>{colors.join('\n')}</code></ResultPanel><ResultPanel text={cssVariables} copyLabel="复制 CSS Variables"><code>{cssVariables}</code></ResultPanel></>;
+  } catch (reason) { return <p className="color-error" role="alert">{reason instanceof Error ? reason.message : '颜色输入有误'}</p>; }
 }
 
 function loadFavorites(): string[] {
@@ -244,7 +272,14 @@ function PaletteGenerator() {
 
 function Tailwind() {
   const [base, setBase] = useState('#3b82f6');
-  try { return <><ColorControl label="基准颜色" value={base} onChange={setBase} /><div className="tailwind-scale">{Object.entries(generateTailwindScale(base)).map(([step, color]) => <ResultPanel key={step} text={color}><span className="color-chip" style={{ backgroundColor: color }} /><code>{step} · {color}</code></ResultPanel>)}</div></>; } catch (reason) { return <p className="color-error" role="alert">{reason instanceof Error ? reason.message : '颜色输入有误'}</p>; }
+  const [name, setName] = useState('brand');
+  const [mode, setMode] = useState<TailwindScaleMode>('balanced');
+  try {
+    const scale = generateTailwindScale(base, mode);
+    const cssVariables = formatTailwindCssVariables(name, scale);
+    const config = formatTailwindConfig(name, scale);
+    return <><ColorControl label="基准颜色" value={base} onChange={setBase} /><label>色阶名称<input aria-label="色阶名称" value={name} onChange={(event) => setName(event.target.value)} /></label><label>生成模式<select aria-label="生成模式" value={mode} onChange={(event) => setMode(event.target.value as TailwindScaleMode)}><option value="balanced">均衡</option><option value="vivid">鲜艳</option><option value="muted">柔和</option></select></label><div className="tailwind-scale">{Object.entries(scale).map(([step, color]) => <ResultPanel key={step} text={color}><span className="color-chip" style={{ backgroundColor: color }} /><code>{step} · {color} · {convertColor(color).oklch}</code></ResultPanel>)}</div><ResultPanel text={cssVariables} copyLabel="复制 CSS Variables" download={{ blob: new Blob([cssVariables], { type: 'text/css;charset=utf-8' }), name: 'tailwind-colors.css', label: '下载 CSS Variables' }}><code>{cssVariables}</code></ResultPanel><ResultPanel text={config} copyLabel="复制 Tailwind 配置" download={{ blob: new Blob([config], { type: 'text/javascript;charset=utf-8' }), name: 'tailwind-colors.js', label: '下载 Tailwind 配置' }}><code>{config}</code></ResultPanel><p className="local-note">用法示例：下载后，在 Tailwind 配置中使用 <code>import colors from './tailwind-colors.js';</code>，再合并为 <code>theme: {'{'} extend: {'{'} colors {'}'} {'}'}</code>。</p></>;
+  } catch (reason) { return <p className="color-error" role="alert">{reason instanceof Error ? reason.message : '颜色输入有误'}</p>; }
 }
 
 function ToolContent({ toolId }: { toolId: ToolId }) {
@@ -269,6 +304,7 @@ export function ColorWorkspace({ tool }: ColorWorkspaceProps) {
       <p className="page-lede">{tool.description}</p>
       <p className="local-note">颜色与图片仅在你的设备本地处理，不会上传任何内容。</p>
       <div className="color-workspace" aria-label={`${tool.title} 工作区`}><ToolContent toolId={tool.id} /></div>
+      <ToolExplanationPanel toolId={tool.id} />
     </section>
   );
 }

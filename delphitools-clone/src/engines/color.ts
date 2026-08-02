@@ -1,8 +1,37 @@
 export type RgbColor = { r: number; g: number; b: number };
 export type HslColor = { h: number; s: number; l: number };
 export type ParsedColor = RgbColor & { hex: string; hsl: HslColor };
+export type ColorConversionResult = {
+  hex: string;
+  rgb: string;
+  decimalRgb: string;
+  hsl: string;
+  lab: string;
+  lch: string;
+  oklab: string;
+  oklch: string;
+};
+export type ColorCoordinates = {
+  lab: [number, number, number];
+  lch: [number, number, number | null];
+  oklab: [number, number, number];
+  oklch: [number, number, number | null];
+};
 export type ImagePixels = { width: number; height: number; data: Uint8ClampedArray };
-export type HarmonyScheme = 'complementary' | 'analogous' | 'triadic' | 'split-complementary';
+export type HarmonyScheme =
+  | 'complementary'
+  | 'analogous'
+  | 'triadic'
+  | 'split-complementary'
+  | 'tetradic'
+  | 'square'
+  | 'monochromatic'
+  | 'shades'
+  | 'tints'
+  | 'tones'
+  | 'double-split'
+  | 'accented-analogous';
+export type TailwindScaleMode = 'balanced' | 'vivid' | 'muted';
 export type VisionMode = 'protanopia' | 'deuteranopia' | 'tritanopia' | 'achromatopsia';
 export type GradientMode = 'linear' | 'radial' | 'corner' | 'mesh';
 
@@ -72,9 +101,103 @@ export function parseColor(input: string): ParsedColor {
   throw new Error(COLOR_ERROR);
 }
 
-export function convertColor(input: string) {
+type Vector3 = [number, number, number];
+type Matrix3 = readonly [Vector3, Vector3, Vector3];
+
+const D50: Vector3 = [0.3457 / 0.3585, 1, (1 - 0.3457 - 0.3585) / 0.3585];
+const LINEAR_SRGB_TO_XYZ_D65: Matrix3 = [
+  [506752 / 1228815, 87881 / 245763, 12673 / 70218],
+  [87098 / 409605, 175762 / 245763, 12673 / 175545],
+  [7918 / 409605, 87881 / 737289, 1001167 / 1053270],
+];
+const D65_TO_D50_BRADFORD: Matrix3 = [
+  [1.0479297925449969, 0.022946870601609652, -0.05019226628920524],
+  [0.02962780877005599, 0.9904344267538799, -0.017073799063418826],
+  [-0.009243040646204504, 0.015055191490298152, 0.7518742814281371],
+];
+const XYZ_D65_TO_OKLAB_LMS: Matrix3 = [
+  [0.819022437996703, 0.3619062600528904, -0.1288737815209879],
+  [0.0329836539323885, 0.9292868615863434, 0.0361446663506424],
+  [0.0481771893596242, 0.2642395317527308, 0.6335478284694309],
+];
+const OKLAB_LMS_TO_OKLAB: Matrix3 = [
+  [0.210454268309314, 0.7936177747023054, -0.0040720430116193],
+  [1.9779985324311684, -2.42859224204858, 0.450593709617411],
+  [0.0259040424655478, 0.7827717124575296, -0.8086757549230774],
+];
+
+function multiplyMatrix(matrix: Matrix3, vector: Vector3): Vector3 {
+  return [
+    matrix[0][0] * vector[0] + matrix[0][1] * vector[1] + matrix[0][2] * vector[2],
+    matrix[1][0] * vector[0] + matrix[1][1] * vector[1] + matrix[1][2] * vector[2],
+    matrix[2][0] * vector[0] + matrix[2][1] * vector[1] + matrix[2][2] * vector[2],
+  ];
+}
+
+function formatNumber(value: number, decimals: number): string {
+  const rounded = Math.abs(value) < 10 ** -(decimals + 1) ? 0 : Number(value.toFixed(decimals));
+  return String(rounded);
+}
+
+function xyzD65FromRgb({ r, g, b }: RgbColor): Vector3 {
+  return multiplyMatrix(LINEAR_SRGB_TO_XYZ_D65, [linearChannel(r), linearChannel(g), linearChannel(b)]);
+}
+
+function labFromXyzD50(xyz: Vector3): Vector3 {
+  const epsilon = 216 / 24389;
+  const kappa = 24389 / 27;
+  const transform = (value: number, white: number) => {
+    const normalized = value / white;
+    return normalized > epsilon ? Math.cbrt(normalized) : (kappa * normalized + 16) / 116;
+  };
+  const f: Vector3 = [transform(xyz[0], D50[0]), transform(xyz[1], D50[1]), transform(xyz[2], D50[2])];
+  return [116 * f[1] - 16, 500 * (f[0] - f[1]), 200 * (f[1] - f[2])];
+}
+
+function oklabFromXyzD65(xyz: Vector3): Vector3 {
+  const lms = multiplyMatrix(XYZ_D65_TO_OKLAB_LMS, xyz);
+  return multiplyMatrix(OKLAB_LMS_TO_OKLAB, [Math.cbrt(lms[0]), Math.cbrt(lms[1]), Math.cbrt(lms[2])]);
+}
+
+export function rectangularToPolar(first: number, second: number, epsilon: number): { chroma: number; hue: number | null } {
+  const chroma = Math.hypot(first, second);
+  if (chroma <= epsilon) return { chroma, hue: null };
+  return { chroma, hue: (Math.atan2(second, first) * 180 / Math.PI + 360) % 360 };
+}
+
+function polarFromLab([lightness, first, second]: Vector3, epsilon: number): [number, number, number | null] {
+  const { chroma, hue } = rectangularToPolar(first, second, epsilon);
+  return [lightness, chroma, hue];
+}
+
+export function convertColorCoordinates(input: string): ColorCoordinates {
   const color = parseColor(input);
-  return { hex: color.hex, rgb: `rgb(${color.r}, ${color.g}, ${color.b})`, hsl: `hsl(${color.hsl.h}, ${color.hsl.s}%, ${color.hsl.l}%)` };
+  const xyzD65 = xyzD65FromRgb(color);
+  const lab = labFromXyzD50(multiplyMatrix(D65_TO_D50_BRADFORD, xyzD65));
+  const oklab = oklabFromXyzD65(xyzD65);
+  return {
+    lab,
+    lch: polarFromLab(lab, 0.0015),
+    oklab,
+    oklch: polarFromLab(oklab, 0.000004),
+  };
+}
+
+export function convertColor(input: string): ColorConversionResult {
+  const color = parseColor(input);
+  const { lab, lch, oklab, oklch } = convertColorCoordinates(input);
+  const formatHue = (hue: number | null) => hue === null ? 'none' : formatNumber(hue, 2);
+
+  return {
+    hex: color.hex,
+    rgb: `rgb(${color.r}, ${color.g}, ${color.b})`,
+    decimalRgb: `rgb(${formatNumber(color.r / 255, 4)}, ${formatNumber(color.g / 255, 4)}, ${formatNumber(color.b / 255, 4)})`,
+    hsl: `hsl(${color.hsl.h}, ${color.hsl.s}%, ${color.hsl.l}%)`,
+    lab: `lab(${formatNumber(lab[0], 2)}% ${formatNumber(lab[1], 2)} ${formatNumber(lab[2], 2)})`,
+    lch: `lch(${formatNumber(lch[0], 2)}% ${formatNumber(lch[1], 2)} ${formatHue(lch[2])})`,
+    oklab: `oklab(${formatNumber(oklab[0] * 100, 1)}% ${formatNumber(oklab[1], 3)} ${formatNumber(oklab[2], 3)})`,
+    oklch: `oklch(${formatNumber(oklch[0] * 100, 1)}% ${formatNumber(oklch[1], 3)} ${formatHue(oklch[2])})`,
+  };
 }
 
 function linearChannel(channel: number): number {
@@ -101,10 +224,24 @@ export function wcagGrade(ratio: number) {
 
 export function generateHarmony(base: string, scheme: HarmonyScheme): string[] {
   const { h, s, l } = parseColor(base).hsl;
-  const offsets: Record<HarmonyScheme, number[]> = {
-    complementary: [0, 180], analogous: [0, 330, 30], triadic: [0, 120, 240], 'split-complementary': [0, 150, 210],
+  const offsets: Partial<Record<HarmonyScheme, number[]>> = {
+    complementary: [0, 180],
+    analogous: [0, 330, 30],
+    triadic: [0, 120, 240],
+    'split-complementary': [0, 150, 210],
+    tetradic: [0, 60, 180, 240],
+    square: [0, 90, 180, 270],
+    'double-split': [0, 30, 150, 180, 210, 330],
+    'accented-analogous': [0, 30, 60, 180],
   };
-  return offsets[scheme].map((offset) => rgbToHex(hslToRgb({ h: h + offset, s, l })));
+  const variations: Partial<Record<HarmonyScheme, ReadonlyArray<Pick<HslColor, 's' | 'l'>>>> = {
+    monochromatic: [{ s: 100, l: 50 }, { s: 80, l: 50 }, { s: 60, l: 50 }, { s: 40, l: 50 }, { s: 20, l: 50 }],
+    shades: [{ s: 85, l: 85 }, { s: 85, l: 65 }, { s: 85, l: 45 }, { s: 85, l: 25 }, { s: 85, l: 10 }],
+    tints: [{ s: 85, l: 50 }, { s: 85, l: 65 }, { s: 85, l: 78 }, { s: 85, l: 88 }, { s: 85, l: 96 }],
+    tones: [{ s: 90, l: 50 }, { s: 70, l: 50 }, { s: 50, l: 50 }, { s: 30, l: 50 }, { s: 10, l: 50 }],
+  };
+  if (variations[scheme]) return variations[scheme].map((variation) => rgbToHex(hslToRgb({ h, ...variation })));
+  return (offsets[scheme] ?? []).map((offset) => rgbToHex(hslToRgb({ h: h + offset, s, l })));
 }
 
 function seedValue(seed: string): number {
@@ -147,10 +284,38 @@ export function simulateColorVision(rgb: RgbColor, mode: VisionMode): RgbColor {
   return { r: clamp(transformed[0]), g: clamp(transformed[1]), b: clamp(transformed[2]) };
 }
 
-export function generateTailwindScale(base: string): Record<string, string> {
+const TAILWIND_LIGHTNESS = { 50: 97, 100: 93, 200: 86, 300: 76, 400: 65, 500: 50, 600: 45, 700: 36, 800: 27, 900: 18, 950: 10 } as const;
+
+export function generateTailwindScale(base: string, mode: TailwindScaleMode = 'balanced'): Record<string, string> {
   const parsed = parseColor(base);
-  const lightness = { 50: 97, 100: 93, 200: 86, 300: 76, 400: 65, 500: parsed.hsl.l, 600: 45, 700: 36, 800: 27, 900: 18, 950: 10 };
-  return Object.fromEntries(Object.entries(lightness).map(([key, l]) => [key, key === '500' ? parsed.hex : rgbToHex(hslToRgb({ h: parsed.hsl.h, s: parsed.hsl.s, l }))]));
+  const saturation = clamp(parsed.hsl.s + (mode === 'vivid' ? 12 : mode === 'muted' ? -24 : 0), 0, 100);
+  return Object.fromEntries(Object.entries(TAILWIND_LIGHTNESS).map(([key, lightness]) => {
+    if (key === '500' && mode === 'balanced') return [key, parsed.hex];
+    return [key, rgbToHex(hslToRgb({ h: parsed.hsl.h, s: saturation, l: key === '500' ? parsed.hsl.l : lightness }))];
+  }));
+}
+
+function normalizeTailwindName(name: string): string {
+  const normalized = name.trim().normalize('NFKC').toLocaleLowerCase()
+    .replace(/[\s_./\\]+/gu, '-')
+    .replace(/[^\p{L}\p{N}-]+/gu, '-')
+    .replace(/-+/gu, '-')
+    .replace(/^-|-$/gu, '');
+  return normalized || 'color';
+}
+
+function orderedScale(scale: Record<string, string>): Record<string, string> {
+  return Object.fromEntries(Object.entries(scale).sort(([first], [second]) => Number(first) - Number(second)));
+}
+
+export function formatTailwindCssVariables(name: string, scale: Record<string, string>): string {
+  const safeName = normalizeTailwindName(name);
+  return `:root {\n${Object.entries(orderedScale(scale)).map(([step, color]) => `  --${safeName}-${step}: ${color};`).join('\n')}\n}`;
+}
+
+export function formatTailwindConfig(name: string, scale: Record<string, string>): string {
+  const colors = JSON.stringify({ [normalizeTailwindName(name)]: orderedScale(scale) }, null, 2);
+  return `const colors = ${colors};\n\nexport default colors;`;
 }
 
 export function generateGradientCss(colors: string[], mode: GradientMode): string {

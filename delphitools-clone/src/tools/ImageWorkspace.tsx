@@ -2,10 +2,24 @@ import { createContext, useContext, useEffect, useMemo, useRef, useState } from 
 import type { ChangeEvent, ReactNode } from 'react';
 
 import { FileDropzone } from '../components/FileDropzone';
+import { BatchProgress } from '../components/BatchProgress';
 import { ResultPanel } from '../components/ResultPanel';
 import { StatusMessage, type StatusKind } from '../components/StatusMessage';
+import { ToolExplanationPanel } from '../components/ToolExplanationPanel';
 import { readFileAsDataUrl, loadImage } from '../core/files';
+import { runBatch, type BatchItem } from '../core/batch';
+import { downloadBlob } from '../core/download';
 import type { ToolDefinition, ToolId } from '../core/types';
+import {
+  cropImage,
+  drawWatermark,
+  resizeImage,
+  rotateImage,
+  splitImage,
+  stitchImages,
+  type ImageDataLike,
+  type NinePosition,
+} from '../engines/imageTransform';
 import {
   createPlaceholderSvg,
   decodeImageBase64,
@@ -28,7 +42,14 @@ import {
 type ImageWorkspaceProps = { tool: ToolDefinition };
 type JobStatus = { kind: StatusKind; message: string };
 type LocalImage = { file: File; image: HTMLImageElement; preview: string; width: number; height: number };
-type ImageOutput = { blob: Blob; name: string; label: string };
+type ImageOutput = {
+  blob: Blob;
+  name: string;
+  label: string;
+  width?: number;
+  height?: number;
+  sourceSummary?: string;
+};
 
 const ImageValidationContext = createContext<(message: string) => void>(() => undefined);
 
@@ -98,6 +119,72 @@ function drawRect(context: CanvasRenderingContext2D, image: CanvasImageSource, s
   context.drawImage(image, source.x, source.y, source.width, source.height, destination.x, destination.y, destination.width, destination.height);
 }
 
+function imagePixels(asset: LocalImage): ImageDataLike {
+  const canvas = makeCanvas(asset.width, asset.height);
+  const context = context2d(canvas, true);
+  context.drawImage(asset.image, 0, 0, asset.width, asset.height);
+  const imageData = context.getImageData(0, 0, asset.width, asset.height);
+  return { width: asset.width, height: asset.height, data: new Uint8ClampedArray(imageData.data) };
+}
+
+async function pixelsToBlob(pixels: ImageDataLike, mime = 'image/png', quality?: number): Promise<Blob> {
+  const canvas = makeCanvas(pixels.width, pixels.height);
+  const context = context2d(canvas);
+  const imageData = typeof context.createImageData === 'function'
+    ? context.createImageData(pixels.width, pixels.height)
+    : { width: pixels.width, height: pixels.height, data: new Uint8ClampedArray(pixels.data.length) } as ImageData;
+  imageData.data.set(pixels.data);
+  context.putImageData(imageData, 0, 0);
+  return canvasBlob(canvas, mime, quality);
+}
+
+function sourceSize(asset: LocalImage): string {
+  return `原图 ${asset.width} × ${asset.height}`;
+}
+
+function sourceSizes(assets: readonly LocalImage[]): string {
+  return `原图 ${assets.map((asset) => `${asset.width} × ${asset.height}`).join(' + ')}`;
+}
+
+function outputStem(file: File): string {
+  return file.name.replace(/\.[^.]+$/, '') || '图片';
+}
+
+function useBatchImages<T>() {
+  const [items, setItems] = useState<BatchItem<T>[]>([]);
+  const controller = useRef<AbortController | null>(null);
+
+  useEffect(() => () => controller.current?.abort(), []);
+
+  const run = async (assets: readonly LocalImage[], worker: (asset: LocalImage, signal: AbortSignal) => Promise<T>): Promise<T[]> => {
+    controller.current?.abort();
+    const nextController = new AbortController();
+    controller.current = nextController;
+    setItems(assets.map((asset, index) => ({ id: `batch-${index + 1}`, file: asset.file, status: 'queued' })));
+    const results = await runBatch(assets.map((asset) => asset.file), async (file, signal) => {
+      const asset = assets.find((candidate) => candidate.file === file);
+      if (!asset) throw new Error('批量图片状态已失效，请重新选择');
+      setItems((current) => current.map((item) => item.file === file ? { ...item, status: 'running' } : item));
+      return worker(asset, signal);
+    }, { signal: nextController.signal });
+    setItems(results);
+    if (nextController.signal.aborted) throw new Error('操作已取消');
+    const outputs = results.flatMap((item) => item.status === 'success' && item.result !== undefined ? [item.result] : []);
+    if (outputs.length === 0) {
+      const firstError = results.find((item) => item.error)?.error;
+      if (firstError) throw new Error(firstError);
+    }
+    return outputs;
+  };
+
+  const reset = () => {
+    controller.current?.abort();
+    setItems([]);
+  };
+
+  return { items, run, reset, cancel: () => controller.current?.abort() };
+}
+
 function useObjectUrl(blob?: Blob): string {
   const [url, setUrl] = useState('');
   useEffect(() => {
@@ -119,10 +206,14 @@ function useObjectUrl(blob?: Blob): string {
 function OutputPreview({ output, reset }: { output: ImageOutput; reset?: () => void }) {
   const url = useObjectUrl(output.blob);
   return (
-    <ResultPanel download={{ blob: output.blob, name: output.name, label: `下载${output.label}` }} onReset={reset}>
+    <ResultPanel download={{ blob: output.blob, name: output.name, label: `下载${output.label}` }} onReset={reset} localOnly>
       <figure className="image-result-card">
         {url && <img src={url} alt={`${output.label}预览`} />}
-        <figcaption>{output.label} · {Math.max(1, Math.round(output.blob.size / 1024))} KB</figcaption>
+        <figcaption>
+          <strong>{output.label}</strong>
+          {output.sourceSummary && output.width && output.height && <span>{output.sourceSummary} · 结果 {output.width} × {output.height}</span>}
+          <span>{Math.max(1, Math.round(output.blob.size / 1024))} KB · 处理成功</span>
+        </figcaption>
       </figure>
     </ResultPanel>
   );
@@ -134,7 +225,10 @@ function OutputGallery({ outputs, reset }: { outputs: ImageOutput[]; reset: () =
     <section className="image-output-gallery" aria-label="图片处理结果">
       <div className="image-output-gallery__heading">
         <h2>处理结果</h2>
-        <button type="button" onClick={reset}>重新开始</button>
+        <div className="image-output-gallery__actions">
+          <button type="button" onClick={() => outputs.forEach((output) => downloadBlob(output.blob, output.name))}>下载全部结果</button>
+          <button type="button" onClick={reset}>重新开始</button>
+        </div>
       </div>
       <div className="image-output-grid">{outputs.map((output) => <OutputPreview key={output.name} output={output} />)}</div>
     </section>
@@ -160,8 +254,7 @@ function useImageJob(multiple = false) {
   const clearResult = () => setOutputs([]);
   const rejectFiles = (message: string) => {
     taskVersion.current += 1;
-    setOutputs([]);
-    setStatus({ kind: 'idle', message: `结果已清除：${message}` });
+    setStatus({ kind: 'idle', message });
   };
   const reset = () => {
     taskVersion.current += 1;
@@ -196,7 +289,6 @@ function useImageJob(multiple = false) {
 
   const run = async (work: (loaded: LocalImage[]) => Promise<ImageOutput[]>) => {
     const version = ++taskVersion.current;
-    clearResult();
     if (images.length === 0) {
       setStatus({ kind: 'error', message: '请先选择图片' });
       return;
@@ -207,10 +299,9 @@ function useImageJob(multiple = false) {
       if (version !== taskVersion.current) return;
       if (next.length === 0) throw new Error('没有生成可下载的图片结果');
       setOutputs(next);
-      setStatus({ kind: 'success', message: `处理完成，共生成 ${next.length} 个文件` });
+      setStatus({ kind: 'success', message: `本地处理完成，共生成 ${next.length} 个文件` });
     } catch (reason) {
       if (version !== taskVersion.current) return;
-      setOutputs([]);
       setStatus({ kind: 'error', message: errorMessage(reason) });
     }
   };
@@ -260,23 +351,32 @@ function ScrollTool() {
 }
 
 function SocialCropTool() {
-  const job = useImageJob();
+  const job = useImageJob(true);
+  const batch = useBatchImages<ImageOutput>();
   const [preset, setPreset] = useState<keyof typeof SOCIAL_PRESETS>('portrait');
   const [custom, setCustom] = useState('4:5');
   const selected = SOCIAL_PRESETS[preset];
   const ratio = preset === 'custom' ? custom : selected.ratio;
-  const process = () => job.run(async ([asset]) => {
+  const process = () => job.run(async (assets) => batch.run(assets, async (asset) => {
     const region = socialCropRect(asset.width, asset.height, ratio);
-    const canvas = makeCanvas(region.width, region.height);
-    context2d(canvas).drawImage(asset.image, region.x, region.y, region.width, region.height, 0, 0, region.width, region.height);
+    const result = cropImage(imagePixels(asset), region);
     const safeRatio = ratio.trim().replace(/\s*[:/]\s*/g, 'x').replace(/[\\:*?"<>|]/g, '-');
-    return [{ blob: await canvasBlob(canvas), name: `社交裁剪-${safeRatio}.png`, label: `${selected.label} · ${ratio}` }];
-  });
-  return <WorkspaceFrame {...job}><Dropzone onFiles={job.acceptFiles} /><div className="image-controls"><label>裁剪场景<select aria-label="裁剪场景" value={preset} onChange={(event) => setPreset(event.target.value as keyof typeof SOCIAL_PRESETS)}>{Object.entries(SOCIAL_PRESETS).map(([key, item]) => <option key={key} value={key}>{item.label}</option>)}</select></label>{preset === 'custom' && <label>自定义比例<input aria-label="自定义比例" value={custom} onChange={(event) => setCustom(event.target.value)} placeholder="例如 3:2" /></label>}<p className="image-ratio-label">{selected.label} · {ratio}</p><button type="button" onClick={process}>按比例裁剪</button></div></WorkspaceFrame>;
+    return {
+      blob: await pixelsToBlob(result),
+      name: assets.length === 1 ? `社交裁剪-${safeRatio}.png` : `${outputStem(asset.file)}-${safeRatio}.png`,
+      label: assets.length === 1 ? `${selected.label} · ${ratio}` : `${asset.file.name} 的 ${selected.label} · ${ratio}`,
+      width: result.width,
+      height: result.height,
+      sourceSummary: sourceSize(asset),
+    };
+  }));
+  const reset = () => { batch.reset(); job.reset(); };
+  return <WorkspaceFrame {...job} reset={reset}><Dropzone onFiles={job.acceptFiles} multiple /><div className="image-controls"><label>裁剪场景<select aria-label="裁剪场景" value={preset} onChange={(event) => setPreset(event.target.value as keyof typeof SOCIAL_PRESETS)}>{Object.entries(SOCIAL_PRESETS).map(([key, item]) => <option key={key} value={key}>{item.label}</option>)}</select></label>{preset === 'custom' && <label>自定义比例<input aria-label="自定义比例" value={custom} onChange={(event) => setCustom(event.target.value)} placeholder="例如 3:2" /></label>}<p className="image-ratio-label">{selected.label} · {ratio}</p><button type="button" onClick={process}>按比例裁剪</button></div>{batch.items.length > 0 && <BatchProgress items={batch.items} onCancel={batch.cancel} />}</WorkspaceFrame>;
 }
 
 function WatermarkTool() {
-  const job = useImageJob();
+  const job = useImageJob(true);
+  const batch = useBatchImages<ImageOutput>();
   const [type, setType] = useState<'text' | 'image'>('text');
   const [text, setText] = useState('版权所有');
   const [watermark, setWatermark] = useState<LocalImage | null>(null);
@@ -289,7 +389,6 @@ function WatermarkTool() {
   const loadWatermark = async (event: ChangeEvent<HTMLInputElement>) => {
     const version = ++watermarkVersion.current;
     setWatermark(null);
-    job.setOutputs([]);
     const file = event.target.files?.[0];
     if (!file) return;
     job.setStatus({ kind: 'loading', message: '正在本地解码水印图片' });
@@ -301,42 +400,72 @@ function WatermarkTool() {
     } catch (reason) {
       if (version !== watermarkVersion.current) return;
       setWatermark(null);
-      job.setOutputs([]);
       job.setStatus({ kind: 'error', message: errorMessage(reason) });
     }
   };
-  const process = () => job.run(async ([asset]) => {
-    const canvas = makeCanvas(asset.width, asset.height);
-    const context = context2d(canvas);
-    context.drawImage(asset.image, 0, 0);
+  const process = () => job.run(async (assets) => batch.run(assets, async (asset) => {
     const fontSize = Math.max(18, Math.round(Math.min(asset.width, asset.height) / 18));
-    context.font = `700 ${fontSize}px system-ui`;
-    const markWidth = type === 'text' ? Math.max(1, Math.ceil(context.measureText(text || '水印').width)) : watermark?.width ?? 0;
+    const measureCanvas = makeCanvas(Math.max(1, asset.width), Math.max(1, asset.height));
+    const measureContext = context2d(measureCanvas, true);
+    measureContext.font = `700 ${fontSize}px system-ui`;
+    const markWidth = type === 'text' ? Math.max(1, Math.ceil(measureContext.measureText(text || '水印').width)) : watermark?.width ?? 0;
     const markHeight = type === 'text' ? Math.ceil(fontSize * 1.3) : watermark?.height ?? 0;
     if (type === 'image' && !watermark) throw new Error('请先选择水印图片');
     const scale = Math.min(1, asset.width / 3 / markWidth, asset.height / 3 / markHeight);
     const width = Math.max(1, Math.round(markWidth * scale));
     const height = Math.max(1, Math.round(markHeight * scale));
-    const placements = watermarkLayout(asset.width, asset.height, width, height, { mode, margin, gap: Math.max(24, margin), opacity, rotation, position: 'bottom-right' });
-    placements.forEach((placement) => {
-      context.save();
-      context.globalAlpha = placement.opacity;
-      context.translate(placement.centerX, placement.centerY);
-      context.rotate((placement.rotation * Math.PI) / 180);
-      if (type === 'text') {
-        context.font = `700 ${Math.max(1, fontSize * scale)}px system-ui`;
-        context.fillStyle = '#ffffff';
-        context.textAlign = 'center';
-        context.textBaseline = 'middle';
-        context.shadowColor = 'rgba(0,0,0,.55)';
-        context.shadowBlur = 3;
-        context.fillText(text || '水印', 0, 0, placement.width);
-      } else context.drawImage(watermark!.image, -placement.width / 2, -placement.height / 2, placement.width, placement.height);
-      context.restore();
-    });
-    return [{ blob: await canvasBlob(canvas), name: '图片水印.png', label: '带水印图片' }];
-  });
-  return <WorkspaceFrame {...job}><Dropzone onFiles={job.acceptFiles} /><div className="image-controls"><label>水印类型<select aria-label="水印类型" value={type} onChange={(event) => setType(event.target.value as 'text' | 'image')}><option value="text">文字水印</option><option value="image">图片水印</option></select></label>{type === 'text' ? <label key="text-watermark">水印文字<input aria-label="水印文字" value={text} onChange={(event) => setText(event.target.value)} /></label> : <label key="image-watermark">选择水印图片<input aria-label="选择水印图片" type="file" accept="image/*" onChange={loadWatermark} /></label>}<label>布局方式<select aria-label="水印布局" value={mode} onChange={(event) => setMode(event.target.value as 'single' | 'tile')}><option value="single">右下角单个</option><option value="tile">平铺水印</option></select></label><label>透明度<input aria-label="水印透明度" type="range" min="0.05" max="1" step="0.05" value={opacity} onChange={(event) => setOpacity(Number(event.target.value))} /></label><label>旋转角度<input aria-label="水印旋转角度" type="number" min="-180" max="180" value={rotation} onChange={(event) => setRotation(Number(event.target.value))} /></label><label>边距<input aria-label="水印边距" type="number" min="0" max="500" value={margin} onChange={(event) => setMargin(Number(event.target.value))} /></label><button type="button" onClick={process}>添加水印</button></div></WorkspaceFrame>;
+    let blob: Blob;
+    if (mode === 'single') {
+      let markPixels: ImageDataLike;
+      if (type === 'image') {
+        markPixels = imagePixels(watermark!);
+      } else {
+        const markCanvas = makeCanvas(markWidth, markHeight);
+        const markContext = context2d(markCanvas, true);
+        markContext.font = `700 ${fontSize}px system-ui`;
+        markContext.fillStyle = '#ffffff';
+        markContext.textAlign = 'center';
+        markContext.textBaseline = 'middle';
+        markContext.fillText(text || '水印', markWidth / 2, markHeight / 2, markWidth);
+        const imageData = markContext.getImageData(0, 0, markWidth, markHeight);
+        markPixels = { width: markWidth, height: markHeight, data: new Uint8ClampedArray(imageData.data) };
+      }
+      const result = drawWatermark(imagePixels(asset), markPixels, { opacity, position: 'bottom-right' as NinePosition, scale });
+      blob = await pixelsToBlob(result);
+    } else {
+      const canvas = makeCanvas(asset.width, asset.height);
+      const context = context2d(canvas);
+      context.drawImage(asset.image, 0, 0);
+      const placements = watermarkLayout(asset.width, asset.height, width, height, { mode, margin, gap: Math.max(24, margin), opacity, rotation, position: 'bottom-right' });
+      placements.forEach((placement) => {
+        context.save();
+        context.globalAlpha = placement.opacity;
+        context.translate(placement.centerX, placement.centerY);
+        context.rotate((placement.rotation * Math.PI) / 180);
+        if (type === 'text') {
+          context.font = `700 ${Math.max(1, fontSize * scale)}px system-ui`;
+          context.fillStyle = '#ffffff';
+          context.textAlign = 'center';
+          context.textBaseline = 'middle';
+          context.shadowColor = 'rgba(0,0,0,.55)';
+          context.shadowBlur = 3;
+          context.fillText(text || '水印', 0, 0, placement.width);
+        } else context.drawImage(watermark!.image, -placement.width / 2, -placement.height / 2, placement.width, placement.height);
+        context.restore();
+      });
+      blob = await canvasBlob(canvas);
+    }
+    return {
+      blob,
+      name: assets.length === 1 ? '图片水印.png' : `${outputStem(asset.file)}-水印.png`,
+      label: assets.length === 1 ? '带水印图片' : `${asset.file.name} 的带水印图片`,
+      width: asset.width,
+      height: asset.height,
+      sourceSummary: sourceSize(asset),
+    };
+  }));
+  const reset = () => { batch.reset(); job.reset(); };
+  return <WorkspaceFrame {...job} reset={reset}><Dropzone onFiles={job.acceptFiles} multiple /><div className="image-controls"><label>水印类型<select aria-label="水印类型" value={type} onChange={(event) => setType(event.target.value as 'text' | 'image')}><option value="text">文字水印</option><option value="image">图片水印</option></select></label>{type === 'text' ? <label key="text-watermark">水印文字<input aria-label="水印文字" value={text} onChange={(event) => setText(event.target.value)} /></label> : <label key="image-watermark">选择水印图片<input aria-label="选择水印图片" type="file" accept="image/*" onChange={loadWatermark} /></label>}<label>布局方式<select aria-label="水印布局" value={mode} onChange={(event) => setMode(event.target.value as 'single' | 'tile')}><option value="single">右下角单个</option><option value="tile">平铺水印</option></select></label><label>透明度<input aria-label="水印透明度" type="range" min="0.05" max="1" step="0.05" value={opacity} onChange={(event) => setOpacity(Number(event.target.value))} /></label><label>旋转角度<input aria-label="水印旋转角度" type="number" min="-180" max="180" value={rotation} onChange={(event) => setRotation(Number(event.target.value))} /></label><label>边距<input aria-label="水印边距" type="number" min="0" max="500" value={margin} onChange={(event) => setMargin(Number(event.target.value))} /></label><button type="button" onClick={process}>添加水印</button></div>{batch.items.length > 0 && <BatchProgress items={batch.items} onCancel={batch.cancel} />}</WorkspaceFrame>;
 }
 
 function sharpenImage(context: CanvasRenderingContext2D, width: number, height: number, amount: number): void {
@@ -418,24 +547,42 @@ function ClipperTool() {
 }
 
 function ConverterTool() {
-  const job = useImageJob();
+  const job = useImageJob(true);
+  const batch = useBatchImages<ImageOutput>();
   const capabilities = useMemo(() => getImageFormatCapabilities(), []);
   const initial = capabilities.find((item) => item.enabled)?.mime ?? '';
   const [mime, setMime] = useState(initial);
   const [quality, setQuality] = useState(0.9);
+  const [width, setWidth] = useState('');
+  const [height, setHeight] = useState('');
+  const [fit, setFit] = useState<'contain' | 'cover' | 'stretch'>('contain');
+  const [rotation, setRotation] = useState<0 | 90 | 180 | 270>(0);
   const selected = capabilities.find((item) => item.mime === mime);
-  const process = () => job.run(async ([asset]) => {
+  const process = () => job.run(async (assets) => {
     if (!selected?.enabled) throw new Error('所选格式在当前浏览器中不能真实编码');
-    const canvas = makeCanvas(asset.width, asset.height);
-    const context = context2d(canvas);
-    if (mime === 'image/jpeg') {
-      context.fillStyle = '#ffffff';
-      context.fillRect(0, 0, canvas.width, canvas.height);
-    }
-    context.drawImage(asset.image, 0, 0);
-    return [{ blob: await canvasBlob(canvas, selected.mime, quality), name: `转换结果.${selected.extension}`, label: `${selected.label} 转换结果` }];
+    return batch.run(assets, async (asset) => {
+      const targetWidth = width === '' ? asset.width : Number(width);
+      const targetHeight = height === '' ? asset.height : Number(height);
+      if (!Number.isInteger(targetWidth) || targetWidth <= 0 || !Number.isInteger(targetHeight) || targetHeight <= 0) throw new Error('输出宽度和高度必须是大于 0 的整数');
+      const resized = resizeImage(imagePixels(asset), { width: targetWidth, height: targetHeight, fit });
+      const transformed = rotateImage(resized, rotation);
+      const stem = outputStem(asset.file);
+      const output = {
+        blob: await pixelsToBlob(transformed, selected.mime, quality),
+        name: assets.length === 1 ? `转换结果.${selected.extension}` : `${stem}.${selected.extension}`,
+        label: assets.length === 1 ? `${selected.label} 转换结果` : `${asset.file.name} 的 ${selected.label} 转换结果`,
+        width: transformed.width,
+        height: transformed.height,
+        sourceSummary: sourceSize(asset),
+      };
+      return output;
+    });
   });
-  return <WorkspaceFrame {...job}><Dropzone onFiles={job.acceptFiles} /><div className="image-controls"><label>输出格式<select aria-label="输出格式" value={mime} onChange={(event) => setMime(event.target.value)}>{capabilities.map((item) => <option key={item.mime} value={item.mime} disabled={!item.enabled}>{item.label}{item.enabled ? '' : '（不可用）'}</option>)}</select></label><label>图片质量<input aria-label="图片质量" type="range" min="0.1" max="1" step="0.05" value={quality} onChange={(event) => setQuality(Number(event.target.value))} /></label><button type="button" disabled={!selected?.enabled} onClick={process}>转换并下载</button></div><ul className="format-capabilities" aria-label="格式能力说明">{capabilities.map((item) => <li key={item.mime}>{item.label}：{item.reason}</li>)}</ul></WorkspaceFrame>;
+  const reset = () => {
+    batch.reset();
+    job.reset();
+  };
+  return <WorkspaceFrame {...job} reset={reset}><Dropzone onFiles={job.acceptFiles} multiple /><div className="image-controls"><label>输出格式<select aria-label="输出格式" value={mime} onChange={(event) => setMime(event.target.value)}>{capabilities.map((item) => <option key={item.mime} value={item.mime} disabled={!item.enabled}>{item.label}{item.enabled ? '' : '（不可用）'}</option>)}</select></label><label>输出宽度<input aria-label="输出宽度" type="number" min="1" max="16384" value={width} placeholder="留空保持原宽度" onChange={(event) => setWidth(event.target.value)} /></label><label>输出高度<input aria-label="输出高度" type="number" min="1" max="16384" value={height} placeholder="留空保持原高度" onChange={(event) => setHeight(event.target.value)} /></label><label>缩放方式<select aria-label="缩放方式" value={fit} onChange={(event) => setFit(event.target.value as typeof fit)}><option value="contain">完整显示并透明留白</option><option value="cover">居中裁剪并铺满</option><option value="stretch">拉伸到目标尺寸</option></select></label><label>旋转角度<select aria-label="旋转角度" value={rotation} onChange={(event) => setRotation(Number(event.target.value) as typeof rotation)}><option value="0">不旋转</option><option value="90">顺时针 90°</option><option value="180">旋转 180°</option><option value="270">顺时针 270°</option></select></label><label>图片质量<input aria-label="图片质量" type="range" min="0.1" max="1" step="0.05" value={quality} onChange={(event) => setQuality(Number(event.target.value))} /></label><button type="button" disabled={!selected?.enabled} onClick={process}>转换并下载</button></div>{batch.items.length > 0 && <BatchProgress items={batch.items} onCancel={batch.cancel} />}<ul className="format-capabilities" aria-label="格式能力说明">{capabilities.map((item) => <li key={item.mime}>{item.label}：{item.reason}</li>)}</ul></WorkspaceFrame>;
 }
 
 function SplitterTool() {
@@ -445,11 +592,16 @@ function SplitterTool() {
   const process = () => job.run(async ([asset]) => {
     if (!Number.isInteger(columns) || !Number.isInteger(rows) || columns < 1 || rows < 1) throw new Error('分割行列必须是大于 0 的整数');
     if (columns > 20 || rows > 20 || columns * rows > 400) throw new Error('分割行列每边最多 20，总输出最多 400 张');
-    const regions = splitGrid(asset.width, asset.height, columns, rows);
-    return Promise.all(regions.map(async (region, index) => {
-      const canvas = makeCanvas(region.width, region.height);
-      context2d(canvas).drawImage(asset.image, region.x, region.y, region.width, region.height, 0, 0, region.width, region.height);
-      return { blob: await canvasBlob(canvas), name: `切图-${index + 1}.png`, label: `切图 ${index + 1}` };
+    const parts = splitImage(imagePixels(asset), rows, columns);
+    return Promise.all(parts.map(async (part, index) => {
+      return {
+        blob: await pixelsToBlob(part),
+        name: `切图-${index + 1}.png`,
+        label: `切图 ${index + 1}`,
+        width: part.width,
+        height: part.height,
+        sourceSummary: sourceSize(asset),
+      };
     }));
   });
   return <WorkspaceFrame {...job}><Dropzone onFiles={job.acceptFiles} /><div className="image-controls"><label>分割列数<input aria-label="分割列数" type="number" min="1" max="20" value={columns} onChange={(event) => setColumns(Number(event.target.value))} /></label><label>分割行数<input aria-label="分割行数" type="number" min="1" max="20" value={rows} onChange={(event) => setRows(Number(event.target.value))} /></label><button type="button" onClick={process}>按网格切图</button></div></WorkspaceFrame>;
@@ -457,22 +609,27 @@ function SplitterTool() {
 
 function StitcherTool() {
   const job = useImageJob(true);
+  const batch = useBatchImages<ImageDataLike>();
   const [direction, setDirection] = useState<StitchDirection>('horizontal');
   const [gap, setGap] = useState(0);
   const [background, setBackground] = useState('#ffffff');
   const process = () => job.run(async (assets) => {
-    const layout = stitchLayout(assets, direction, gap);
-    const canvas = makeCanvas(layout.width, layout.height);
+    if (!Number.isInteger(gap) || gap < 0) throw new Error('图片间距必须是大于或等于 0 的整数');
+    const sources = await batch.run(assets, async (asset) => imagePixels(asset));
+    const result = stitchImages(sources, direction, gap);
+    const canvas = makeCanvas(result.width, result.height);
     const context = context2d(canvas);
     context.fillStyle = background;
-    context.fillRect(0, 0, canvas.width, canvas.height);
-    assets.forEach((asset, index) => {
-      const placement = layout.placements[index];
-      context.drawImage(asset.image, placement.x, placement.y, placement.width, placement.height);
-    });
-    return [{ blob: await canvasBlob(canvas), name: '图片拼接.png', label: `${direction === 'horizontal' ? '横向' : '纵向'}拼接结果` }];
+    context.fillRect(0, 0, result.width, result.height);
+    const imageData = typeof context.createImageData === 'function'
+      ? context.createImageData(result.width, result.height)
+      : { width: result.width, height: result.height, data: new Uint8ClampedArray(result.data.length) } as ImageData;
+    imageData.data.set(result.data);
+    context.putImageData(imageData, 0, 0);
+    return [{ blob: await canvasBlob(canvas), name: '图片拼接.png', label: `${direction === 'horizontal' ? '横向' : '纵向'}拼接结果`, width: result.width, height: result.height, sourceSummary: sourceSizes(assets) }];
   });
-  return <WorkspaceFrame {...job}><Dropzone onFiles={job.acceptFiles} multiple /><div className="image-controls"><label>拼接方向<select aria-label="拼接方向" value={direction} onChange={(event) => setDirection(event.target.value as StitchDirection)}><option value="horizontal">横向拼接</option><option value="vertical">纵向拼接</option></select></label><label>图片间距<input aria-label="图片间距" type="number" min="0" max="500" value={gap} onChange={(event) => setGap(Number(event.target.value))} /></label><label>空白颜色<input aria-label="空白颜色" type="color" value={background} onChange={(event) => setBackground(event.target.value)} /></label><button type="button" onClick={process}>拼接图片</button></div></WorkspaceFrame>;
+  const reset = () => { batch.reset(); job.reset(); };
+  return <WorkspaceFrame {...job} reset={reset}><Dropzone onFiles={job.acceptFiles} multiple /><div className="image-controls"><label>拼接方向<select aria-label="拼接方向" value={direction} onChange={(event) => setDirection(event.target.value as StitchDirection)}><option value="horizontal">横向拼接</option><option value="vertical">纵向拼接</option></select></label><label>图片间距<input aria-label="图片间距" type="number" min="0" max="500" value={gap} onChange={(event) => setGap(Number(event.target.value))} /></label><label>空白颜色<input aria-label="空白颜色" type="color" value={background} onChange={(event) => setBackground(event.target.value)} /></label><button type="button" onClick={process}>拼接图片</button></div>{batch.items.length > 0 && <BatchProgress items={batch.items} onCancel={batch.cancel} />}</WorkspaceFrame>;
 }
 
 function PasteImageTool() {
@@ -631,6 +788,7 @@ export function ImageWorkspace({ tool }: ImageWorkspaceProps) {
       <p className="page-lede">{tool.description}</p>
       <p className="local-note">图片只在你的设备本地处理，不会上传到服务器。</p>
       <div className="image-workspace" aria-label={`${tool.title} 工作区`}><ToolContent toolId={tool.id} /></div>
+      <ToolExplanationPanel toolId={tool.id} />
     </section>
   );
 }

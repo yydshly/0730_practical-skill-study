@@ -1,4 +1,5 @@
 import type { ToolDefinition } from '../core/types';
+import { ToolExplanationPanel } from './ToolExplanationPanel';
 
 type ToolLayoutProps = {
   tool: ToolDefinition;
@@ -15,6 +16,7 @@ export function ToolLayout({ tool, localNote = '本工具将在你的设备本�
       <p className="page-lede">{tool.description}</p>
       <p className="local-note">{localNote}</p>
       {children}
+      <ToolExplanationPanel toolId={tool.id} />
     </section>
   );
 }

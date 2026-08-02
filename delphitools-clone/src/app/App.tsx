@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 
 import { AppShell } from '../components/AppShell';
+import { CapabilityStatusPage } from './CapabilityStatusPage';
 import { HomePage } from './HomePage';
 import { NotFoundPage } from './NotFoundPage';
 import { ToolPage } from './ToolPage';
@@ -38,6 +39,8 @@ export function App() {
   };
   const content = pathname === '/'
     ? <HomePage query={searchQuery} />
+    : pathname === '/capabilities'
+      ? <CapabilityStatusPage />
     : pathname === '/editor'
       ? <ToolPage toolId="editor" />
       : toolId

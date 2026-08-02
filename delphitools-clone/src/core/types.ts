@@ -95,3 +95,24 @@ export type ToolCategoryDefinition = {
   title: string;
   description: string;
 };
+
+export type ToolCapabilityStatus =
+  | 'complete'
+  | 'core-complete'
+  | 'partial'
+  | 'unavailable';
+
+export type ToolExplanation = {
+  toolId: ToolId;
+  status: ToolCapabilityStatus;
+  summary: string;
+  capabilities: readonly string[];
+  inputs: readonly string[];
+  outputs: readonly string[];
+  principle: readonly string[];
+  workflow: readonly string[];
+  privacy: string;
+  limitations: readonly string[];
+  unavailableReasons?: readonly string[];
+  futureRequirements?: readonly string[];
+};

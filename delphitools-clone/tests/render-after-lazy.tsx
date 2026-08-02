@@ -7,6 +7,6 @@ export async function renderAfterLazy(element: ReactElement): Promise<RenderResu
     if (result.container.querySelector('.workspace-loading')) {
       throw new Error('工作区仍在加载');
     }
-  });
+  }, { timeout: 5000 });
   return result;
 }

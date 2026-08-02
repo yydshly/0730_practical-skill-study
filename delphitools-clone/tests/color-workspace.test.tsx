@@ -29,6 +29,7 @@ const TOOL_ENTRIES = [
   ['pixel-picker', '像素取色器'],
   ['tailwind-shades', 'Tailwind 色阶生成器'],
 ] as const;
+const originalClipboard = navigator.clipboard;
 
 async function renderTool(toolId: string) {
   window.history.replaceState({}, '', `/tools/${toolId}`);
@@ -70,6 +71,7 @@ afterEach(() => {
   window.localStorage.clear();
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
+  Object.defineProperty(navigator, 'clipboard', { configurable: true, value: originalClipboard });
 });
 
 describe('颜色工具工作区', () => {
@@ -84,7 +86,7 @@ describe('颜色工具工作区', () => {
     if (toolId === 'palette-collection') expect(screen.getAllByRole('button', { name: '收藏调色板' })).not.toHaveLength(0);
     if (toolId === 'palette-extractor' || toolId === 'pixel-picker') expect(screen.getByRole('button', { name: '选择或拖放文件' })).toBeVisible();
     if (toolId === 'palette-genny') expect(screen.getByRole('textbox', { name: '生成种子' })).toBeVisible();
-    if (toolId === 'tailwind-shades') expect(screen.getByText('500 · #3b82f6')).toBeVisible();
+    if (toolId === 'tailwind-shades') expect(screen.getByText(/500 · #3b82f6 · oklch\(/u)).toBeVisible();
     unmount();
   });
 
@@ -97,6 +99,95 @@ describe('颜色工具工作区', () => {
     await renderTool('qr-genny');
     expect(screen.getByLabelText('二维码内容')).toBeVisible();
     expect(document.querySelector('.color-workspace')).toBeNull();
+  });
+
+  it('转换器展示八种格式，并逐项复制 OKLCH 后提供中文反馈', async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    const user = userEvent.setup();
+    Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText } });
+    await renderTool('colour-converter');
+
+    expect(document.querySelectorAll('.conversion-result dt')).toHaveLength(8);
+    expect(screen.getByText('Decimal RGB')).toBeVisible();
+    expect(screen.getByText('OKLCH')).toBeVisible();
+    expect(screen.getByRole('button', { name: '复制 OKLCH' })).toBeEnabled();
+
+    await user.click(screen.getByRole('button', { name: '复制 OKLCH' }));
+
+    await waitFor(() => expect(writeText).toHaveBeenCalledWith('oklch(62.3% 0.188 259.81)'));
+    expect(screen.getByRole('status')).toHaveTextContent('已复制 OKLCH');
+  });
+
+  it('转换器逐项复制失败时显示中文错误', async () => {
+    const writeText = vi.fn().mockRejectedValue(new Error('browser denied'));
+    const user = userEvent.setup();
+    Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText } });
+    await renderTool('colour-converter');
+
+    await user.click(screen.getByRole('button', { name: '复制 Lab' }));
+
+    await waitFor(() => expect(writeText).toHaveBeenCalled());
+    expect(screen.getByRole('status')).toHaveTextContent('复制 Lab 失败，请重试');
+  });
+
+  it('和谐工具提供十二个中文方案，并复制全部颜色和 CSS 变量', async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    const user = userEvent.setup();
+    Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText } });
+    await renderTool('harmony-genny');
+
+    expect(screen.getAllByRole('option')).toHaveLength(12);
+    expect(screen.getByRole('option', { name: '方形配色' })).toBeVisible();
+    expect(screen.getByRole('option', { name: '强调类似色' })).toBeVisible();
+
+    await user.click(screen.getByRole('button', { name: '复制全部颜色' }));
+    await user.click(screen.getByRole('button', { name: '复制 CSS Variables' }));
+
+    await waitFor(() => expect(writeText).toHaveBeenCalledTimes(2));
+    expect(writeText.mock.calls[0][0]).toMatch(/^#[0-9a-f]{6}(\n#[0-9a-f]{6})+$/u);
+    expect(writeText.mock.calls[1][0]).toMatch(/^:root \{\n  --harmony-1: #[0-9a-f]{6};/u);
+  });
+
+  it('Tailwind 工具以 vivid 模式展示同源 HEX/OKLCH，并提供可复制和下载导出', async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    let downloadedBlob: Blob | undefined;
+    const downloadedNames: string[] = [];
+    const user = userEvent.setup();
+    Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText } });
+    vi.stubGlobal('URL', {
+      createObjectURL: vi.fn((blob: Blob) => {
+        downloadedBlob = blob;
+        return 'blob:tailwind-colors';
+      }),
+      revokeObjectURL: vi.fn(),
+    });
+    vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function recordDownload(this: HTMLAnchorElement) {
+      downloadedNames.push(this.download);
+    });
+    await renderTool('tailwind-shades');
+
+    expect(screen.getByRole('textbox', { name: '色阶名称' })).toHaveValue('brand');
+    expect(screen.getByRole('combobox', { name: '生成模式' })).toHaveValue('balanced');
+    expect(screen.getByRole('button', { name: '复制 CSS Variables' })).toBeVisible();
+    expect(screen.getByRole('button', { name: '下载 Tailwind 配置' })).toBeVisible();
+
+    await user.selectOptions(screen.getByRole('combobox', { name: '生成模式' }), 'vivid');
+
+    expect(screen.getByText(/500 · #[0-9a-f]{6} · oklch\(/u)).toBeVisible();
+    await user.click(screen.getByRole('button', { name: '下载 Tailwind 配置' }));
+    expect(downloadedNames).toEqual(['tailwind-colors.js']);
+    expect(downloadedBlob?.type).toBe('text/javascript;charset=utf-8');
+    const downloadedModule = await downloadedBlob?.text();
+    const importedDownload = await import(`data:text/javascript;charset=utf-8,${encodeURIComponent(downloadedModule ?? '')}`);
+    expect(importedDownload.default).toHaveProperty('brand');
+    expect(importedDownload.default.brand).toMatchObject({ 50: '#f0f6ff', 500: '#3381ff', 950: '#001433' });
+
+    await user.click(screen.getByRole('button', { name: '复制 CSS Variables' }));
+    await user.click(screen.getByRole('button', { name: '复制 Tailwind 配置' }));
+    await waitFor(() => expect(writeText).toHaveBeenCalledTimes(2));
+    expect(writeText.mock.calls[0][0]).toContain('--brand-50:');
+    const importedCopy = await import(`data:text/javascript;charset=utf-8,${encodeURIComponent(writeText.mock.calls[1][0])}`);
+    expect(importedCopy.default.brand).toMatchObject({ 50: '#f0f6ff', 500: '#3381ff', 950: '#001433' });
   });
 
   it('图片工具拒绝空选择且不会创建 Object URL', async () => {

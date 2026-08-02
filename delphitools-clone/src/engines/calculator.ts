@@ -14,53 +14,85 @@ export type UnitCategory = 'length' | 'mass' | 'temperature' | 'data' | 'area' |
 export const MAX_PLOT_MAGNITUDE = 1_000_000;
 export const MAX_DEEP_PLOT_EVALUATIONS = 4096;
 
+export type ScientificOptions = {
+  angleMode?: 'rad' | 'deg';
+  ans?: number;
+};
+
 type Token =
   | { type: 'number'; value: number }
   | { type: 'identifier'; value: string }
-  | { type: 'operator'; value: '+' | '-' | '*' | '/' | '^' }
-  | { type: 'left-paren' | 'right-paren' | 'end' };
+  | { type: 'operator'; value: '+' | '-' | '*' | '/' | '%' | '^' | '!' }
+  | { type: 'left-paren' | 'right-paren' | 'comma' | 'end' };
 
 const CONSTANTS: Readonly<Record<string, number>> = {
   pi: Math.PI,
   e: Math.E,
 };
 
-const FUNCTIONS: Readonly<Record<string, (value: number) => number>> = {
-  sin: Math.sin,
-  cos: Math.cos,
-  tan: (value) => {
+function tanRadians(value: number): number {
     const reduced = value - Math.round(value / Math.PI) * Math.PI;
     const distanceFromPole = Math.abs(Math.abs(reduced) - Math.PI / 2);
     const reductionTolerance = 8 * Number.EPSILON * Math.max(Math.PI, Math.abs(value));
     if (distanceFromPole <= reductionTolerance) throw new Error('tan 的输入超出定义域：cos(x) 接近零');
     return Math.tan(reduced);
-  },
-  asin: (value) => {
+}
+
+function root(value: number, degree: number): number {
+  if (!Number.isInteger(degree) || degree === 0) throw new Error('根的次数必须是非零整数');
+  if (value < 0 && Math.abs(degree) % 2 === 0) throw new Error('负数不能计算偶次根');
+  const magnitude = Math.pow(Math.abs(value), 1 / degree);
+  return value < 0 ? -magnitude : magnitude;
+}
+
+function factorial(value: number): number {
+  if (!Number.isInteger(value) || value < 0 || value > 170) throw new Error('阶乘只支持 0 到 170 的整数');
+  let result = 1;
+  for (let number = 2; number <= value; number += 1) result *= number;
+  return result;
+}
+
+function radians(value: number, options: ScientificOptions): number {
+  return options.angleMode === 'deg' ? value * Math.PI / 180 : value;
+}
+
+function angle(value: number, options: ScientificOptions): number {
+  return options.angleMode === 'deg' ? value * 180 / Math.PI : value;
+}
+
+type ScientificFunction = { arity: number; evaluate: (args: readonly number[], options: ScientificOptions) => number };
+
+const FUNCTIONS: Readonly<Record<string, ScientificFunction>> = {
+  sin: { arity: 1, evaluate: ([value], options) => Math.sin(radians(value, options)) },
+  cos: { arity: 1, evaluate: ([value], options) => Math.cos(radians(value, options)) },
+  tan: { arity: 1, evaluate: ([value], options) => tanRadians(radians(value, options)) },
+  asin: { arity: 1, evaluate: ([value], options) => {
     if (value < -1 || value > 1) throw new Error('asin 的输入超出定义域 [-1, 1]');
-    return Math.asin(value);
-  },
-  acos: (value) => {
+    return angle(Math.asin(value), options);
+  } },
+  acos: { arity: 1, evaluate: ([value], options) => {
     if (value < -1 || value > 1) throw new Error('acos 的输入超出定义域 [-1, 1]');
-    return Math.acos(value);
-  },
-  atan: Math.atan,
-  sqrt: (value) => {
+    return angle(Math.acos(value), options);
+  } },
+  atan: { arity: 1, evaluate: ([value], options) => angle(Math.atan(value), options) },
+  sqrt: { arity: 1, evaluate: ([value]) => {
     if (value < 0) throw new Error('sqrt 的输入超出定义域，不能小于零');
     return Math.sqrt(value);
-  },
-  abs: Math.abs,
-  ln: (value) => {
+  } },
+  root: { arity: 2, evaluate: ([value, degree]) => root(value, degree) },
+  abs: { arity: 1, evaluate: ([value]) => Math.abs(value) },
+  ln: { arity: 1, evaluate: ([value]) => {
     if (value <= 0) throw new Error('ln 的输入超出定义域，必须大于零');
     return Math.log(value);
-  },
-  log: (value) => {
+  } },
+  log: { arity: 1, evaluate: ([value]) => {
     if (value <= 0) throw new Error('log 的输入超出定义域，必须大于零');
     return Math.log10(value);
-  },
-  exp: Math.exp,
-  floor: Math.floor,
-  ceil: Math.ceil,
-  round: Math.round,
+  } },
+  exp: { arity: 1, evaluate: ([value]) => Math.exp(value) },
+  floor: { arity: 1, evaluate: ([value]) => Math.floor(value) },
+  ceil: { arity: 1, evaluate: ([value]) => Math.ceil(value) },
+  round: { arity: 1, evaluate: ([value]) => Math.round(value) },
 };
 
 function tokenize(expression: string): Token[] {
@@ -89,7 +121,8 @@ function tokenize(expression: string): Token[] {
     }
     if (character === '(') tokens.push({ type: 'left-paren' });
     else if (character === ')') tokens.push({ type: 'right-paren' });
-    else if (character === '+' || character === '-' || character === '*' || character === '/' || character === '^') {
+    else if (character === ',') tokens.push({ type: 'comma' });
+    else if (character === '+' || character === '-' || character === '*' || character === '/' || character === '%' || character === '^' || character === '!') {
       tokens.push({ type: 'operator', value: character });
     } else {
       throw new Error(`表达式包含非法字符“${character}”，位置 ${index + 1}`);
@@ -103,7 +136,11 @@ function tokenize(expression: string): Token[] {
 class NumericParser {
   private index = 0;
 
-  constructor(private readonly tokens: readonly Token[], private readonly variables: Readonly<Record<string, number>>) {}
+  constructor(
+    private readonly tokens: readonly Token[],
+    private readonly variables: Readonly<Record<string, number>>,
+    private readonly options: ScientificOptions,
+  ) {}
 
   parse(): number {
     if (this.current().type === 'end') throw new Error('请输入要计算的表达式');
@@ -139,11 +176,11 @@ class NumericParser {
 
   private parseMultiplicative(): number {
     let value = this.parseUnary();
-    while (this.matchesOperator('*') || this.matchesOperator('/')) {
+    while (this.matchesOperator('*') || this.matchesOperator('/') || this.matchesOperator('%')) {
       const operator = (this.consume() as Extract<Token, { type: 'operator' }>).value;
       const right = this.parseUnary();
-      if (operator === '/' && right === 0) throw new Error('除数不能为零');
-      value = operator === '*' ? value * right : value / right;
+      if ((operator === '/' || operator === '%') && right === 0) throw new Error('除数不能为零');
+      value = operator === '*' ? value * right : operator === '/' ? value / right : value % right;
     }
     return ensureFinite(value);
   }
@@ -161,10 +198,19 @@ class NumericParser {
   }
 
   private parsePower(): number {
-    const base = this.parsePrimary();
+    const base = this.parsePostfix();
     if (!this.matchesOperator('^')) return base;
     this.consume();
     return ensureFinite(Math.pow(base, this.parseUnary()));
+  }
+
+  private parsePostfix(): number {
+    let value = this.parsePrimary();
+    while (this.matchesOperator('!')) {
+      this.consume();
+      value = factorial(value);
+    }
+    return value;
   }
 
   private parsePrimary(): number {
@@ -179,12 +225,20 @@ class NumericParser {
     if (token.type === 'identifier') {
       if (this.current().type === 'left-paren') {
         this.consume();
-        const argument = this.parseAdditive();
+        const argumentsList: number[] = [];
+        if (this.current().type !== 'right-paren') {
+          argumentsList.push(this.parseAdditive());
+          while (this.current().type === 'comma') {
+            this.consume();
+            argumentsList.push(this.parseAdditive());
+          }
+        }
         if (this.current().type !== 'right-paren') throw new Error('函数调用缺少右括号');
         this.consume();
         if (!Object.prototype.hasOwnProperty.call(FUNCTIONS, token.value)) throw new Error(`不支持的函数或常量：${token.value}`);
         const fn = FUNCTIONS[token.value];
-        return ensureFinite(fn(argument));
+        if (argumentsList.length !== fn.arity) throw new Error(`${token.value} 需要 ${fn.arity} 个参数`);
+        return ensureFinite(fn.evaluate(argumentsList, this.options));
       }
       if (Object.prototype.hasOwnProperty.call(this.variables, token.value)) return ensureFinite(this.variables[token.value]);
       if (Object.prototype.hasOwnProperty.call(CONSTANTS, token.value)) return CONSTANTS[token.value];
@@ -199,12 +253,17 @@ function ensureFinite(value: number): number {
   return Object.is(value, -0) ? 0 : value;
 }
 
-function evaluateWithVariables(expression: string, variables: Readonly<Record<string, number>>): number {
-  return new NumericParser(tokenize(expression), variables).parse();
+function evaluateWithVariables(expression: string, variables: Readonly<Record<string, number>>, options: ScientificOptions = {}): number {
+  return new NumericParser(tokenize(expression), variables, options).parse();
 }
 
-export function evaluateScientific(expression: string): number {
-  return evaluateWithVariables(expression, {});
+export function evaluateScientific(expression: string, options: ScientificOptions = {}): number {
+  const variables: Record<string, number> = {};
+  if (options.ans !== undefined) {
+    if (!Number.isFinite(options.ans)) throw new Error('Ans 必须是有限数字');
+    variables.ans = options.ans;
+  }
+  return evaluateWithVariables(expression, variables, options);
 }
 
 type Polynomial = Map<number, number>;

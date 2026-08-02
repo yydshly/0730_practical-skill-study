@@ -178,6 +178,40 @@ describe('纸张、Unicode 与字体数据', () => {
     expect(convertPaperDimensions('letter', 'in')).toEqual({ width: 8.5, height: 11, unit: 'in' });
   });
 
+  it('纸张库覆盖完整系列，支持可搜索别名与受限 DPI 像素换算', async () => {
+    const { PAPER_SIZES, findPaperSize, paperPixelDimensions, searchPaperSizes } = await import('../src/data/paperSizes');
+    expect(PAPER_SIZES.length).toBeGreaterThanOrEqual(75);
+    expect(new Set(PAPER_SIZES.map((item) => item.id)).size).toBe(PAPER_SIZES.length);
+    expect(PAPER_SIZES.every((item) => item.widthMm > 0 && item.heightMm > 0 && item.aliases.length > 0)).toBe(true);
+    expect(findPaperSize('c5')).toMatchObject({ widthMm: 162, heightMm: 229 });
+    expect(findPaperSize('sra3')).toMatchObject({ widthMm: 320, heightMm: 450 });
+    expect(paperPixelDimensions('a4', 300)).toEqual({ width: 2480, height: 3508, dpi: 300 });
+    expect(searchPaperSizes(' 名片 ').some((item) => item.id === 'business-card-cn')).toBe(true);
+    expect(searchPaperSizes('c5', 'ISO 信封')).toEqual([expect.objectContaining({ id: 'c5' })]);
+    expect(searchPaperSizes('ANSI B')).toEqual([expect.objectContaining({ id: 'tabloid' })]);
+    expect(() => paperPixelDimensions('a4', 35)).toThrow('DPI 必须在 36 到 2400 之间');
+    expect(() => paperPixelDimensions('a4', 2401)).toThrow('DPI 必须在 36 到 2400 之间');
+  });
+
+  it('纸张尺寸在 DPI 边界、检索入口与物理规格去重上保持准确', async () => {
+    const { PAPER_SIZES, convertPaperDimensions, findPaperSize, paperPixelDimensions, searchPaperSizes } = await import('../src/data/paperSizes');
+    const demy = findPaperSize('demy');
+    expect(demy).toMatchObject({ widthMm: 444.5, heightMm: 571.5 });
+    expect(() => paperPixelDimensions('a4', 36)).not.toThrow();
+    expect(() => paperPixelDimensions('a4', 2400)).not.toThrow();
+    for (const dpi of [Number.NaN, Number.POSITIVE_INFINITY, 35, 2401]) expect(() => paperPixelDimensions('a4', dpi)).toThrow('DPI 必须在 36 到 2400 之间');
+
+    const pixels = paperPixelDimensions('a4', 300);
+    expect(convertPaperDimensions('a4', 'px', 300)).toMatchObject({ width: pixels.width, height: pixels.height });
+    expect(searchPaperSizes('sra3')).toEqual([expect.objectContaining({ id: 'sra3' })]);
+    expect(searchPaperSizes('Executive')).toEqual([expect.objectContaining({ id: 'executive' })]);
+    expect(searchPaperSizes('SIS 瑞典').map((item) => item.id)).toEqual(['sis-e5', 'sis-g5']);
+    expect(searchPaperSizes('US Letter')).toEqual([expect.objectContaining({ id: 'letter' })]);
+
+    const physicalDimensions = PAPER_SIZES.map((item) => [item.widthMm, item.heightMm].sort((left, right) => left - right).join('×'));
+    expect(new Set(physicalDimensions).size).toBe(PAPER_SIZES.length);
+  });
+
   it('按 Unicode 码点搜索并限制返回数量', async () => {
     const { formatCodePoint, searchUnicode } = await import('../src/data/unicodeBlocks');
     expect(searchUnicode('U+4E2D', undefined, 20)).toEqual([{ character: '中', codePoint: 0x4e2d, label: 'U+4E2D' }]);

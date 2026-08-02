@@ -2,7 +2,7 @@
 
 import '@testing-library/jest-dom/vitest';
 
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -65,11 +65,13 @@ function installImmediateImages(failName = ''): void {
 }
 
 function installCanvas(): void {
-  const pixelData = new Uint8ClampedArray(120 * 80 * 4);
-  for (let index = 3; index < pixelData.length; index += 4) pixelData[index] = 255;
   const context = {
     drawImage: vi.fn(), fillRect: vi.fn(), save: vi.fn(), restore: vi.fn(), translate: vi.fn(), rotate: vi.fn(), fillText: vi.fn(),
-    getImageData: vi.fn(() => ({ data: pixelData, width: 120, height: 80 })),
+    getImageData: vi.fn((_x = 0, _y = 0, width = 120, height = 80) => {
+      const data = new Uint8ClampedArray(width * height * 4);
+      for (let index = 3; index < data.length; index += 4) data[index] = 255;
+      return { data, width, height };
+    }),
     createImageData: vi.fn((width: number, height: number) => ({ data: new Uint8ClampedArray(width * height * 4), width, height })),
     putImageData: vi.fn(), measureText: vi.fn(() => ({ width: 72 })),
     fillStyle: '', filter: '', font: '', globalAlpha: 1, textAlign: 'start', textBaseline: 'alphabetic', shadowColor: '', shadowBlur: 0,
@@ -142,19 +144,23 @@ describe('13 条图片路由的核心成功交互', () => {
     await userEvent.clear(screen.getByLabelText('自定义比例'));
     await userEvent.type(screen.getByLabelText('自定义比例'), '4/5');
     await userEvent.click(screen.getByRole('button', { name: '按比例裁剪' }));
+    expect(await screen.findByText('原图 120 × 80 · 结果 64 × 80')).toBeVisible();
     await expectDownload(/下载自定义比例/, '社交裁剪-4x5.png', 'image/png');
   });
 
   it('水印工具导入 WebP、旋转平铺并导出 PNG', async () => {
     await renderTool('watermarker');
-    await upload(fixtureFile('webp'));
+    expect(screen.getByLabelText('选择文件')).toHaveAttribute('multiple');
+    await upload([fixtureFile('webp', '第一张.webp'), fixtureFile('png', '第二张.png')]);
     await userEvent.selectOptions(screen.getByLabelText('水印布局'), 'tile');
     fireEvent.change(screen.getByLabelText('水印旋转角度'), { target: { value: '45' } });
     fireEvent.change(screen.getByLabelText('水印边距'), { target: { value: '2' } });
     await userEvent.click(screen.getByRole('button', { name: '添加水印' }));
     expect(canvasContext.translate).toHaveBeenCalled();
     expect(canvasContext.font).toBe('700 10px system-ui');
-    await expectDownload('下载带水印图片', '图片水印.png', 'image/png');
+    expect(await screen.findByLabelText('批处理进度')).toHaveTextContent('已完成 2/2，失败 0 项');
+    expect(screen.getAllByText('原图 120 × 80 · 结果 120 × 80')).toHaveLength(2);
+    await expectDownload(/下载第一张.webp 的带水印图片/, '第一张-水印.png', 'image/png');
   });
 
   it('艺术品增强导入 JPEG、修改倍率与对比度并导出 PNG', async () => {
@@ -186,9 +192,28 @@ describe('13 条图片路由的核心成功交互', () => {
     await renderTool('image-converter');
     await upload(fixtureFile('webp'));
     await userEvent.selectOptions(screen.getByLabelText('输出格式'), 'image/jpeg');
+    fireEvent.change(screen.getByLabelText('输出宽度'), { target: { value: '64' } });
+    fireEvent.change(screen.getByLabelText('输出高度'), { target: { value: '32' } });
+    await userEvent.selectOptions(screen.getByLabelText('缩放方式'), 'contain');
+    await userEvent.selectOptions(screen.getByLabelText('旋转角度'), '90');
     fireEvent.change(screen.getByLabelText('图片质量'), { target: { value: '0.8' } });
     await userEvent.click(screen.getByRole('button', { name: '转换并下载' }));
+    expect(await screen.findByText('原图 120 × 80 · 结果 32 × 64')).toBeVisible();
     await expectDownload('下载JPEG 转换结果', '转换结果.jpg', 'image/jpeg');
+  });
+
+  it('格式转换器批量处理两张图片并提供整体进度与全部下载', async () => {
+    await renderTool('image-converter');
+    expect(screen.getByLabelText('选择文件')).toHaveAttribute('multiple');
+
+    await upload([fixtureFile('png', '第一张.png'), fixtureFile('jpeg', '第二张.jpg')]);
+    await userEvent.click(screen.getByRole('button', { name: '转换并下载' }));
+
+    expect(await screen.findByLabelText('批处理进度')).toHaveTextContent('已完成 2/2，失败 0 项');
+    expect(screen.getByText('本地处理完成，共生成 2 个文件')).toBeVisible();
+    expect(screen.getAllByRole('button', { name: '下载全部结果' })).toHaveLength(1);
+    await userEvent.click(screen.getByRole('button', { name: '下载全部结果' }));
+    expect(downloads.map((item) => item.name)).toEqual(['第一张.png', '第二张.png']);
   });
 
   it('图片分割导入 WebP、设置 2×2 网格并导出 PNG', async () => {
@@ -197,6 +222,10 @@ describe('13 条图片路由的核心成功交互', () => {
     fireEvent.change(screen.getByLabelText('分割列数'), { target: { value: '2' } });
     fireEvent.change(screen.getByLabelText('分割行数'), { target: { value: '2' } });
     await userEvent.click(screen.getByRole('button', { name: '按网格切图' }));
+    const gallery = await screen.findByLabelText('图片处理结果');
+    expect(within(gallery).getAllByText('原图 120 × 80 · 结果 60 × 40')).toHaveLength(4);
+    await userEvent.click(within(gallery).getByRole('button', { name: '下载全部结果' }));
+    expect(downloads.map((item) => item.name)).toEqual(['切图-1.png', '切图-2.png', '切图-3.png', '切图-4.png']);
     await expectDownload('下载切图 1', '切图-1.png', 'image/png');
   });
 
@@ -206,7 +235,26 @@ describe('13 条图片路由的核心成功交互', () => {
     await userEvent.selectOptions(screen.getByLabelText('拼接方向'), 'vertical');
     fireEvent.change(screen.getByLabelText('图片间距'), { target: { value: '8' } });
     await userEvent.click(screen.getByRole('button', { name: '拼接图片' }));
+    expect(await screen.findByText('原图 120 × 80 + 120 × 80 · 结果 120 × 168')).toBeVisible();
     await expectDownload('下载纵向拼接结果', '图片拼接.png', 'image/png');
+  });
+
+  it('社交裁剪参数失败时保留上一次真实成功结果', async () => {
+    await renderTool('social-cropper');
+    await upload(fixtureFile('jpeg'));
+    await userEvent.selectOptions(screen.getByLabelText('裁剪场景'), 'square');
+    await userEvent.click(screen.getByRole('button', { name: '按比例裁剪' }));
+    const previousDownload = await screen.findByRole('button', { name: /下载方形帖子/ });
+    expect(screen.getByText('原图 120 × 80 · 结果 80 × 80')).toBeVisible();
+
+    await userEvent.selectOptions(screen.getByLabelText('裁剪场景'), 'custom');
+    await userEvent.clear(screen.getByLabelText('自定义比例'));
+    await userEvent.type(screen.getByLabelText('自定义比例'), '0:5');
+    await userEvent.click(screen.getByRole('button', { name: '按比例裁剪' }));
+
+    expect((await screen.findAllByRole('alert')).some((alert) => alert.textContent?.includes('比例'))).toBe(true);
+    expect(previousDownload).toBeVisible();
+    expect(screen.getByText('原图 120 × 80 · 结果 80 × 80')).toBeVisible();
   });
 
   it('剪贴板图片工具读取真实图片 Blob、完成解码并下载原 MIME 文件', async () => {
@@ -310,7 +358,7 @@ describe('图片工作台状态、竞态与资源上限', () => {
     expect(canvasToBlob).not.toHaveBeenCalled();
   });
 
-  it('水印图片读取失败会清除之前的专属成功输出', async () => {
+  it('水印图片读取失败会保留之前的成功输出', async () => {
     installImmediateImages('损坏水印.png');
     await renderTool('watermarker');
     await upload(fixtureFile('png'));
@@ -319,7 +367,7 @@ describe('图片工作台状态、竞态与资源上限', () => {
     await userEvent.selectOptions(screen.getByLabelText('水印类型'), 'image');
     fireEvent.change(screen.getByLabelText('选择水印图片'), { target: { files: [fixtureFile('png', '损坏水印.png')] } });
     expect(await screen.findByRole('alert')).toHaveTextContent('图片加载失败');
-    expect(screen.queryByRole('button', { name: '下载带水印图片' })).toBeNull();
+    expect(screen.getByRole('button', { name: '下载带水印图片' })).toBeVisible();
   });
 
   it('Base64 必须通过浏览器图片解码后才呈现已验证结果', async () => {

@@ -301,6 +301,7 @@ git commit -m "feat: document all tool capabilities"
 **Files:**
 - Create: `src/components/ToolExplanationPanel.tsx`
 - Modify: `src/components/ToolLayout.tsx`
+- Modify: `src/tools/EditorWorkspace.tsx`
 - Modify: `src/styles/components.css`
 - Create: `tests/tool-explanation-panel.test.tsx`
 
@@ -402,6 +403,20 @@ Expected: FAIL，提示找不到 `ToolExplanationPanel`。
 
 `ToolLayout` 保持工作区优先：`children` 后渲染 `<ToolExplanationPanel toolId={tool.id} />`。不得在各个 Workspace 重复添加面板。
 
+`EditorWorkspace` 不使用 `ToolLayout`，因此必须单独导入 `ToolExplanationPanel`，在 `.substrata-workspace` 之后、移动端抽屉之前添加：
+
+```tsx
+<div
+  className="page-wrap editor-explanation-wrap"
+  aria-hidden={mobilePanel ? true : undefined}
+  inert={mobilePanel ? '' : undefined}
+>
+  <ToolExplanationPanel toolId={tool.id} />
+</div>
+```
+
+编辑器移动端抽屉打开时，说明区域必须与编辑器主体一起隐藏并不可聚焦。
+
 - [ ] **Step 5: 增加响应式样式**
 
 在 `components.css` 添加：
@@ -421,7 +436,7 @@ Expected: PASS；说明面板不改变工作区控件行为。
 - [ ] **Step 7: 提交面板**
 
 ```bash
-git add src/components/ToolExplanationPanel.tsx src/components/ToolLayout.tsx src/styles/components.css tests/tool-explanation-panel.test.tsx
+git add src/components/ToolExplanationPanel.tsx src/components/ToolLayout.tsx src/tools/EditorWorkspace.tsx src/styles/components.css tests/tool-explanation-panel.test.tsx
 git commit -m "feat: show capability explanations on tool pages"
 ```
 

@@ -66,6 +66,7 @@ export function Sidebar({ isDrawer, isOpen, onClose, onToggleTheme, theme, searc
         </label>
 
         <nav className="sidebar__nav" aria-label="工具分类">
+          <a href="/capabilities" onClick={onClose} tabIndex={disabledTabIndex}>能力与实现说明</a>
           <a href="#featured" onClick={onClose} tabIndex={disabledTabIndex}>精选工具</a>
           {TOOL_CATEGORIES.map((category) => (
             <a key={category.id} href={`#${category.id}`} onClick={onClose} tabIndex={disabledTabIndex}>{category.title}</a>

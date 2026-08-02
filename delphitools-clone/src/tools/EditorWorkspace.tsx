@@ -6,6 +6,7 @@ import { InspectorPanel } from '../components/editor/InspectorPanel';
 import { LayerPanel } from '../components/editor/LayerPanel';
 import { ResultPanel } from '../components/ResultPanel';
 import { StatusMessage } from '../components/StatusMessage';
+import { ToolExplanationPanel } from '../components/ToolExplanationPanel';
 import { loadImage, readFileAsDataUrl } from '../core/files';
 import type { ToolDefinition } from '../core/types';
 import { createDocument, editorReducer, renderDocument } from '../engines/editor';
@@ -230,6 +231,9 @@ export function EditorWorkspace({ tool }: EditorWorkspaceProps) {
           <StatusMessage status={exportState.kind === 'idle' ? 'idle' : exportState.kind} message={exportState.message} />
           {exportState.blob && <ResultPanel download={{ blob: exportState.blob, name: 'Substrata-画布.png', label: '下载 PNG' }} />}
         </div>
+      </div>
+      <div className="page-wrap editor-explanation-wrap" aria-hidden={mobilePanel ? true : undefined} inert={mobilePanel ? '' : undefined}>
+        <ToolExplanationPanel toolId={tool.id} />
       </div>
       {mobilePanel === 'layers' && <MobileDrawer label="移动端图层面板" closeLabel="关闭图层面板" onClose={closeMobilePanel}><LayerPanel document={document} dispatch={dispatch} /></MobileDrawer>}
       {mobilePanel === 'inspector' && <MobileDrawer label="移动端属性面板" closeLabel="关闭属性面板" onClose={closeMobilePanel}><InspectorPanel document={document} dispatch={dispatch} showCanvasSettings={showCanvasSettings} /></MobileDrawer>}

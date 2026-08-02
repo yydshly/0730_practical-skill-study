@@ -6,7 +6,7 @@ import { StatusMessage } from '../components/StatusMessage';
 import { ToolLayout } from '../components/ToolLayout';
 import { copyText } from '../core/clipboard';
 import type { ToolDefinition, ToolId } from '../core/types';
-import { PAPER_SIZES, convertPaperDimensions, type PaperUnit } from '../data/paperSizes';
+import { PAPER_SIZES, paperPixelDimensions, searchPaperSizes, type PaperGroup } from '../data/paperSizes';
 import { UNICODE_BLOCKS, searchUnicode } from '../data/unicodeBlocks';
 import { createDocx, createEpub, hasInvalidNumericEntities, htmlToMarkdown, inspectFont, markdownToHtml, markdownToLatex, markdownToPlainText, plainTextToHtml, plainTextToLatex, sanitizeHtml, type FontInspection } from '../engines/document';
 import { calculateLineHeight, convertTypographyUnit, countText, diffText, pxToRem, remToPx, type TypographyUnit } from '../engines/text';
@@ -148,11 +148,39 @@ function LineHeightCalculator() {
 }
 
 function PaperSizes() {
-  const [paper, setPaper] = useState('a4');
-  const [unit, setUnit] = useState<PaperUnit>('mm');
-  const result = convertPaperDimensions(paper, unit);
-  const selected = PAPER_SIZES.find((item) => item.id === paper)!;
-  return <div className="text-tool-stack"><div className="text-controls text-controls--two"><label>纸张规格<select aria-label="纸张规格" value={paper} onChange={(event) => setPaper(event.target.value)}>{PAPER_SIZES.map((item) => <option key={item.id} value={item.id}>{item.group} · {item.name}</option>)}</select></label><label>显示单位<select aria-label="显示单位" value={unit} onChange={(event) => setUnit(event.target.value as PaperUnit)}><option value="mm">毫米</option><option value="cm">厘米</option><option value="in">英寸</option><option value="px">像素（96 DPI）</option></select></label></div><ResultPanel text={`${selected.name}: ${result.width} × ${result.height} ${unit}`}><p className="calculation-result"><strong>{selected.name}</strong>：{result.width} × {result.height} {unit}</p></ResultPanel></div>;
+  const [query, setQuery] = useState('');
+  const [group, setGroup] = useState<'全部' | PaperGroup>('全部');
+  const [dpi, setDpi] = useState('96');
+  const [selectedIds, setSelectedIds] = useState<readonly string[]>([]);
+  const [message, setMessage] = useState('');
+  const groups = [...new Set(PAPER_SIZES.map((item) => item.group))];
+  const papers = searchPaperSizes(query, group === '全部' ? undefined : group);
+  const selected = selectedIds.map((id) => PAPER_SIZES.find((item) => item.id === id)).filter((item): item is (typeof PAPER_SIZES)[number] => Boolean(item));
+  const numericDpi = Number(dpi);
+  let a4Pixels: ReturnType<typeof paperPixelDimensions> | undefined;
+  let dpiError = '';
+  try { a4Pixels = paperPixelDimensions('a4', numericDpi); } catch (reason) { dpiError = reason instanceof Error ? reason.message : 'DPI 无效'; }
+  const longestSide = Math.max(...selected.flatMap((item) => [item.widthMm, item.heightMm]), 1);
+  const togglePaper = (id: string) => {
+    if (selectedIds.includes(id)) { setSelectedIds(selectedIds.filter((item) => item !== id)); setMessage(''); return; }
+    if (selectedIds.length >= 3) { setMessage('最多只能比较 3 项纸张规格'); return; }
+    setSelectedIds([...selectedIds, id]); setMessage('');
+  };
+  return <div className="text-tool-stack">
+    <div className="text-controls text-controls--three">
+      <label>搜索纸张<input aria-label="搜索纸张" value={query} placeholder="例如：C5、名片、Raisin" onChange={(event) => setQuery(event.target.value)} /></label>
+      <label>纸张类别<select aria-label="纸张类别" value={group} onChange={(event) => setGroup(event.target.value as '全部' | PaperGroup)}><option value="全部">全部</option>{groups.map((item) => <option key={item} value={item}>{item}</option>)}</select></label>
+      <label>DPI<input aria-label="DPI" type="number" min="36" max="2400" step="1" value={dpi} onChange={(event) => setDpi(event.target.value)} /></label>
+    </div>
+    {dpiError ? <StatusMessage status="error" message={dpiError} /> : <p className="format-limit">A4 在 {a4Pixels!.dpi} DPI：<strong>{a4Pixels!.width} × {a4Pixels!.height} px</strong>；像素结果按四舍五入计算。</p>}
+    {message && <StatusMessage status="error" message={message} />}
+    <div className="paper-size-list" aria-label="纸张规格结果">{papers.map((item) => <label key={item.id} className="paper-size-option"><input type="checkbox" aria-label={`选择 ${item.name}`} checked={selectedIds.includes(item.id)} onChange={() => togglePaper(item.id)} /><span><strong>{item.name}</strong><small>{item.group} · {item.widthMm} × {item.heightMm} mm</small></span></label>)}</div>
+    {!papers.length && <StatusMessage status="error" message="没有找到匹配的纸张规格" />}
+    <section aria-labelledby="paper-comparison-heading"><h2 id="paper-comparison-heading">比较纸张</h2>{selected.length ? <div className="paper-comparison-grid">{selected.map((item) => {
+      const pixels = dpiError ? undefined : paperPixelDimensions(item.id, numericDpi);
+      return <article className="paper-comparison-card" key={item.id}><h3>{item.name}</h3><div aria-label={`${item.name} 比例预览`} style={{ width: `${item.widthMm / longestSide * 240}px`, height: `${item.heightMm / longestSide * 240}px`, maxWidth: '240px', maxHeight: '240px', border: '2px solid var(--accent)', background: 'var(--surface-muted)' }} /><p>{item.widthMm} × {item.heightMm} mm</p><p>{pixels ? `${pixels.width} × ${pixels.height} px` : '请输入有效 DPI'}</p></article>;
+    })}</div> : <p className="format-limit">从列表勾选最多三项纸张进行比较。</p>}</section>
+  </div>;
 }
 
 function PxRemCalculator() {

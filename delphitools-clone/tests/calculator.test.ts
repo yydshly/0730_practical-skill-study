@@ -51,6 +51,25 @@ describe('安全科学计算器', () => {
   it('tan 接近远周期奇点但超过浮点容差时仍可求值', () => {
     expect(Number.isFinite(evaluateScientific('tan(pi / 2 + 1000000000 * pi + 0.00001)'))).toBe(true);
   });
+
+  it('支持角度模式、Ans、科学计数法和新增运算', () => {
+    expect(evaluateScientific('sin(30)', { angleMode: 'deg' })).toBeCloseTo(0.5, 12);
+    expect(evaluateScientific('asin(0.5)', { angleMode: 'deg' })).toBeCloseTo(30, 12);
+    expect(evaluateScientific('5!')).toBe(120);
+    expect(evaluateScientific('17 % 5')).toBe(2);
+    expect(evaluateScientific('root(27, 3)')).toBeCloseTo(3, 12);
+    expect(evaluateScientific('ans * 2', { ans: 7 })).toBe(14);
+    expect(evaluateScientific('1.25e3')).toBe(1250);
+  });
+
+  it('为新增运算保留定义域和边界保护', () => {
+    expect(() => evaluateScientific('171!')).toThrow(/阶乘/);
+    expect(() => evaluateScientific('2.5!')).toThrow(/阶乘/);
+    expect(() => evaluateScientific('root(8, 0)')).toThrow(/根/);
+    expect(() => evaluateScientific('root(-8, 2)')).toThrow(/偶次根/);
+    expect(() => evaluateScientific('5 % 0')).toThrow(/除数不能为零/);
+    expect(() => evaluateScientific('tan(90)', { angleMode: 'deg' })).toThrow(/tan.*定义域/);
+  });
 });
 
 describe('代数工具', () => {

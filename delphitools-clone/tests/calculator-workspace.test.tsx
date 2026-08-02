@@ -73,6 +73,36 @@ describe('计算工作台关键交互', () => {
     expect(screen.queryByLabelText('科学计算结果')).not.toBeInTheDocument();
   });
 
+  it('科学计算器提供角度、Ans 和完整科学键盘', async () => {
+    const user = userEvent.setup();
+    await renderTool('sci-calc');
+
+    const degree = screen.getByRole('button', { name: '角度制 DEG' });
+    const radians = screen.getByRole('button', { name: '弧度制 RAD' });
+    expect(degree).toHaveAttribute('aria-pressed', 'false');
+    expect(radians).toHaveAttribute('aria-pressed', 'true');
+    await user.click(degree);
+    expect(degree).toHaveAttribute('aria-pressed', 'true');
+
+    for (const name of ['正弦 sin', '余弦 cos', '正切 tan', '反正弦', '反余弦', '反正切', '常用对数 log', '自然对数 ln', '阶乘', '绝对值', '圆周率 π', '自然常数 e', '上次结果 Ans', '科学计数法 EE', '取模 mod', '幂 xʸ', 'n 次方根']) {
+      expect(screen.getByRole('button', { name })).toBeVisible();
+    }
+
+    const input = screen.getByLabelText('科学计算表达式');
+    await user.clear(input);
+    await user.type(input, '3+4');
+    await user.click(screen.getByRole('button', { name: '计算结果' }));
+    await user.clear(input);
+    await user.click(screen.getByRole('button', { name: '上次结果 Ans' }));
+    await user.click(screen.getByRole('button', { name: '乘号' }));
+    await user.click(screen.getByRole('button', { name: '数字 2' }));
+    await user.click(screen.getByRole('button', { name: '计算结果' }));
+    expect(screen.getByLabelText('科学计算结果')).toHaveTextContent('14');
+
+    await user.click(screen.getByRole('button', { name: '清空历史' }));
+    expect(screen.getByLabelText('计算历史')).toHaveTextContent('完成一次计算后会显示在这里');
+  });
+
   it('代数工具分开展示化简、因式分解、解方程和求导', async () => {
     await renderTool('algebra-calc');
     fireEvent.change(screen.getByLabelText('代数表达式或方程'), { target: { value: 'x^2 - 5x + 6 = 0' } });

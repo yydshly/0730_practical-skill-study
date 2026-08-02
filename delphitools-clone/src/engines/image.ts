@@ -1,5 +1,6 @@
 export type Rect = { x: number; y: number; width: number; height: number };
 export type Size = { width: number; height: number };
+export type { ImageDataLike } from './imageTransform';
 export type FitMode = 'contain' | 'cover';
 export type StitchDirection = 'horizontal' | 'vertical';
 export type PixelBuffer = Size & { data: ArrayLike<number> };
