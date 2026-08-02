@@ -50,6 +50,7 @@
 | [`/gc-minimal-zine-poster/`](https://yydshly.github.io/0730_practical-skill-study/gc-minimal-zine-poster/) | 项目 5 · 极简 ZINE 海报技能仓库与研究说明 |
 | [`/gc-minimal-zine-poster/demo/`](https://yydshly.github.io/0730_practical-skill-study/gc-minimal-zine-poster/demo/) | 项目 5 · Prompt Compiler、10 个产品场景与完整文字版海报在线 Demo |
 | [`/rope-gallery-study/rope-gallery-source/`](https://yydshly.github.io/0730_practical-skill-study/rope-gallery-study/rope-gallery-source/) | 项目 6a · rope-gallery 原始演示（WebGL 悬挂绳索画廊） |
+| [`/hyperframes-motion-library/`](https://yydshly.github.io/0730_practical-skill-study/hyperframes-motion-library/) | 项目 7 · 视频动效模板库（20 个模板 · 需本地运行） |
 | [`/rope-gallery-study/custom-sample/`](https://yydshly.github.io/0730_practical-skill-study/rope-gallery-study/custom-sample/) | 项目 6b · 画轴画廊 · 人像风格悬挂交互展示 |
 
 > 部署开关：`Settings → Pages → Source: master · /(root)`（首次部署需仓库 owner 手动开启）
@@ -82,7 +83,12 @@ python -m http.server 8000
 #   http://localhost:8000/female-portrait-style-gallery/                ← 项目 4c · 静态风格画廊
 #   http://localhost:8000/gc-minimal-zine-poster/demo/                  ← 项目 5 · Prompt Compiler + 场景产品展示 Demo
 #   http://localhost:8000/rope-gallery-study/rope-gallery-source/       ← 项目 6a · rope-gallery 原始演示
+#   http://localhost:8000/hyperframes-motion-library/             ← 项目 7 · 视频动效模板库（需 npm install && npm run dev）
 #   http://localhost:8000/rope-gallery-study/custom-sample/            ← 项目 6b · 画轴画廊 · 人像风格悬挂展示
+
+# 项目 7 需要独立运行（HyperFrames + Chrome + FFmpeg）:
+#   cd hyperframes-motion-library && npm install && npm run dev
+#   → http://localhost:4312
 
 # 项目 6 需要独立运行（Three.js + Vite）:
 #   cd rope-gallery-study/rope-gallery-source && npm install && npm run dev
@@ -160,6 +166,22 @@ python -m http.server 8000
 │       ├── package.json
 │       └── assets/               ← 20 张人像风格图片（复制自 female-portrait-style-gallery）
 │
+├── hyperframes-motion-library/     ← 项目 7 · 视频动效模板库（栗噔噔）
+│   ├── README.md                   ← 技能说明、安装与使用方法
+│   ├── catalog.json                ← 20 个模板目录索引
+│   ├── app/                       ← 模板浏览器 + 参数编辑器 UI
+│   ├── templates/                  ← 20 个动效模板（含设计文档 + 默认 preset）
+│   │   └── key-point-marker/presets/gc-zine-business.json ← 业务自定义 preset
+│   ├── renders/                    ← 20 个模板的参考视频样片
+│   ├── business-demo/             ← 我们的业务演示（透明动效 + 合成测试）
+│   │   ├── gc-zine-overlay.webm   ← 透明前景动效（可叠加到真人视频）
+│   │   └── gc-zine-final.mp4      ← FFmpeg 合成测试视频
+│   ├── scripts/                   ← 渲染脚本（server / render / check）
+│   ├── references/                ← 上线前模板盘点 + 素材收集清单
+│   ├── redskill-submission/       ← 提交给 redskill 的完整包
+│   ├── SYSTEM.md                  ← 新模板注册规范
+│   └── AGENT_GUIDE.md            ← Agent 辅助扩展指南
+│
 └── mengto-skills-study/            ← 项目 2/3 · MengTo/Skills 研究 + 设计模式
     ├── README.md                   ← 项目 2 入口
     ├── index.html                  ← 研究总览
@@ -179,7 +201,7 @@ python -m http.server 8000
                                       atomic-state-update
 ```
 
-**当前 6 个项目（+1 个 3D Skill），10 个研究工具 HTML,3 个可交付页面。** 未来每个新项目按 `项目名/` 单目录形式加入。
+**当前 7 个项目，10 个研究工具 HTML,3 个可交付页面。** 未来每个新项目按 `项目名/` 单目录形式加入。
 
 ---
 
@@ -198,6 +220,7 @@ python -m http.server 8000
 | 6 | [rope-gallery-study](./rope-gallery-study/) | WebGL 悬挂绳索画廊：弹簧链物理 + 卡片多层运动叠加 + 自定义 GLSL 着色器 | 已完成 |
 | 6a | [原始 rope-gallery 演示](./rope-gallery-study/rope-gallery-source/) | 克隆自 GitHub · 儿童教育卡片 Awwwards 风格画廊 | ✓ |
 | 6b | [画轴画廊 · 人像风格](./rope-gallery-study/custom-sample/) | 20 种人像风格 · 悬挂物理交互 · 中式墨金主题 | ✓ |
+| 7 | [hyperframes-motion-library](./hyperframes-motion-library/) | 视频动效模板库：HTML+GSAP 动画，渲染为透明通道视频，可叠加到真人出镜视频 | 研究完成 |
 
 > **项目 3 运行方式**：
 > ```bash
@@ -222,6 +245,8 @@ python -m http.server 8000
 | - | [项目 5 · GC Minimal Zine Poster Demo](./gc-minimal-zine-poster/demo/) | 9 字段 Prompt 编译器 + 10 个产品场景 + 从留白到成品文字版海报 | ✓ |
 | - | [项目 6a · rope-gallery 原始演示](./rope-gallery-study/rope-gallery-source/) | WebGL 绳索 + 钟摆卡片 · Awwwards 风格 · 拖拽/滚轮/方向键交互 | ✓ |
 | - | [项目 6b · 画轴画廊](./rope-gallery-study/custom-sample/) | 20 种人像风格 · 悬挂物理 · 中式墨金主题 · 弹簧链 + 6 层卡片运动 | ✓ |
+| - | [项目 7 · 动效模板库](./hyperframes-motion-library/) | 20 个视频动效模板 · 数据可视化/知识讲解/透明叠加 · 本地渲染 · npm run dev | ✓ |
+| - | [项目 7 · 业务演示](./hyperframes-motion-library/business-demo/) | 透明前景动效 + 合成测试视频 · gc-zine-overlay.webm | ✓ |
 
 (更多项目待加入。)
 
@@ -248,6 +273,7 @@ python -m http.server 8000
 ## 致谢
 
 - 上游 Skill: **[finesse-skill](https://github.com/mouse-lin/finesse-skill)** @ mouse-lin —— MIT
+- 上游动效库: **[hyperframes-motion-library](https://github.com/nutllwhy/hyperframes-motion-library)** @ 栗噔噔
 - AI 图像生成: **[Pollinations.ai](https://pollinations.ai)**(免费,免 key) · **[MiniMax](https://platform.minimaxi.com)**(需 API Key)
 - 编辑工具链: Claude Code · Pollinations.ai · MiniMax · OpenStreetMap
 
