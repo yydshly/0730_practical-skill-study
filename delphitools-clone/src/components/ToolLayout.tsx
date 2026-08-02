@@ -1,4 +1,5 @@
 import type { ToolDefinition } from '../core/types';
+import { createRouteHref } from '../core/navigation';
 import { ToolExplanationPanel } from './ToolExplanationPanel';
 
 type ToolLayoutProps = {
@@ -10,7 +11,7 @@ type ToolLayoutProps = {
 export function ToolLayout({ tool, localNote = '本工具将在你的设备本地处理文件，不会上传任何内容。', children }: ToolLayoutProps) {
   return (
     <section className="tool-page page-wrap">
-      <a className="back-link" href="/">← 返回工具目录</a>
+      <a className="back-link" href={createRouteHref('/')}>← 返回工具目录</a>
       <p className="page-kicker">{tool.englishTitle}</p>
       <h1>{tool.title}</h1>
       <p className="page-lede">{tool.description}</p>

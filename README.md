@@ -29,6 +29,8 @@
 | 路径 | 内容 |
 |---|---|
 | [`/`](https://yydshly.github.io/0730_practical-skill-study/) | 仓库总入口（多项目索引） |
+| [`/delphitools-clone/site/`](https://yydshly.github.io/0730_practical-skill-study/delphitools-clone/site/) | 项目 8 · DelphiTools 中文本地工具站展示 |
+| [`/delphitools-clone/site/#/capabilities`](https://yydshly.github.io/0730_practical-skill-study/delphitools-clone/site/#/capabilities) | 项目 8 · 56 个工具的能力、算法原理与实现状态总览 |
 | [`/finesse-skill-study/examples-index.html`](https://yydshly.github.io/0730_practical-skill-study/finesse-skill-study/examples-index.html) | 项目 1 · 13 个范例索引 |
 | [`/finesse-skill-study/capabilities.html`](https://yydshly.github.io/0730_practical-skill-study/finesse-skill-study/capabilities.html) | 项目 1 · 能力全景 + 决策树 |
 | [`/finesse-skill-study/prompt-builder.html`](https://yydshly.github.io/0730_practical-skill-study/finesse-skill-study/prompt-builder.html) | 项目 1 · Prompt 自动拼装 |
@@ -55,6 +57,15 @@
 | [`/hyperframes-motion-library/app/`](https://yydshly.github.io/0730_practical-skill-study/hyperframes-motion-library/app/) | 项目 7 · 20 个模板索引 + 参数编辑器（纯静态，可查看所有样片） |
 
 > 部署开关：`Settings → Pages → Source: master · /(root)`（首次部署需仓库 owner 手动开启）
+
+### 项目 8 · DelphiTools 中文工具站
+
+`delphitools-clone` 是参考 [tools.rmv.fyi](https://tools.rmv.fyi/) 独立实现的中文浏览器工具站，覆盖图片、颜色、文本、开发、计算、印刷与编辑器等 56 个工具入口。文件和图片处理优先在浏览器本地完成；每个工具都说明当前能力、使用算法、输入输出、隐私边界和未实现限制。
+
+- **在线展示**：[打开 DelphiTools 中文工具站](https://yydshly.github.io/0730_practical-skill-study/delphitools-clone/site/)
+- **实现状态**：[查看 56 个工具的能力总览](https://yydshly.github.io/0730_practical-skill-study/delphitools-clone/site/#/capabilities)
+- **来源关系**：参考网页对应的官方源码为 [1612elphi/delphitools](https://github.com/1612elphi/delphitools)；本项目是独立中文实现，不是官方版本或完整镜像。
+- **当前边界**：核心能力完成 17 个、部分完成 24 个、暂不可用 15 个，项目仍在持续补齐。
 
 ---
 
@@ -87,6 +98,7 @@ python -m http.server 8000
 #   http://localhost:8000/hyperframes-motion-library/             ← 项目 7 · 视频动效模板库（需 npm install && npm run dev）
 #   http://localhost:8000/hyperframes-motion-library/business-demo/   ← 项目 7 · 动效业务演示（静态）
 #   http://localhost:8000/hyperframes-motion-library/app/            ← 项目 7 · 20 模板索引+参数编辑器（静态，可查看所有样片）
+#   http://localhost:8000/delphitools-clone/site/                    ← 项目 8 · 已构建的 DelphiTools 静态展示
 #   http://localhost:8000/rope-gallery-study/custom-sample/            ← 项目 6b · 画轴画廊 · 人像风格悬挂展示
 
 # 项目 7 需要独立运行（HyperFrames + Chrome + FFmpeg）:
@@ -104,6 +116,11 @@ python -m http.server 8000
 #   → http://localhost:3000
 #   cd craftzdog-homepage && npm run dev
 #   http://localhost:3000
+
+# 项目 8 开发模式（React + Vite）:
+#   cd delphitools-clone && npm install && npm run dev
+#   → http://localhost:5173
+#   npm run build 会更新可提交的 site/ 静态展示目录
 ```
 
 > 项目 1 子交付物（family-orchard）使用了 ES module，必须走 HTTP 不能 `file://` 双击。项目 2 的 Demo 展示页内含"打开 Demo"链接，必须用 HTTP 服务打开。
@@ -185,6 +202,12 @@ python -m http.server 8000
 │   ├── SYSTEM.md                  ← 新模板注册规范
 │   └── AGENT_GUIDE.md            ← Agent 辅助扩展指南
 │
+├── delphitools-clone/             ← 项目 8 · 56 项中文浏览器工具站
+│   ├── README.md                  ← 子项目说明与开发方式
+│   ├── src/                       ← React、工具算法与中文能力说明
+│   ├── tests/                     ← Vitest 自动化测试
+│   └── site/                      ← GitHub Pages 静态展示产物
+│
 └── mengto-skills-study/            ← 项目 2/3 · MengTo/Skills 研究 + 设计模式
     ├── README.md                   ← 项目 2 入口
     ├── index.html                  ← 研究总览
@@ -204,7 +227,7 @@ python -m http.server 8000
                                       atomic-state-update
 ```
 
-**当前 7 个项目，10 个研究工具 HTML,3 个可交付页面。** 未来每个新项目按 `项目名/` 单目录形式加入。
+**当前 8 个项目，包含静态研究页面、交互工具站与可独立运行的前端项目。** 未来每个新项目按 `项目名/` 单目录形式加入。
 
 ---
 
@@ -224,6 +247,7 @@ python -m http.server 8000
 | 6a | [原始 rope-gallery 演示](./rope-gallery-study/rope-gallery-source/) | 克隆自 GitHub · 儿童教育卡片 Awwwards 风格画廊 | ✓ |
 | 6b | [画轴画廊 · 人像风格](./rope-gallery-study/custom-sample/) | 20 种人像风格 · 悬挂物理交互 · 中式墨金主题 | ✓ |
 | 7 | [hyperframes-motion-library](./hyperframes-motion-library/) | 视频动效模板库（需本地运行）：HTML+GSAP 动画，渲染为透明通道视频，可叠加到真人出镜视频 | 仅本地运行 |
+| 8 | [delphitools-clone](./delphitools-clone/) | 56 项中文浏览器工具站，逐项说明能力、算法原理、隐私边界和实现状态 | 持续建设 · [在线展示](https://yydshly.github.io/0730_practical-skill-study/delphitools-clone/site/) |
 
 > **项目 3 运行方式**：
 > ```bash

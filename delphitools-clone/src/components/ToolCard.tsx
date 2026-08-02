@@ -1,11 +1,12 @@
 import type { ToolDefinition } from '../core/types';
+import { createRouteHref } from '../core/navigation';
 
 type ToolCardProps = {
   tool: ToolDefinition;
 };
 
 export function ToolCard({ tool }: ToolCardProps) {
-  const href = tool.id === 'editor' ? '/editor' : `/tools/${tool.id}`;
+  const href = createRouteHref(tool.id === 'editor' ? '/editor' : `/tools/${tool.id}`);
 
   return (
     <a className="tool-card" href={href} aria-label={tool.title}>

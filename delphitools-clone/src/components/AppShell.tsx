@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 
+import { createRouteHref } from '../core/navigation';
 import { applyTheme, getPreferredTheme, type Theme } from '../core/theme';
 import { Sidebar } from './Sidebar';
 
@@ -67,7 +68,7 @@ export function AppShell({ children, searchQuery, onSearchQueryChange }: AppShel
       <main className="app-main" aria-hidden={isDrawer && isMenuOpen ? true : undefined} inert={isDrawer && isMenuOpen ? '' : undefined}>
         <div className="mobile-header">
           <button ref={openButtonRef} className="icon-button" type="button" onClick={() => setIsMenuOpen(true)} aria-label="打开导航菜单">☰</button>
-          <a className="mobile-header__brand" href="/">DelphiTools</a>
+          <a className="mobile-header__brand" href={createRouteHref('/')}>DelphiTools</a>
         </div>
         {children}
       </main>

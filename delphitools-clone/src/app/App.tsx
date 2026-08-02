@@ -1,13 +1,14 @@
 import { useEffect, useState } from 'react';
 
 import { AppShell } from '../components/AppShell';
+import { createRouteHref, resolveRoutePath } from '../core/navigation';
 import { CapabilityStatusPage } from './CapabilityStatusPage';
 import { HomePage } from './HomePage';
 import { NotFoundPage } from './NotFoundPage';
 import { ToolPage } from './ToolPage';
 
 function getPathname(): string {
-  return window.location.pathname;
+  return resolveRoutePath(window.location.pathname, window.location.hash);
 }
 
 function decodeToolId(encodedToolId: string): string | undefined {
@@ -25,7 +26,11 @@ export function App() {
   useEffect(() => {
     const updatePathname = () => setPathname(getPathname());
     window.addEventListener('popstate', updatePathname);
-    return () => window.removeEventListener('popstate', updatePathname);
+    window.addEventListener('hashchange', updatePathname);
+    return () => {
+      window.removeEventListener('popstate', updatePathname);
+      window.removeEventListener('hashchange', updatePathname);
+    };
   }, []);
 
   const toolMatch = pathname.match(/^\/tools\/([^/]+)$/);
@@ -33,7 +38,11 @@ export function App() {
   const updateSearchQuery = (query: string) => {
     setSearchQuery(query);
     if (pathname !== '/') {
-      window.history.pushState({}, '', '/');
+      if (import.meta.env.PROD) {
+        window.location.hash = createRouteHref('/', true).slice(1);
+      } else {
+        window.history.pushState({}, '', '/');
+      }
       setPathname('/');
     }
   };

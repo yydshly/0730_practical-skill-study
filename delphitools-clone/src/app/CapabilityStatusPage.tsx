@@ -1,6 +1,7 @@
 import { useState } from 'react';
 
 import type { ToolCapabilityStatus } from '../core/types';
+import { createRouteHref } from '../core/navigation';
 import { PROJECT_PROVENANCE } from '../data/projectProvenance';
 import { TOOL_CAPABILITY_STATUS_META, TOOL_EXPLANATION_BY_ID, TOOL_EXPLANATIONS } from '../data/toolExplanations';
 import { TOOLS } from '../data/tools';
@@ -73,7 +74,7 @@ export function CapabilityStatusPage() {
           const explanation = TOOL_EXPLANATION_BY_ID[tool.id];
           const meta = TOOL_CAPABILITY_STATUS_META[explanation.status];
           const unavailableDetail = explanation.unavailableReasons?.[0] ?? explanation.futureRequirements?.[0];
-          const href = tool.id === 'editor' ? '/editor' : `/tools/${tool.id}`;
+          const href = createRouteHref(tool.id === 'editor' ? '/editor' : `/tools/${tool.id}`);
           return (
             <article key={tool.id} className="capability-tool-card" aria-label={tool.title}>
               <div className="capability-tool-card__header">
