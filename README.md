@@ -49,6 +49,8 @@
 | [`/female-portrait-style-gallery/`](https://yydshly.github.io/0730_practical-skill-study/female-portrait-style-gallery/) | 项目 4c · 静态风格画廊（20 风格参考图浏览） |
 | [`/gc-minimal-zine-poster/`](https://yydshly.github.io/0730_practical-skill-study/gc-minimal-zine-poster/) | 项目 5 · 极简 ZINE 海报技能仓库与研究说明 |
 | [`/gc-minimal-zine-poster/demo/`](https://yydshly.github.io/0730_practical-skill-study/gc-minimal-zine-poster/demo/) | 项目 5 · Prompt Compiler、10 个产品场景与完整文字版海报在线 Demo |
+| [`/rope-gallery-study/rope-gallery-source/`](https://yydshly.github.io/0730_practical-skill-study/rope-gallery-study/rope-gallery-source/) | 项目 6a · rope-gallery 原始演示（WebGL 悬挂绳索画廊） |
+| [`/rope-gallery-study/custom-sample/`](https://yydshly.github.io/0730_practical-skill-study/rope-gallery-study/custom-sample/) | 项目 6b · 画轴画廊 · 人像风格悬挂交互展示 |
 
 > 部署开关：`Settings → Pages → Source: master · /(root)`（首次部署需仓库 owner 手动开启）
 
@@ -79,6 +81,14 @@ python -m http.server 8000
 #   http://localhost:8000/female-portrait-director-demo/playground/     ← 项目 4b · Playground（推荐）
 #   http://localhost:8000/female-portrait-style-gallery/                ← 项目 4c · 静态风格画廊
 #   http://localhost:8000/gc-minimal-zine-poster/demo/                  ← 项目 5 · Prompt Compiler + 场景产品展示 Demo
+#   http://localhost:8000/rope-gallery-study/rope-gallery-source/       ← 项目 6a · rope-gallery 原始演示
+#   http://localhost:8000/rope-gallery-study/custom-sample/            ← 项目 6b · 画轴画廊 · 人像风格悬挂展示
+
+# 项目 6 需要独立运行（Three.js + Vite）:
+#   cd rope-gallery-study/rope-gallery-source && npm install && npm run dev
+#   → http://localhost:5177
+#   cd rope-gallery-study/custom-sample && npm install && npm run dev
+#   → http://localhost:5178
 
 # craftzdog-homepage 需要独立运行（Next.js 项目）:
 #   cd craftzdog-homepage && npm install && npm run dev
@@ -140,6 +150,16 @@ python -m http.server 8000
 │   ├── SKILL.md                    ← Prompt 编译与图像生成规则
 │   └── demo/                       ← Prompt Compiler + 场景产品展示 + 文字版海报
 │
+├── rope-gallery-study/              ← 项目 6 · WebGL 悬挂绳索画廊研究
+│   ├── README.md                   ← 项目 6 入口（能力分析 + 使用场景 + 定制说明）
+│   ├── rope-gallery-source/       ← 原始仓库克隆（3 stars, 2 commits）
+│   │   ├── index.html             ← 全部代码（约 960 行，内联 HTML+JS+CSS）
+│   │   └── package.json
+│   └── custom-sample/             ← 定制样例：画轴画廊（人像风格 20 图）
+│       ├── index.html             ← Three.js + GSAP + 自定义 GLSL 绳索着色器
+│       ├── package.json
+│       └── assets/               ← 20 张人像风格图片（复制自 female-portrait-style-gallery）
+│
 └── mengto-skills-study/            ← 项目 2/3 · MengTo/Skills 研究 + 设计模式
     ├── README.md                   ← 项目 2 入口
     ├── index.html                  ← 研究总览
@@ -159,7 +179,7 @@ python -m http.server 8000
                                       atomic-state-update
 ```
 
-**当前 5 个项目（+1 个 3D Skill），10 个研究工具 HTML,2 个可交付页面。** 未来每个新项目按 `项目名/` 单目录形式加入。
+**当前 6 个项目（+1 个 3D Skill），10 个研究工具 HTML,3 个可交付页面。** 未来每个新项目按 `项目名/` 单目录形式加入。
 
 ---
 
@@ -175,6 +195,9 @@ python -m http.server 8000
 | 4b | [交互式 Playground](./female-portrait-director-demo/playground/) | 20 风格参数填充 + MiniMax API 生图 + 提示词一键复制 | ✓ |
 | 4c | [静态风格画廊](./female-portrait-style-gallery/) | 20 风格参考图 gallery 浏览器，支持分类筛选和详情弹窗 | ✓ |
 | 5 | [gc-minimal-zine-poster](./gc-minimal-zine-poster/) | 极简 ZINE 海报技能：Prompt Compiler、场景产品展示与文字版成品演示 | 已完成 v0.1 |
+| 6 | [rope-gallery-study](./rope-gallery-study/) | WebGL 悬挂绳索画廊：弹簧链物理 + 卡片多层运动叠加 + 自定义 GLSL 着色器 | 已完成 |
+| 6a | [原始 rope-gallery 演示](./rope-gallery-study/rope-gallery-source/) | 克隆自 GitHub · 儿童教育卡片 Awwwards 风格画廊 | ✓ |
+| 6b | [画轴画廊 · 人像风格](./rope-gallery-study/custom-sample/) | 20 种人像风格 · 悬挂物理交互 · 中式墨金主题 | ✓ |
 
 > **项目 3 运行方式**：
 > ```bash
@@ -197,6 +220,8 @@ python -m http.server 8000
 | - | [项目 4 · Playground](./female-portrait-director-demo/playground/) | 交互式测试场：20 风格 + MiniMax API 生图 + 提示词复制 | ✓ |
 | - | [项目 4 · 静态风格画廊](./female-portrait-style-gallery/) | 20 风格参考图 gallery 浏览器，支持分类筛选 | ✓ |
 | - | [项目 5 · GC Minimal Zine Poster Demo](./gc-minimal-zine-poster/demo/) | 9 字段 Prompt 编译器 + 10 个产品场景 + 从留白到成品文字版海报 | ✓ |
+| - | [项目 6a · rope-gallery 原始演示](./rope-gallery-study/rope-gallery-source/) | WebGL 绳索 + 钟摆卡片 · Awwwards 风格 · 拖拽/滚轮/方向键交互 | ✓ |
+| - | [项目 6b · 画轴画廊](./rope-gallery-study/custom-sample/) | 20 种人像风格 · 悬挂物理 · 中式墨金主题 · 弹簧链 + 6 层卡片运动 | ✓ |
 
 (更多项目待加入。)
 

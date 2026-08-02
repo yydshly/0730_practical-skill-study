@@ -1,0 +1,1960 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <title>Astro — Safe web for kids to learn and grow</title>
+    <meta
+      name="description"
+      content="A safe web browser for kids with built in parental controls and monitoring."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Anton&family=Outfit:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      /* ============================================================
+   DESIGN SYSTEM  — extracted from the reference composition
+   ============================================================ */
+      :root {
+        /* palette */
+        --ink: #0b0b0b;
+        --ink-2: #2a2a2a;
+        --muted: #6e6e6e;
+        --muted-2: #8a8a8a;
+        --green: #22c24c;
+        --green-deep: #17a93e;
+        --green-text: #1fc24a;
+        --paper: #ffffff;
+        --hairline: rgba(11, 11, 11, 0.075);
+
+        /* type scale */
+        --fs-nav: clamp(13px, 1.25vw, 15.5px);
+        --fs-badge: clamp(12px, 1.13vw, 13.5px);
+        --fs-h1: clamp(40px, 7.8vw, 96px);
+        --fs-sub: clamp(14.5px, 1.55vw, 19px);
+        --fs-cta: clamp(15px, 1.42vw, 17.5px);
+
+        /* rhythm */
+        --pad-x: clamp(18px, 3.3vw, 44px);
+        --nav-y: clamp(18px, 2.2vw, 30px);
+
+        /* shape */
+        --r-pill: 999px;
+
+        /* elevation */
+        --sh-badge:
+          0 1px 2px rgba(11, 11, 11, 0.04), 0 6px 18px rgba(11, 11, 11, 0.05);
+        --sh-btn-sm:
+          0 4px 14px rgba(34, 194, 76, 0.3),
+          0 1px 0 rgba(255, 255, 255, 0.35) inset;
+        --sh-btn-lg:
+          0 10px 30px rgba(34, 194, 76, 0.34),
+          0 2px 6px rgba(34, 194, 76, 0.22),
+          0 1px 0 rgba(255, 255, 255, 0.4) inset;
+      }
+
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        height: 100%;
+      }
+      html {
+        -webkit-text-size-adjust: 100%;
+      }
+      body {
+        margin: 0;
+        font-family:
+          "Outfit",
+          ui-sans-serif,
+          system-ui,
+          -apple-system,
+          "Segoe UI",
+          sans-serif;
+        color: var(--ink);
+        background-color: #faf8f4;
+        background-image:
+          radial-gradient(
+            58% 48% at 10% 104%,
+            rgba(240, 203, 152, 0.8),
+            rgba(240, 203, 152, 0) 70%
+          ),
+          radial-gradient(
+            52% 44% at 90% 102%,
+            rgba(243, 213, 164, 0.85),
+            rgba(243, 213, 164, 0) 70%
+          ),
+          radial-gradient(
+            46% 38% at 63% 96%,
+            rgba(203, 229, 148, 0.72),
+            rgba(203, 229, 148, 0) 72%
+          ),
+          radial-gradient(
+            64% 52% at 50% -6%,
+            rgba(255, 255, 255, 0.95),
+            rgba(255, 255, 255, 0) 64%
+          );
+        background-attachment: fixed;
+        overflow-x: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      /* ============================================================
+   WEBGL STAGE  (sits above the flat background, below the text)
+   ============================================================ */
+      #stage {
+        position: absolute;
+        top: calc(-1 * var(--rope-overhang));
+        right: 0;
+        left: 0;
+        z-index: 0;
+        display: block;
+        width: 100%;
+        height: calc(100% + var(--rope-overhang));
+        pointer-events: none;
+      }
+      .page {
+        position: relative;
+        z-index: 2;
+        min-height: 100svh;
+        display: flex;
+        flex-direction: column;
+        pointer-events: none;
+      }
+      .page a,
+      .page button,
+      .page .interactive {
+        pointer-events: auto;
+      }
+
+      /* ---------------- navigation ---------------- */
+      .nav {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: var(--nav-y) var(--pad-x);
+      }
+      .logo {
+        font-family: "Anton", Impact, sans-serif;
+        font-size: clamp(20px, 2.1vw, 26px);
+        letter-spacing: 0.005em;
+        line-height: 1;
+        color: var(--ink);
+        text-decoration: none;
+        display: inline-flex;
+        align-items: baseline;
+      }
+      .logo .lead {
+        font-size: 0.5em;
+        transform: translateY(-0.05em);
+      }
+      .logo .sm {
+        font-size: 0.74em;
+      }
+      .logo .deg {
+        font-size: 0.42em;
+        transform: translateY(-1.05em);
+        margin-left: 0.06em;
+      }
+
+      .nav-links {
+        display: flex;
+        align-items: center;
+        gap: clamp(18px, 2.6vw, 34px);
+      }
+      .nav-links a {
+        font-size: var(--fs-nav);
+        font-weight: 400;
+        color: #5f5f5f;
+        text-decoration: none;
+        letter-spacing: 0.005em;
+        transition: color 0.18s ease;
+      }
+      .nav-links a:hover {
+        color: var(--ink);
+      }
+      .nav-center {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+      }
+
+      .nav-right {
+        display: flex;
+        align-items: center;
+        gap: clamp(14px, 2vw, 26px);
+      }
+      .link-login {
+        font-size: var(--fs-nav);
+        color: #5f5f5f;
+        text-decoration: none;
+      }
+      .link-login:hover {
+        color: var(--ink);
+      }
+
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-family: inherit;
+        border: 0;
+        cursor: pointer;
+        text-decoration: none;
+        border-radius: var(--r-pill);
+        color: #fff;
+        background: linear-gradient(
+          180deg,
+          #2acc55 0%,
+          var(--green) 55%,
+          var(--green-deep) 100%
+        );
+        transition:
+          transform 0.18s cubic-bezier(0.22, 1, 0.36, 1),
+          box-shadow 0.18s ease,
+          filter 0.18s ease;
+      }
+      .btn:hover {
+        transform: translateY(-1px);
+        filter: saturate(1.06);
+      }
+      .btn:active {
+        transform: translateY(0);
+      }
+      .btn-sm {
+        font-size: var(--fs-nav);
+        font-weight: 500;
+        letter-spacing: 0.005em;
+        padding: 0 clamp(18px, 2.1vw, 26px);
+        height: clamp(36px, 3.4vw, 42px);
+        box-shadow: var(--sh-btn-sm);
+      }
+      .btn-lg {
+        font-size: var(--fs-cta);
+        font-weight: 600;
+        letter-spacing: 0.005em;
+        padding: 0 clamp(24px, 2.9vw, 36px);
+        height: clamp(44px, 4.2vw, 52px);
+        box-shadow: var(--sh-btn-lg);
+      }
+
+      .menu-toggle {
+        display: none;
+        width: 40px;
+        height: 40px;
+        border-radius: 12px;
+        border: 1px solid var(--hairline);
+        background: rgba(255, 255, 255, 0.7);
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+      }
+      .menu-toggle span {
+        display: block;
+        width: 16px;
+        height: 1.5px;
+        background: var(--ink);
+        box-shadow:
+          0 5px 0 var(--ink),
+          0 -5px 0 var(--ink);
+      }
+
+      /* ---------------- hero ---------------- */
+      .hero {
+        padding: clamp(18px, 2.4vw, 30px) var(--pad-x) 0;
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: var(--paper);
+        border: 1px solid var(--hairline);
+        box-shadow: var(--sh-badge);
+        border-radius: var(--r-pill);
+        padding: clamp(6px, 0.7vw, 8px) clamp(12px, 1.4vw, 18px);
+        font-size: var(--fs-badge);
+        font-weight: 400;
+        color: #1b1b1b;
+        letter-spacing: 0.005em;
+      }
+      .badge .emoji {
+        font-size: 1.15em;
+        line-height: 1;
+        transform: translateY(-0.5px);
+      }
+
+      h1 {
+        margin: clamp(14px, 2.1vw, 26px) 0 0;
+        font-family: "Anton", Impact, sans-serif;
+        font-weight: 400;
+        font-size: var(--fs-h1);
+        line-height: 0.885;
+        letter-spacing: -0.007em;
+        text-transform: uppercase;
+        color: var(--ink);
+        max-width: none;
+      }
+      h1 .line {
+        display: block;
+        white-space: nowrap;
+      }
+      h1 .hl {
+        color: var(--green-text);
+      }
+
+      .sub {
+        margin: clamp(12px, 1.6vw, 20px) 0 0;
+        font-size: var(--fs-sub);
+        font-weight: 400;
+        color: #2e2e2e;
+        letter-spacing: 0.004em;
+      }
+      .cta-wrap {
+        margin-top: clamp(16px, 2.2vw, 28px);
+        position: relative;
+        z-index: 3;
+      }
+
+      /* ---------------- rope stage spacer ---------------- */
+      #ropeZone {
+        /* JS replaces these fallbacks with values derived from the actual
+           rope curve and card size. The extra render room prevents the
+           canvas from trimming the raised rope ends or card shadows. */
+        --rope-overhang: clamp(56px, 7vw, 104px);
+        --rope-min-height: clamp(280px, 32vw, 370px);
+        position: relative;
+        isolation: isolate;
+        flex: 1 1 auto;
+        min-height: var(--rope-min-height);
+        margin-top: clamp(18px, 2vw, 28px);
+      }
+      #ropeHit {
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: calc(-1 * var(--rope-overhang));
+        bottom: 0;
+        z-index: 2;
+        pointer-events: auto;
+        touch-action: pan-y;
+        cursor: grab;
+        outline: none;
+      }
+      #ropeHit.dragging {
+        cursor: grabbing;
+      }
+      #ropeHit:focus-visible {
+        box-shadow: inset 0 0 0 2px rgba(34, 194, 76, 0.65);
+        border-radius: 14px;
+      }
+
+      /* ---------------- partner logos ---------------- */
+      .logos {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: clamp(20px, 3.6vw, 56px);
+        flex-wrap: wrap;
+        padding: 0 var(--pad-x) clamp(26px, 4vw, 52px);
+        opacity: 0.34;
+      }
+      .logos svg {
+        display: block;
+        height: clamp(15px, 1.6vw, 20px);
+        width: auto;
+        color: #3a3a3a;
+      }
+
+      /* ---------------- utility ---------------- */
+      .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0 0 0 0);
+        white-space: nowrap;
+        border: 0;
+      }
+      #fps {
+        position: fixed;
+        z-index: 9;
+        left: 10px;
+        bottom: 10px;
+        font:
+          500 11px/1.3 ui-monospace,
+          monospace;
+        color: #4a4a4a;
+        background: rgba(255, 255, 255, 0.72);
+        border: 1px solid var(--hairline);
+        border-radius: 8px;
+        padding: 5px 8px;
+        display: none;
+        pointer-events: none;
+      }
+      .hint {
+        position: absolute;
+        left: 50%;
+        bottom: 6px;
+        transform: translateX(-50%);
+        font-size: 12px;
+        color: var(--muted-2);
+        letter-spacing: 0.02em;
+        opacity: 0;
+        transition: opacity 0.5s ease;
+        pointer-events: none;
+        z-index: 3;
+      }
+      .hint.show {
+        opacity: 1;
+      }
+
+      /* ---------------- responsive ---------------- */
+      @media (max-width: 900px) {
+        .nav-center {
+          display: none;
+        }
+        .menu-toggle {
+          display: inline-flex;
+        }
+      }
+      @media (max-width: 640px) {
+        .link-login {
+          display: none;
+        }
+        h1 {
+          font-size: clamp(26px, 7.8vw, 50px);
+          line-height: 0.92;
+        }
+        #ropeZone {
+          --rope-min-height: clamp(255px, 66vw, 310px);
+        }
+        .hero {
+          padding-top: clamp(24px, 6vw, 38px);
+        }
+        .logos {
+          gap: 22px;
+          row-gap: 14px;
+        }
+        .logos svg {
+          height: 14px;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .btn {
+          transition: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <header class="nav">
+        <a class="logo interactive" href="#" aria-label="Astro home">
+          <span class="lead">.</span>A<span class="sm">s</span>T<span>R</span
+          ><span class="sm">o</span><span class="deg">&deg;</span>
+        </a>
+
+        <nav class="nav-links nav-center" aria-label="Primary">
+          <a href="#">Kids Browser</a>
+          <a href="#">Parent Portal</a>
+          <a href="#">Safe Search</a>
+        </nav>
+
+        <div class="nav-right">
+          <a class="link-login interactive" href="#">Login</a>
+          <a class="btn btn-sm interactive" href="#">Download</a>
+          <button class="menu-toggle interactive" aria-label="Open menu">
+            <span></span>
+          </button>
+        </div>
+      </header>
+
+      <main class="hero">
+        <p class="badge">
+          <span class="emoji" aria-hidden="true">&#127881;</span> Best App for
+          kids education
+        </p>
+        <h1>
+          <span class="line">Safe web for <span class="hl">kids</span></span>
+          <span class="line">to learn and grow</span>
+        </h1>
+        <p class="sub">With Built In Parental Controls And Monitoring</p>
+        <div class="cta-wrap">
+          <a class="btn btn-lg interactive" href="#">Download App</a>
+        </div>
+      </main>
+
+      <div id="ropeZone">
+        <canvas id="stage" aria-hidden="true"></canvas>
+        <div
+          id="ropeHit"
+          class="interactive"
+          tabindex="0"
+          role="group"
+          aria-label="Hanging photo gallery. Use the left and right arrow keys to move the line."
+        ></div>
+        <p class="hint" id="hint">Drag the line</p>
+      </div>
+
+      <ul class="sr-only" aria-label="Gallery topics" id="srList"></ul>
+
+      <div class="logos" aria-label="Featured in">
+        <svg viewBox="0 0 118 22" fill="none" aria-hidden="true">
+          <circle cx="9" cy="11" r="8" stroke="currentColor" stroke-width="2" />
+          <path d="M5 11h8M9 7v8" stroke="currentColor" stroke-width="2" />
+          <text
+            x="24"
+            y="16"
+            font-family="Outfit,sans-serif"
+            font-size="13"
+            font-weight="500"
+            fill="currentColor"
+          >
+            logoipsum
+          </text>
+        </svg>
+        <svg viewBox="0 0 84 22" fill="none" aria-hidden="true">
+          <path d="M2 20V4l7 8 7-8v16" stroke="currentColor" stroke-width="3" />
+          <path
+            d="M22 20V4h8a6 6 0 0 1 0 12h-8"
+            stroke="currentColor"
+            stroke-width="3"
+          />
+          <rect x="38" y="2" width="4" height="4" fill="currentColor" />
+          <text
+            x="46"
+            y="17"
+            font-family="Outfit,sans-serif"
+            font-size="11"
+            font-weight="700"
+            fill="currentColor"
+          >
+            IPSUM
+          </text>
+        </svg>
+        <svg viewBox="0 0 60 22" fill="none" aria-hidden="true">
+          <ellipse cx="30" cy="11" rx="28" ry="8" fill="currentColor" />
+          <ellipse cx="30" cy="11" rx="9" ry="4" fill="#FAF8F4" />
+        </svg>
+        <svg viewBox="0 0 62 22" fill="none" aria-hidden="true">
+          <path
+            d="M4 11a7 7 0 0 1 14 0 7 7 0 0 0 14 0 7 7 0 0 1 14 0 7 7 0 0 0 12 5"
+            stroke="currentColor"
+            stroke-width="2.4"
+          />
+        </svg>
+        <svg viewBox="0 0 122 22" fill="none" aria-hidden="true">
+          <circle cx="10" cy="11" r="9" fill="currentColor" opacity=".55" />
+          <circle cx="10" cy="11" r="4.5" fill="#FAF8F4" />
+          <text
+            x="26"
+            y="16"
+            font-family="Outfit,sans-serif"
+            font-size="13"
+            font-weight="600"
+            fill="currentColor"
+          >
+            Logoipsum
+          </text>
+        </svg>
+        <svg viewBox="0 0 76 22" fill="none" aria-hidden="true">
+          <text
+            x="0"
+            y="17"
+            font-family="Outfit,sans-serif"
+            font-size="16"
+            font-weight="700"
+            letter-spacing="1"
+            fill="currentColor"
+          >
+            LOC
+          </text>
+          <circle
+            cx="56"
+            cy="11"
+            r="8"
+            stroke="currentColor"
+            stroke-width="3"
+          />
+        </svg>
+      </div>
+    </div>
+
+    <div id="fps">–</div>
+
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js",
+          "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"
+        }
+      }
+    </script>
+    <script type="module">
+      import * as THREE from "three";
+      import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
+
+      /* ============================================================================
+   0. TUNING — every layout and physical constant lives here
+   ========================================================================== */
+      const CFG = {
+        camera: { fov: 30, z: 12, parallax: 0.06, damp: 5.0 },
+
+        line: {
+          riseFrac: 0.105, // how far the line rises from centre to screen edge (/ half width)
+          tiltFrac: 0.0208, // total left-to-right drop across the screen (/ width)
+          depthArc: 0.75, // world units the ends travel toward the camera
+          spread: 0.1, // mild apparent widening of spacing near the edges
+          radiusPx: 1.35,
+          waveSpeed: 11.0, // world units per second
+          rest: 9.0,
+          damp: 3.4,
+          nodes: 96,
+          samples: 128,
+        },
+
+        card: {
+          ratio: 1.2,
+          spacing: 1.245,
+          depth: 0.014,
+          corner: 0.062,
+          tiltMax: 0.085,
+          swingGravity: 22.0,
+          swingDamp: 1.75,
+          idleAmp: 0.0085,
+          lagK: 44,
+          lagC: 7.4,
+          lagAir: 2.05,
+          repelK: 105,
+          repelGap: 1.02,
+          bounceK: 150,
+          bounceC: 9.5,
+          weight: 7.0,
+        },
+
+        clip: { w: 0.093, h: 0.168, drop: 0.72, depth: 0.05, z: 0.05 },
+
+        input: { momentumDamp: 3.1, wheelGain: 0.9, wheelEase: 9.0 },
+      };
+
+      const REDUCED = matchMedia("(prefers-reduced-motion: reduce)").matches;
+      const clamp = THREE.MathUtils.clamp;
+
+      /* ============================================================================
+   1. CONTENT
+   ========================================================================== */
+      const THEMES = [
+        { title: "Animals", topic: "animals", kind: "forest" },
+        { title: "History", topic: "history", kind: "sepia" },
+        { title: "Geography", topic: "geography", kind: "earth" },
+        { title: "Entertainment", topic: "entertainment", kind: "screen" },
+        { title: "Numbers", topic: "numbers", kind: "blocks" },
+        { title: "Music", topic: "music", kind: "vinyl" },
+        { title: "Art", topic: "art", kind: "blobs" },
+        { title: "Science", topic: "science", kind: "atom" },
+      ];
+
+      /* Deterministic, topic-matched Picsum images. These are index-matched to
+         THEMES; the generated scenes remain in place as loading fallbacks. */
+      const PHOTOS = [
+        "https://picsum.photos/id/237/640/768", // Animals — dog
+        "https://picsum.photos/id/318/640/768", // History — Eiffel Tower
+        "https://picsum.photos/id/1015/640/768", // Geography — fjord landscape
+        "https://picsum.photos/id/250/640/768", // Entertainment — classic camera
+        "https://picsum.photos/id/180/640/768", // Numbers — study notes and laptop
+        "https://picsum.photos/id/145/640/768", // Music — guitar
+        "https://picsum.photos/id/823/640/768", // Art — photography
+        "https://picsum.photos/id/119/640/768", // Science — technology workspace
+      ];
+
+      document.getElementById("srList").innerHTML = THEMES.map(
+        (t) => `<li>${t.title} — learn about ${t.topic} for kids</li>`,
+      ).join("");
+
+      /* ============================================================================
+   2. ARTWORK — deterministic procedural card faces, zero network requests
+   ========================================================================== */
+      const TEX_W = 640,
+        TEX_H = Math.round(640 * CFG.card.ratio);
+
+      const rng = (seed) => {
+        let s = seed >>> 0;
+        return () => (s = (s * 1664525 + 1013904223) >>> 0) / 4294967296;
+      };
+
+      function rrect(c, x, y, w, h, r) {
+        r = Math.min(r, w * 0.5, h * 0.5);
+        c.beginPath();
+        c.moveTo(x + r, y);
+        c.arcTo(x + w, y, x + w, y + h, r);
+        c.arcTo(x + w, y + h, x, y + h, r);
+        c.arcTo(x, y + h, x, y, r);
+        c.arcTo(x, y, x + w, y, r);
+        c.closePath();
+      }
+      function lg(c, x0, y0, x1, y1, stops) {
+        const g = c.createLinearGradient(x0, y0, x1, y1);
+        for (const s of stops) g.addColorStop(s[0], s[1]);
+        return g;
+      }
+
+      /* each painter draws into a 0,0 → w,h box */
+      const SCENES = {
+        forest(c, w, h, r) {
+          c.fillStyle = lg(c, 0, 0, 0, h, [
+            [0, "#C4E5AC"],
+            [0.42, "#79C069"],
+            [1, "#1C5130"],
+          ]);
+          c.fillRect(0, 0, w, h);
+          c.fillStyle = "rgba(255,248,208,.85)";
+          c.beginPath();
+          c.arc(w * 0.74, h * 0.2, w * 0.1, 0, 7);
+          c.fill();
+          const cols = ["#5FA85C", "#3F8A4C", "#2C6B3E", "#1B4A2C"];
+          for (let L = 0; L < 4; L++) {
+            const base = h * (0.44 + L * 0.16),
+              amp = h * 0.05 * (1 - L * 0.15);
+            c.fillStyle = cols[L];
+            c.beginPath();
+            c.moveTo(0, h);
+            for (let x = 0; x <= w; x += w / 24)
+              c.lineTo(x, base + Math.sin((x / w) * 5 + L * 2.1) * amp);
+            c.lineTo(w, h);
+            c.closePath();
+            c.fill();
+          }
+          c.fillStyle = "rgba(12,38,22,.82)";
+          for (let i = 0; i < 12; i++) {
+            const x = r() * w,
+              s = h * (0.16 + r() * 0.2),
+              y = h * (0.6 + r() * 0.32);
+            c.beginPath();
+            c.moveTo(x, y);
+            c.lineTo(x - s * 0.26, y + s * 0.1);
+            c.lineTo(x, y - s);
+            c.lineTo(x + s * 0.26, y + s * 0.1);
+            c.closePath();
+            c.fill();
+          }
+        },
+
+        sepia(c, w, h, r) {
+          c.fillStyle = lg(c, 0, 0, 0, h, [
+            [0, "#E9E1D3"],
+            [0.5, "#B5A897"],
+            [1, "#4A4239"],
+          ]);
+          c.fillRect(0, 0, w, h);
+          c.fillStyle = "rgba(38,32,26,.6)";
+          for (let i = 0; i < 5; i++) {
+            const x = w * (0.07 + i * 0.21),
+              cw = w * 0.1;
+            c.fillRect(x, h * 0.36, cw, h * 0.52);
+            rrect(c, x - cw * 0.14, h * 0.28, cw * 1.28, h * 0.085, cw * 0.55);
+            c.fill();
+          }
+          c.fillStyle = "rgba(28,23,19,.8)";
+          for (let i = 0; i < 8; i++) {
+            const x = w * (0.08 + r() * 0.84),
+              y = h * (0.72 + r() * 0.18),
+              s = h * (0.11 + r() * 0.08);
+            c.beginPath();
+            c.arc(x, y - s * 0.8, s * 0.17, 0, 7);
+            c.fill();
+            c.beginPath();
+            c.moveTo(x - s * 0.21, y);
+            c.lineTo(x, y - s * 0.66);
+            c.lineTo(x + s * 0.21, y);
+            c.closePath();
+            c.fill();
+          }
+          c.fillStyle = "rgba(122,96,62,.2)";
+          c.fillRect(0, 0, w, h);
+        },
+
+        earth(c, w, h, r) {
+          c.fillStyle = lg(c, 0, 0, 0, h, [
+            [0, "#050A18"],
+            [0.6, "#08122C"],
+            [1, "#02060B"],
+          ]);
+          c.fillRect(0, 0, w, h);
+          c.fillStyle = "#fff";
+          for (let i = 0; i < 140; i++) {
+            c.globalAlpha = 0.18 + r() * 0.7;
+            c.fillRect(r() * w, r() * h * 0.72, 1.5, 1.5);
+          }
+          c.globalAlpha = 1;
+          const cx = w * 0.5,
+            cy = h * 1.16,
+            rad = h * 0.8;
+          const g = c.createRadialGradient(
+            cx,
+            cy - rad * 0.25,
+            rad * 0.18,
+            cx,
+            cy,
+            rad,
+          );
+          g.addColorStop(0, "#2079B2");
+          g.addColorStop(0.62, "#0E3F66");
+          g.addColorStop(1, "#04121F");
+          c.fillStyle = g;
+          c.beginPath();
+          c.arc(cx, cy, rad, 0, 7);
+          c.fill();
+          c.save();
+          c.clip();
+          c.fillStyle = "rgba(104,152,96,.5)";
+          for (let i = 0; i < 18; i++) {
+            c.beginPath();
+            c.ellipse(
+              cx + (r() - 0.5) * rad * 1.5,
+              cy - rad * (0.14 + r() * 0.82),
+              rad * (0.06 + r() * 0.16),
+              rad * (0.03 + r() * 0.08),
+              r() * 3,
+              0,
+              7,
+            );
+            c.fill();
+          }
+          c.fillStyle = "rgba(255,208,132,.92)";
+          for (let i = 0; i < 60; i++)
+            c.fillRect(
+              cx + (r() - 0.5) * rad * 1.6,
+              cy - rad * (0.2 + r() * 0.78),
+              2,
+              2,
+            );
+          c.restore();
+          const rim = c.createRadialGradient(
+            cx,
+            cy,
+            rad * 0.95,
+            cx,
+            cy,
+            rad * 1.15,
+          );
+          rim.addColorStop(0, "rgba(112,192,255,.45)");
+          rim.addColorStop(1, "rgba(112,192,255,0)");
+          c.fillStyle = rim;
+          c.beginPath();
+          c.arc(cx, cy, rad * 1.15, 0, 7);
+          c.fill();
+        },
+
+        screen(c, w, h) {
+          c.fillStyle = lg(c, 0, 0, 0, h, [
+            [0, "#15171E"],
+            [1, "#05060A"],
+          ]);
+          c.fillRect(0, 0, w, h);
+          const sx = w * 0.12,
+            sy = h * 0.15,
+            sw = w * 0.76,
+            sh = h * 0.47;
+          rrect(c, sx, sy, sw, sh, w * 0.02);
+          c.fillStyle = lg(c, sx, sy, sx + sw, sy + sh, [
+            [0, "#3FB6E8"],
+            [0.45, "#7C5CE0"],
+            [1, "#E85C8A"],
+          ]);
+          c.fill();
+          c.save();
+          rrect(c, sx, sy, sw, sh, w * 0.02);
+          c.clip();
+          c.globalAlpha = 0.2;
+          c.fillStyle = "#000";
+          for (let y = sy; y < sy + sh; y += 6) c.fillRect(sx, y, sw, 2);
+          c.restore();
+          c.globalAlpha = 1;
+          const spill = c.createRadialGradient(
+            w * 0.5,
+            sy + sh * 0.5,
+            sh * 0.3,
+            w * 0.5,
+            sy + sh * 0.5,
+            h * 0.85,
+          );
+          spill.addColorStop(0, "rgba(124,152,255,.3)");
+          spill.addColorStop(1, "rgba(124,152,255,0)");
+          c.fillStyle = spill;
+          c.fillRect(0, 0, w, h);
+          c.fillStyle = "rgba(226,214,202,.92)";
+          for (const s of [-1, 1]) {
+            const x = w * 0.5 + s * w * 0.16;
+            rrect(c, x - w * 0.045, h * 0.66, w * 0.09, h * 0.2, w * 0.04);
+            c.fill();
+          }
+          c.fillStyle = "#0A0B0F";
+          rrect(c, w * 0.16, h * 0.82, w * 0.68, h * 0.3, w * 0.06);
+          c.fill();
+        },
+
+        blocks(c, w, h, r) {
+          c.fillStyle = "#EFA0BD";
+          c.fillRect(0, 0, w, h);
+          const cols = ["#F45B9B", "#E8478C", "#FB74AE", "#F2F0EE"];
+          for (let i = 0; i < 104; i++) {
+            const bw = w * (0.1 + r() * 0.05),
+              bh = bw * 0.48;
+            const x = r() * (w + bw) - bw * 0.5,
+              y = r() * (h + bh) - bh * 0.5,
+              a = (r() - 0.5) * 2.6;
+            c.save();
+            c.translate(x, y);
+            c.rotate(a);
+            c.fillStyle = "rgba(120,20,60,.15)";
+            rrect(c, -bw * 0.5 + 3, -bh * 0.5 + 4, bw, bh, bh * 0.28);
+            c.fill();
+            c.fillStyle = cols[i % 4];
+            rrect(c, -bw * 0.5, -bh * 0.5, bw, bh, bh * 0.28);
+            c.fill();
+            c.fillStyle = "rgba(255,255,255,.32)";
+            c.fillRect(-bw * 0.38, -bh * 0.34, bw * 0.34, bh * 0.12);
+            c.restore();
+          }
+        },
+
+        vinyl(c, w, h) {
+          c.fillStyle = lg(c, 0, 0, w, h, [
+            [0, "#3A1D6E"],
+            [0.55, "#7A2E8C"],
+            [1, "#E86A3C"],
+          ]);
+          c.fillRect(0, 0, w, h);
+          const cx = w * 0.5,
+            cy = h * 0.5;
+          c.fillStyle = "#1B1024";
+          c.beginPath();
+          c.arc(cx, cy, h * 0.43, 0, 7);
+          c.fill();
+          for (let i = 16; i > 0; i--) {
+            c.strokeStyle = `rgba(255,236,222,${0.02 + (i % 2) * 0.04})`;
+            c.lineWidth = h * 0.008;
+            c.beginPath();
+            c.arc(cx, cy, h * 0.13 + i * h * 0.019, 0, 7);
+            c.stroke();
+          }
+          c.fillStyle = "#F2C14E";
+          c.beginPath();
+          c.arc(cx, cy, h * 0.12, 0, 7);
+          c.fill();
+          c.fillStyle = "#1B1024";
+          c.beginPath();
+          c.arc(cx, cy, h * 0.018, 0, 7);
+          c.fill();
+          c.fillStyle = lg(c, 0, 0, w, h, [
+            [0, "rgba(255,255,255,.18)"],
+            [0.5, "rgba(255,255,255,0)"],
+          ]);
+          c.fillRect(0, 0, w, h);
+        },
+
+        blobs(c, w, h, r) {
+          c.fillStyle = "#F7F2E6";
+          c.fillRect(0, 0, w, h);
+          const cols = [
+            "#E8524F",
+            "#F2B33D",
+            "#3E8BC4",
+            "#4CA96B",
+            "#8C5AC8",
+            "#1B1B1B",
+          ];
+          c.globalCompositeOperation = "multiply";
+          for (let i = 0; i < 9; i++) {
+            c.globalAlpha = 0.55;
+            c.fillStyle = cols[i % cols.length];
+            c.beginPath();
+            c.ellipse(
+              w * (0.15 + r() * 0.7),
+              h * (0.15 + r() * 0.7),
+              w * (0.1 + r() * 0.18),
+              w * (0.09 + r() * 0.16),
+              r() * 3,
+              0,
+              7,
+            );
+            c.fill();
+          }
+          c.globalCompositeOperation = "source-over";
+          c.globalAlpha = 1;
+          c.strokeStyle = "rgba(24,24,24,.45)";
+          c.lineWidth = h * 0.009;
+          for (let i = 0; i < 5; i++) {
+            c.beginPath();
+            c.moveTo(r() * w, r() * h);
+            c.quadraticCurveTo(r() * w, r() * h, r() * w, r() * h);
+            c.stroke();
+          }
+        },
+
+        atom(c, w, h, r) {
+          c.fillStyle = lg(c, 0, 0, w, h, [
+            [0, "#062B33"],
+            [0.6, "#0A4C55"],
+            [1, "#02181D"],
+          ]);
+          c.fillRect(0, 0, w, h);
+          const cx = w * 0.5,
+            cy = h * 0.5;
+          for (let i = 0; i < 3; i++) {
+            c.save();
+            c.translate(cx, cy);
+            c.rotate((i * Math.PI) / 3);
+            c.strokeStyle = "rgba(122,236,226,.5)";
+            c.lineWidth = h * 0.01;
+            c.beginPath();
+            c.ellipse(0, 0, w * 0.36, h * 0.13, 0, 0, 7);
+            c.stroke();
+            const a = r() * 7;
+            c.fillStyle = "#8FF3E4";
+            c.beginPath();
+            c.arc(
+              Math.cos(a) * w * 0.36,
+              Math.sin(a) * h * 0.13,
+              h * 0.022,
+              0,
+              7,
+            );
+            c.fill();
+            c.restore();
+          }
+          const g = c.createRadialGradient(cx, cy, 0, cx, cy, h * 0.17);
+          g.addColorStop(0, "#F2FFFC");
+          g.addColorStop(0.5, "#6FE0D0");
+          g.addColorStop(1, "rgba(60,200,190,0)");
+          c.fillStyle = g;
+          c.beginPath();
+          c.arc(cx, cy, h * 0.17, 0, 7);
+          c.fill();
+          c.fillStyle = "rgba(184,255,246,.45)";
+          for (let i = 0; i < 44; i++) c.fillRect(r() * w, r() * h, 1.6, 1.6);
+        },
+      };
+
+      function paintPhoto(c, theme, seed, pad, iw, ih) {
+        c.save();
+        rrect(c, pad, pad, iw, ih, TEX_W * 0.036);
+        c.clip();
+        c.translate(pad, pad);
+        (SCENES[theme.kind] || SCENES.blobs)(
+          c,
+          iw,
+          ih,
+          rng(seed * 9301 + 49297),
+        );
+        c.restore();
+      }
+
+      function makeCardCanvas(theme, seed, photo) {
+        const cv = document.createElement("canvas");
+        cv.width = TEX_W;
+        cv.height = TEX_H;
+        const c = cv.getContext("2d");
+
+        c.fillStyle = "#FFFFFF";
+        c.fillRect(0, 0, TEX_W, TEX_H);
+
+        const pad = Math.round(TEX_W * 0.053);
+        const iw = TEX_W - pad * 2,
+          ih = Math.round(TEX_W * 0.869);
+
+        if (photo) {
+          c.save();
+          rrect(c, pad, pad, iw, ih, TEX_W * 0.036);
+          c.clip();
+          const s = Math.max(iw / photo.width, ih / photo.height);
+          c.drawImage(
+            photo,
+            pad + (iw - photo.width * s) / 2,
+            pad + (ih - photo.height * s) / 2,
+            photo.width * s,
+            photo.height * s,
+          );
+          c.restore();
+        } else {
+          paintPhoto(c, theme, seed, pad, iw, ih);
+        }
+
+        /* film grain, keeps flat vector art from reading as vector art */
+        const gr = rng(seed + 77);
+        c.globalAlpha = 0.045;
+        for (let i = 0; i < 2600; i++) {
+          c.fillStyle = gr() > 0.5 ? "#fff" : "#000";
+          c.fillRect(pad + gr() * iw, pad + gr() * ih, 1.5, 1.5);
+        }
+        c.globalAlpha = 1;
+
+        rrect(c, pad, pad, iw, ih, TEX_W * 0.036);
+        c.strokeStyle = "rgba(0,0,0,.08)";
+        c.lineWidth = 2;
+        c.stroke();
+
+        const ff = '"Outfit",system-ui,sans-serif';
+        c.textBaseline = "alphabetic";
+        c.fillStyle = "#111111";
+        c.font = `600 ${Math.round(TEX_W * 0.048)}px ${ff}`;
+        c.fillText(theme.title, pad + 2, pad + ih + Math.round(TEX_W * 0.092));
+        c.fillStyle = "#8B8B8B";
+        c.font = `400 ${Math.round(TEX_W * 0.0325)}px ${ff}`;
+        c.fillText(
+          `Learn about ${theme.topic} for kids`,
+          pad + 2,
+          pad + ih + Math.round(TEX_W * 0.137),
+        );
+
+        return cv;
+      }
+
+      function makeShadowTexture() {
+        const S = 256,
+          cv = document.createElement("canvas");
+        cv.width = S;
+        cv.height = Math.round(S * CFG.card.ratio);
+        const c = cv.getContext("2d");
+        c.shadowColor = "rgba(0,0,0,1)";
+        c.shadowBlur = S * 0.17;
+        c.shadowOffsetY = S * 0.02;
+        c.fillStyle = "#000";
+        rrect(
+          c,
+          S * 0.15,
+          cv.height * 0.12,
+          S * 0.7,
+          cv.height * 0.74,
+          S * 0.06,
+        );
+        c.fill();
+        const t = new THREE.CanvasTexture(cv);
+        t.colorSpace = THREE.SRGBColorSpace;
+        return t;
+      }
+
+      /* ============================================================================
+   3. GEOMETRY LIBRARY
+   ========================================================================== */
+      function roundedPlane(w, h, r, seg = 8) {
+        const s = new THREE.Shape();
+        const x = -w / 2,
+          y = -h / 2;
+        r = Math.min(r, w / 2, h / 2);
+        s.moveTo(x + r, y);
+        s.lineTo(x + w - r, y);
+        s.quadraticCurveTo(x + w, y, x + w, y + r);
+        s.lineTo(x + w, y + h - r);
+        s.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+        s.lineTo(x + r, y + h);
+        s.quadraticCurveTo(x, y + h, x, y + h - r);
+        s.lineTo(x, y + r);
+        s.quadraticCurveTo(x, y, x + r, y);
+        const g = new THREE.ShapeGeometry(s, seg);
+        const p = g.attributes.position,
+          uv = g.attributes.uv;
+        for (let i = 0; i < p.count; i++)
+          uv.setXY(i, p.getX(i) / w + 0.5, p.getY(i) / h + 0.5);
+        uv.needsUpdate = true;
+        return g;
+      }
+
+      function clipGeometry(w, h, d) {
+        const s = new THREE.Shape();
+        const r = w * 0.44,
+          x = -w / 2,
+          y = -h * 0.8;
+        s.moveTo(x + r, y);
+        s.lineTo(x + w - r, y);
+        s.quadraticCurveTo(x + w, y, x + w, y + r);
+        s.lineTo(x + w, y + h - r);
+        s.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+        s.lineTo(x + r, y + h);
+        s.quadraticCurveTo(x, y + h, x, y + h - r);
+        s.lineTo(x, y + r);
+        s.quadraticCurveTo(x, y, x + r, y);
+        const g = new THREE.ExtrudeGeometry(s, {
+          depth: d * 0.7,
+          bevelEnabled: true,
+          bevelThickness: d * 0.15,
+          bevelSize: d * 0.15,
+          bevelSegments: 3,
+          curveSegments: 10,
+        });
+        g.translate(0, 0, -d * 0.5);
+        g.computeVertexNormals();
+        return g;
+      }
+
+      /* rope material: procedural three-strand twist, fibre noise, soft rim */
+      const ropeMaterial = new THREE.ShaderMaterial({
+        uniforms: {
+          uColorA: { value: new THREE.Color("#D2CEC4") },
+          uColorB: { value: new THREE.Color("#9C978B") },
+          uLight: { value: new THREE.Vector3(-0.45, 0.68, 0.58).normalize() },
+        },
+        vertexShader: `
+    varying vec2 vUv; varying vec3 vN; varying vec3 vV;
+    void main(){
+      vUv = uv;
+      vN = normalize(mat3(modelMatrix) * normal);
+      vec4 wp = modelMatrix * vec4(position, 1.0);
+      vV = normalize(cameraPosition - wp.xyz);
+      gl_Position = projectionMatrix * viewMatrix * wp;
+    }`,
+        fragmentShader: `
+    uniform vec3 uColorA, uColorB, uLight;
+    varying vec2 vUv; varying vec3 vN; varying vec3 vV;
+    void main(){
+      float tw = fract(vUv.y * 210.0 + vUv.x * 3.0);
+      float strand = smoothstep(0.0, 0.34, tw) * (1.0 - smoothstep(0.66, 1.0, tw));
+      float fibre = fract(sin(vUv.y * 4100.0) * 43758.5453);
+      float diff = max(dot(vN, uLight), 0.0);
+      float rim  = pow(1.0 - abs(dot(vN, vV)), 2.2);
+      vec3 col = mix(uColorB, uColorA, strand * 0.8 + 0.2);
+      col *= 0.72 + diff * 0.38 + fibre * 0.05;
+      col += rim * 0.14;
+      gl_FragColor = vec4(col, 1.0);
+      #include <colorspace_fragment>
+    }`,
+      });
+
+      /* ============================================================================
+   4. RENDERER / SCENE / CAMERA / LIGHTS
+   ========================================================================== */
+      const canvas = document.getElementById("stage");
+      const renderer = new THREE.WebGLRenderer({
+        canvas,
+        antialias: true,
+        alpha: true,
+        powerPreference: "high-performance",
+      });
+      renderer.setClearAlpha(0);
+      renderer.outputColorSpace = THREE.SRGBColorSpace;
+      renderer.toneMapping = THREE.NoToneMapping;
+
+      const scene = new THREE.Scene();
+      const camera = new THREE.PerspectiveCamera(CFG.camera.fov, 1, 0.1, 60);
+      camera.position.set(0, 0, CFG.camera.z);
+
+      {
+        const pmrem = new THREE.PMREMGenerator(renderer);
+        pmrem.compileEquirectangularShader();
+        scene.environment = pmrem.fromScene(
+          new RoomEnvironment(),
+          0.04,
+        ).texture;
+        scene.environmentIntensity = 0.26;
+        pmrem.dispose();
+      }
+      scene.add(new THREE.HemisphereLight(0xffffff, 0xede6d8, 0.5));
+      const key = new THREE.DirectionalLight(0xffffff, 0.42);
+      key.position.set(-3, 4, 6);
+      scene.add(key);
+      const fill = new THREE.DirectionalLight(0xfff4e4, 0.15);
+      fill.position.set(4, -1.5, 3);
+      scene.add(fill);
+
+      const world = new THREE.Group();
+      scene.add(world);
+
+      /* ============================================================================
+   5. LAYOUT MANAGER — maps design pixels onto world units
+   ========================================================================== */
+      const ropeZone = document.getElementById("ropeZone");
+      const L = {};
+
+      function layout() {
+        const W = canvas.clientWidth;
+
+        /* Size the canvas bleed from the same measurements used by WebGL.
+           Keeping this in sync is important around the tablet breakpoint,
+           where the cards are proportionally largest. */
+        L.halfWpx = W * 0.5;
+        L.cardWpx =
+          W < 640 ? W * 0.435 : W < 1024 ? W * 0.245 : Math.min(W * 0.179, 236);
+        L.cardHpx = L.cardWpx * CFG.card.ratio;
+        L.spacingPx = L.cardWpx * CFG.card.spacing;
+        L.slots = Math.max(5, Math.ceil((2.75 * L.halfWpx) / L.spacingPx));
+        L.halfSpanPx = L.slots * L.spacingPx * 0.5;
+
+        const tEdge = Math.min(0.92, L.halfWpx / L.halfSpanPx);
+        L.sagPx = (CFG.line.riseFrac * L.halfWpx) / (1 - tEdge * tEdge);
+        L.tiltPx = (CFG.line.tiltFrac * W) / (2 * tEdge);
+
+        const topRisePx =
+          L.sagPx * tEdge * tEdge + Math.abs(L.tiltPx * tEdge);
+        const clipDropPx = L.cardWpx * CFG.clip.h * CFG.clip.drop;
+        const renderOverhangPx = Math.ceil(topRisePx + 18);
+        const renderDepthPx = Math.ceil(clipDropPx + L.cardHpx * 1.1 + 28);
+        ropeZone.style.setProperty("--rope-overhang", `${renderOverhangPx}px`);
+        ropeZone.style.setProperty("--rope-min-height", `${renderDepthPx}px`);
+
+        const H = canvas.clientHeight;
+        camera.aspect = W / H;
+        camera.updateProjectionMatrix();
+        renderer.setSize(W, H, false);
+
+        L.worldH =
+          2 *
+          CFG.camera.z *
+          Math.tan(THREE.MathUtils.degToRad(CFG.camera.fov) * 0.5);
+        L.ppu = H / L.worldH;
+        L.viewH = H;
+
+        /* solve sag / tilt so the on-screen curvature is identical at every width */
+        L.anchorPx =
+          ropeZone.getBoundingClientRect().top -
+          canvas.getBoundingClientRect().top;
+
+        L.cardW = L.cardWpx / L.ppu;
+        L.cardH = L.cardHpx / L.ppu;
+        L.spacing = L.spacingPx / L.ppu;
+        L.halfSpan = L.halfSpanPx / L.ppu;
+        L.span = L.halfSpan * 2;
+        L.clipW = L.cardW * CFG.clip.w;
+        L.clipH = L.cardW * CFG.clip.h;
+        L.clipDrop = L.clipH * CFG.clip.drop;
+        L.ropeR = CFG.line.radiusPx / L.ppu;
+
+        /* wave speed held constant in world units, so ripples read the same */
+        const dx = L.span / (CFG.line.nodes - 1);
+        L.tension = (CFG.line.waveSpeed / dx) ** 2;
+        L.maxDisp = L.cardH * 0.25;
+      }
+
+      const pxToWorldY = (px) => (L.viewH * 0.5 - px) / L.ppu;
+
+      /* ============================================================================
+   6. ROPE PHYSICS — 1D wave chain in y and z, loaded by the cards
+   ========================================================================== */
+      const N = CFG.line.nodes;
+      const rope = {
+        dy: new Float32Array(N),
+        vy: new Float32Array(N),
+        ly: new Float32Array(N),
+        dz: new Float32Array(N),
+        vz: new Float32Array(N),
+        lz: new Float32Array(N),
+      };
+
+      function sampleWave(arr, t) {
+        const f = (t + 1) * 0.5 * (N - 1);
+        const i = clamp(f | 0, 0, N - 2);
+        const a = f - i;
+        return arr[i] * (1 - a) + arr[i + 1] * a;
+      }
+      function addLoad(arr, t, v) {
+        const f = (t + 1) * 0.5 * (N - 1);
+        const i = clamp(f | 0, 0, N - 2);
+        const a = f - i;
+        arr[i] += v * (1 - a);
+        arr[i + 1] += v * a;
+      }
+
+      function stepRope(dt) {
+        const T = L.tension,
+          { rest, damp } = CFG.line;
+        const sub = clamp(Math.ceil(dt * Math.sqrt(2 * T)), 2, 6);
+        const h = dt / sub,
+          lim = L.maxDisp;
+        for (let s = 0; s < sub; s++) {
+          for (let i = 1; i < N - 1; i++) {
+            rope.vy[i] +=
+              (T * (rope.dy[i - 1] + rope.dy[i + 1] - 2 * rope.dy[i]) -
+                rest * rope.dy[i] -
+                damp * rope.vy[i] +
+                rope.ly[i]) *
+              h;
+            rope.vz[i] +=
+              (T * (rope.dz[i - 1] + rope.dz[i + 1] - 2 * rope.dz[i]) -
+                rest * rope.dz[i] -
+                damp * rope.vz[i] +
+                rope.lz[i]) *
+              h;
+          }
+          for (let i = 1; i < N - 1; i++) {
+            rope.dy[i] = clamp(rope.dy[i] + rope.vy[i] * h, -lim, lim);
+            rope.dz[i] = clamp(rope.dz[i] + rope.vz[i] * h, -lim, lim);
+          }
+        }
+        rope.dy[0] = rope.dy[N - 1] = rope.dz[0] = rope.dz[N - 1] = 0;
+      }
+
+      /* ----- the line in space ---------------------------------------------------- */
+      const _ap = { x: 0, y: 0, z: 0 };
+      function lineApparent(t) {
+        const sp = CFG.line.spread;
+        _ap.x = (L.halfSpan * (t + sp * t * t * t)) / (1 + sp);
+        _ap.y =
+          pxToWorldY(L.anchorPx - L.sagPx * t * t + L.tiltPx * t) +
+          sampleWave(rope.dy, t);
+        _ap.z = CFG.line.depthArc * t * t + sampleWave(rope.dz, t);
+        return _ap;
+      }
+      /* apparent -> real world: keeps the on-screen position exact while depth varies */
+      function lineWorld(t, v) {
+        lineApparent(t);
+        const k = (CFG.camera.z - _ap.z) / CFG.camera.z;
+        return v.set(_ap.x * k, _ap.y * k, _ap.z);
+      }
+
+      /* ----- hand-built tube, positions rewritten every frame -------------------- */
+      const M = CFG.line.samples,
+        R = 6;
+      const ropeGeo = new THREE.BufferGeometry();
+      {
+        const pos = new Float32Array(M * R * 3),
+          nor = new Float32Array(M * R * 3),
+          uv = new Float32Array(M * R * 2);
+        const idx = [];
+        for (let i = 0; i < M; i++)
+          for (let j = 0; j < R; j++) {
+            uv[(i * R + j) * 2] = j / R;
+            uv[(i * R + j) * 2 + 1] = i / (M - 1);
+          }
+        for (let i = 0; i < M - 1; i++)
+          for (let j = 0; j < R; j++) {
+            const a = i * R + j,
+              b = i * R + ((j + 1) % R),
+              c = (i + 1) * R + j,
+              d = (i + 1) * R + ((j + 1) % R);
+            idx.push(a, c, b, b, c, d);
+          }
+        ropeGeo.setAttribute("position", new THREE.BufferAttribute(pos, 3));
+        ropeGeo.setAttribute("normal", new THREE.BufferAttribute(nor, 3));
+        ropeGeo.setAttribute("uv", new THREE.BufferAttribute(uv, 2));
+        ropeGeo.setIndex(idx);
+      }
+      const ropeMesh = new THREE.Mesh(ropeGeo, ropeMaterial);
+      ropeMesh.frustumCulled = false;
+      world.add(ropeMesh);
+
+      const _p0 = new THREE.Vector3(),
+        _pA = new THREE.Vector3(),
+        _pB = new THREE.Vector3();
+      const _tan = new THREE.Vector3(),
+        _nrm = new THREE.Vector3(),
+        _bin = new THREE.Vector3();
+      const _up = new THREE.Vector3(0, 0, 1);
+
+      function updateRopeMesh() {
+        const pos = ropeGeo.attributes.position.array,
+          nor = ropeGeo.attributes.normal.array;
+        const step = 2 / (M - 1);
+        for (let i = 0; i < M; i++) {
+          const t = -1 + step * i;
+          lineWorld(t, _p0);
+          lineWorld(Math.max(-1, t - step), _pA);
+          lineWorld(Math.min(1, t + step), _pB);
+          _tan.subVectors(_pB, _pA).normalize();
+          _nrm.crossVectors(_tan, _up);
+          if (_nrm.lengthSq() < 1e-9) _nrm.set(0, 1, 0);
+          _nrm.normalize();
+          _bin.crossVectors(_tan, _nrm).normalize();
+          for (let j = 0; j < R; j++) {
+            const a = (j / R) * Math.PI * 2,
+              ca = Math.cos(a),
+              sa = Math.sin(a);
+            const nx = _nrm.x * ca + _bin.x * sa,
+              ny = _nrm.y * ca + _bin.y * sa,
+              nz = _nrm.z * ca + _bin.z * sa;
+            const o = (i * R + j) * 3;
+            pos[o] = _p0.x + nx * L.ropeR;
+            pos[o + 1] = _p0.y + ny * L.ropeR;
+            pos[o + 2] = _p0.z + nz * L.ropeR;
+            nor[o] = nx;
+            nor[o + 1] = ny;
+            nor[o + 2] = nz;
+          }
+        }
+        ropeGeo.attributes.position.needsUpdate = true;
+        ropeGeo.attributes.normal.needsUpdate = true;
+      }
+
+      /* ============================================================================
+   7. HANGING CARDS — a fixed pool, recycled endlessly around the line
+   ========================================================================== */
+      const shadowTex = makeShadowTexture();
+      const clipBodyMat = new THREE.MeshPhysicalMaterial({
+        color: "#20BF49",
+        roughness: 0.32,
+        metalness: 0,
+        clearcoat: 1,
+        clearcoatRoughness: 0.14,
+        envMapIntensity: 0.9,
+      });
+      const clipDotMat = new THREE.MeshPhysicalMaterial({
+        color: "#FCFCFA",
+        roughness: 0.42,
+        metalness: 0,
+        clearcoat: 0.6,
+      });
+
+      const cards = [];
+      let textures = [];
+      let sharedClipGeo = null,
+        sharedDotGeo = null;
+
+      function buildTextures() {
+        textures.forEach((t) => t.dispose());
+        textures = THEMES.map((th, i) => {
+          const t = new THREE.CanvasTexture(makeCardCanvas(th, i + 1));
+          t.colorSpace = THREE.SRGBColorSpace;
+          t.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy());
+          t.minFilter = THREE.LinearMipmapLinearFilter;
+          return t;
+        });
+        PHOTOS.forEach((url, i) => {
+          if (!THEMES[i]) return;
+          const img = new Image();
+          img.crossOrigin = "anonymous";
+          img.onload = () => {
+            textures[i].image = makeCardCanvas(THEMES[i], i + 1, img);
+            textures[i].needsUpdate = true;
+          };
+          img.src = url;
+        });
+      }
+
+      function buildCards() {
+        for (const c of cards) {
+          world.remove(c.pivot);
+          c.cardGeo.dispose();
+          c.shadowGeo.dispose();
+          c.mat.dispose();
+          c.shadow.material.dispose();
+        }
+        cards.length = 0;
+        if (sharedClipGeo) sharedClipGeo.dispose();
+        if (sharedDotGeo) sharedDotGeo.dispose();
+        sharedClipGeo = clipGeometry(L.clipW, L.clipH, CFG.clip.depth);
+        sharedDotGeo = new THREE.CircleGeometry(L.clipW * 0.2, 18);
+
+        const drop = L.clipDrop + L.cardH * 0.5;
+
+        for (let i = 0; i < L.slots; i++) {
+          const pivot = new THREE.Group();
+
+          const cardGeo = roundedPlane(
+            L.cardW,
+            L.cardH,
+            L.cardW * CFG.card.corner,
+          );
+          const mat = new THREE.MeshPhysicalMaterial({
+            map: textures[i % textures.length],
+            roughness: 0.62,
+            metalness: 0,
+            clearcoat: 0.22,
+            clearcoatRoughness: 0.55,
+            envMapIntensity: 0.4,
+            side: THREE.DoubleSide,
+          });
+          const mesh = new THREE.Mesh(cardGeo, mat);
+          mesh.position.set(0, -drop, CFG.card.depth);
+
+          const shadowGeo = roundedPlane(
+            L.cardW * 1.17,
+            L.cardH * 1.15,
+            L.cardW * 0.1,
+            6,
+          );
+          const shadow = new THREE.Mesh(
+            shadowGeo,
+            new THREE.MeshBasicMaterial({
+              map: shadowTex,
+              transparent: true,
+              opacity: 0.2,
+              depthWrite: false,
+              color: 0x2a2418,
+            }),
+          );
+          shadow.position.set(
+            0,
+            -drop - L.cardH * 0.012,
+            CFG.card.depth - 0.006,
+          );
+
+          const clip = new THREE.Mesh(sharedClipGeo, clipBodyMat);
+          clip.position.z = CFG.clip.z;
+          const dot = new THREE.Mesh(sharedDotGeo, clipDotMat);
+          dot.position.set(0, -L.clipH * 0.04, CFG.clip.z + 0.028);
+
+          pivot.add(shadow, mesh, clip, dot);
+          world.add(pivot);
+
+          cards.push({
+            pivot,
+            mesh,
+            shadow,
+            mat,
+            cardGeo,
+            shadowGeo,
+            drop,
+            slot: i,
+            lag: 0,
+            lagV: 0,
+            theta: 0,
+            thetaV: 0,
+            tilt: 0,
+            tiltV: 0,
+            bounce: 0,
+            bounceV: 0,
+            prevX: null,
+            vx: 0,
+            ax: 0,
+            speed: 0,
+            prevSpeed: 0,
+            mass: 0.9 + ((i * 0.137) % 1) * 0.3,
+            baseRot: (((i * 0.618) % 1) - 0.5) * 0.075,
+            phase: i * 1.7,
+            along: 0,
+            texIndex: -1,
+          });
+        }
+      }
+
+      /* ============================================================================
+   8. INPUT MANAGER
+   ========================================================================== */
+      const hit = document.getElementById("ropeHit");
+      const io = {
+        offset: 0,
+        vel: 0,
+        accel: 0,
+        prevVel: 0,
+        wheel: 0,
+        kb: 0,
+        dragging: false,
+        lastX: 0,
+        lastT: 0,
+      };
+      const ptr = { x: 0, y: 0, tx: 0, ty: 0 };
+
+      const hintEl = document.getElementById("hint");
+      let hintTimer = setTimeout(() => hintEl.classList.add("show"), 1800);
+      function hideHint() {
+        clearTimeout(hintTimer);
+        hintEl.classList.remove("show");
+      }
+
+      hit.addEventListener("pointerdown", (e) => {
+        io.dragging = true;
+        io.lastX = e.clientX;
+        io.lastT = performance.now();
+        io.vel = 0;
+        hit.classList.add("dragging");
+        try {
+          hit.setPointerCapture(e.pointerId);
+        } catch {}
+        hideHint();
+      });
+      hit.addEventListener("pointermove", (e) => {
+        if (!io.dragging) return;
+        const now = performance.now();
+        const dt = Math.max(8, now - io.lastT) / 1000;
+        const dx = (e.clientX - io.lastX) / L.ppu;
+        io.offset += dx;
+        io.vel = io.vel * 0.55 + (dx / dt) * 0.45;
+        io.lastX = e.clientX;
+        io.lastT = now;
+      });
+      const endDrag = () => {
+        if (!io.dragging) return;
+        io.dragging = false;
+        hit.classList.remove("dragging");
+        if (REDUCED) io.vel *= 0.25;
+      };
+      hit.addEventListener("pointerup", endDrag);
+      hit.addEventListener("pointercancel", endDrag);
+      hit.addEventListener("lostpointercapture", endDrag);
+
+      hit.addEventListener(
+        "wheel",
+        (e) => {
+          const d =
+            Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
+          if (!d) return;
+          e.preventDefault();
+          io.wheel += (-d / L.ppu) * CFG.input.wheelGain;
+          hideHint();
+        },
+        { passive: false },
+      );
+
+      hit.addEventListener("keydown", (e) => {
+        if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
+        e.preventDefault();
+        const dir = e.key === "ArrowLeft" ? -1 : 1;
+        gsap.to(io, {
+          kb: io.kb + dir * L.spacing,
+          duration: REDUCED ? 0.2 : 0.9,
+          ease: "power3.out",
+          overwrite: true,
+        });
+        hideHint();
+      });
+
+      addEventListener("pointermove", (e) => {
+        ptr.tx = (e.clientX / innerWidth) * 2 - 1;
+        ptr.ty = (e.clientY / innerHeight) * 2 - 1;
+      });
+
+      /* ============================================================================
+   9. FRAME
+   ========================================================================== */
+      const _v = new THREE.Vector3();
+      const order = [];
+      let time = 0,
+        prevKb = 0;
+
+      const wrapAlong = (a) =>
+        a - Math.floor((a + L.halfSpan) / L.span) * L.span;
+
+      function tick() {
+        const dt = Math.min(1 / 30, gsap.ticker.deltaRatio(60) / 60);
+        time += dt;
+
+        /* ---------- input integration ---------- */
+        const wStep = io.wheel * Math.min(1, dt * CFG.input.wheelEase);
+        io.wheel -= wStep;
+        const kbStep = io.kb - prevKb;
+        prevKb = io.kb;
+        io.offset += wStep + kbStep;
+
+        if (!io.dragging) {
+          io.offset += io.vel * dt;
+          io.vel *= Math.exp(-(REDUCED ? 9 : CFG.input.momentumDamp) * dt);
+        }
+        const injected = wStep + kbStep;
+        if (Math.abs(injected) > 1e-6)
+          io.vel = (injected / dt) * 0.6 + io.vel * 0.4;
+
+        io.accel = io.accel * 0.7 + ((io.vel - io.prevVel) / dt) * 0.3;
+        io.prevVel = io.vel;
+
+        /* ---------- along-line placement: spring lag + neighbour repulsion ------- */
+        const C = CFG.card;
+        for (const c of cards) {
+          const a =
+            (-C.lagK * c.lag - C.lagC * c.lagV - C.lagAir * io.vel) / c.mass -
+            io.accel * 0.32;
+          c.lagV += a * dt;
+          c.lag = clamp(c.lag + c.lagV * dt, -L.spacing * 0.7, L.spacing * 0.7);
+          c.along = wrapAlong(c.slot * L.spacing + io.offset + c.lag);
+        }
+
+        order.length = 0;
+        for (let i = 0; i < cards.length; i++) order.push(i);
+        order.sort((a, b) => cards[a].along - cards[b].along);
+
+        const minGap = L.cardW * C.repelGap;
+        for (let n = 0; n < order.length; n++) {
+          const A = cards[order[n]],
+            B = cards[order[(n + 1) % order.length]];
+          let gap = B.along - A.along;
+          if (gap < 0) gap += L.span;
+          if (gap < minGap) {
+            const f = (minGap - gap) * C.repelK * dt;
+            A.lagV -= f / A.mass;
+            B.lagV += f / B.mass;
+          }
+        }
+
+        /* ---------- rope loading: weight, plus force transferred by the drag ----- */
+        rope.ly.fill(0);
+        rope.lz.fill(0);
+        const ga = clamp(io.accel, -50, 50),
+          gv = clamp(io.vel, -10, 10);
+        for (const c of cards) {
+          const t = c.along / L.halfSpan;
+          addLoad(rope.ly, t, -C.weight * c.mass - ga * 0.05 * c.mass);
+          addLoad(rope.lz, t, -gv * 0.6);
+        }
+        /* remove the mean so hanging weight bumps the line locally without
+     shifting the whole designed curve downward */
+        let mean = 0;
+        for (let i = 0; i < N; i++) mean += rope.ly[i];
+        mean /= N;
+        for (let i = 0; i < N; i++) rope.ly[i] -= mean;
+        stepRope(dt);
+
+        /* ---------- per-card hanging dynamics ---------- */
+        for (const c of cards) {
+          const t = clamp(c.along / L.halfSpan, -1, 1);
+          lineWorld(t, _v);
+          c.pivot.position.copy(_v);
+
+          if (c.prevX === null) c.prevX = _v.x;
+          const vx = (_v.x - c.prevX) / dt;
+          c.ax = c.ax * 0.65 + ((vx - c.vx) / dt) * 0.35;
+          c.vx = c.vx * 0.4 + vx * 0.6;
+          c.prevX = _v.x;
+
+          /* driven pendulum: gravity restore, anchor acceleration, damping, idle life */
+          let thA =
+            -(C.swingGravity / c.drop) * Math.sin(c.theta) -
+            (c.ax / c.drop) * Math.cos(c.theta) -
+            C.swingDamp * c.thetaV;
+          if (!REDUCED) {
+            thA +=
+              Math.sin(time * 0.63 + c.phase) * C.idleAmp +
+              Math.sin(time * 1.41 + c.phase * 2.3) * C.idleAmp * 0.45;
+          }
+          c.thetaV += (thA * dt) / c.mass;
+          c.theta = clamp(c.theta + c.thetaV * dt, -0.7, 0.7);
+
+          /* forward lean while travelling fast, spring relaxation back to rest */
+          c.speed = Math.abs(c.vx);
+          const tiltTarget = -Math.min(C.tiltMax, c.speed * 0.03);
+          c.tiltV += ((tiltTarget - c.tilt) * 190 - c.tiltV * 17) * dt;
+          c.tilt += c.tiltV * dt;
+
+          /* weight bounce, excited by deceleration */
+          c.bounceV += (c.prevSpeed - c.speed) * 0.014;
+          c.bounceV += (-C.bounceK * c.bounce - C.bounceC * c.bounceV) * dt;
+          c.bounce = clamp(
+            c.bounce + c.bounceV * dt,
+            -L.cardH * 0.02,
+            L.cardH * 0.02,
+          );
+          c.prevSpeed = c.speed;
+
+          c.pivot.rotation.z = c.baseRot + c.theta;
+          c.pivot.rotation.x = c.tilt;
+          c.mesh.position.y = -c.drop + c.bounce;
+
+          /* contact shadow drifts against the swing and softens as the card lifts */
+          c.shadow.position.x = -c.theta * L.cardH * 0.22;
+          c.shadow.position.y =
+            c.mesh.position.y -
+            L.cardH * 0.012 -
+            Math.abs(c.theta) * L.cardH * 0.02;
+          c.shadow.material.opacity = 0.2 - Math.min(0.09, c.speed * 0.012);
+
+          /* seamless recycling: content index follows the wrap count */
+          const wraps = Math.floor(
+            (c.slot * L.spacing + io.offset + c.lag + L.halfSpan) / L.span,
+          );
+          const nt = textures.length;
+          const ti = (((c.slot - wraps * L.slots) % nt) + nt * 1000) % nt;
+          if (ti !== c.texIndex) {
+            c.texIndex = ti;
+            c.mat.map = textures[ti];
+            c.mat.needsUpdate = true;
+          }
+        }
+
+        updateRopeMesh();
+
+        /* ---------- camera: gentle cursor parallax, heavily damped ---------- */
+        if (!REDUCED) {
+          const k = 1 - Math.exp(-CFG.camera.damp * dt);
+          ptr.x += (ptr.tx - ptr.x) * k;
+          ptr.y += (ptr.ty - ptr.y) * k;
+          camera.position.x = ptr.x * CFG.camera.parallax * 4;
+          camera.position.y = -ptr.y * CFG.camera.parallax * 2;
+          camera.lookAt(camera.position.x * 0.55, camera.position.y * 0.55, 0);
+        }
+
+        renderer.render(scene, camera);
+        meter(dt);
+      }
+
+      /* ============================================================================
+   10. PERFORMANCE MONITOR + adaptive resolution
+   ========================================================================== */
+      const fpsEl = document.getElementById("fps");
+      let showFps = false,
+        frames = 0,
+        acc = 0,
+        lowered = 0;
+      let dpr = Math.min(2, devicePixelRatio || 1);
+      renderer.setPixelRatio(dpr);
+
+      function meter(dt) {
+        frames++;
+        acc += dt;
+        if (acc < 0.5) return;
+        const fps = frames / acc;
+        frames = 0;
+        acc = 0;
+        if (showFps)
+          fpsEl.textContent = `${fps.toFixed(0)} fps · ${cards.length} cards · dpr ${dpr.toFixed(2)}`;
+        if (fps < 46 && lowered < 2) {
+          lowered++;
+          dpr = Math.max(1, dpr - 0.35);
+          renderer.setPixelRatio(dpr);
+        }
+      }
+      addEventListener("keydown", (e) => {
+        if (e.key === "p" || e.key === "P") {
+          showFps = !showFps;
+          fpsEl.style.display = showFps ? "block" : "none";
+        }
+      });
+
+      /* ============================================================================
+   11. BOOT
+   ========================================================================== */
+      let resizeRaf = 0;
+      addEventListener("resize", () => {
+        cancelAnimationFrame(resizeRaf);
+        resizeRaf = requestAnimationFrame(() => {
+          layout();
+          buildCards();
+        });
+      });
+
+      (async () => {
+        try {
+          await document.fonts.ready;
+        } catch {}
+        layout();
+        buildTextures();
+        buildCards();
+
+        gsap.ticker.lagSmoothing(500, 33);
+        gsap.ticker.add(tick);
+
+        if (!REDUCED) {
+          gsap.from(
+            cards.map((c) => c.pivot.scale),
+            {
+              x: 0.86,
+              y: 0.86,
+              z: 0.86,
+              duration: 1.1,
+              ease: "elastic.out(1, 0.62)",
+              stagger: { each: 0.05, from: "center" },
+            },
+          );
+          gsap.fromTo(
+            io,
+            { vel: 2.2 },
+            { vel: 0, duration: 2.2, ease: "power2.out" },
+          );
+        }
+      })();
+    </script>
+  </body>
+</html>

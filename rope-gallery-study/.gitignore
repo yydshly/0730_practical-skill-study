@@ -1,0 +1,9 @@
+# Ignore all node_modules and build artifacts
+*/node_modules/
+*/.vite/
+*.log
+.vite-preview.log
+.vite-preview-error.log
+
+# But always track the rope-gallery source
+!rope-gallery-source/
